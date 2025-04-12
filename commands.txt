@@ -1,0 +1,18 @@
+python3 eval.py --model_path ./models/tinyphysics.onnx --data_path ./data --num_segs 5000 --test_controller pid --baseline_controller pid
+
+
+python3 tinyphysics.py --model_path ./models/tinyphysics.onnx --data_path ./data/00004.csv --debug --controller mycontroller 
+python3 tinyphysics.py --model_path ./models/tinyphysics.onnx --data_path ./data/00000.csv  --controller mycontroller 
+
+
+# batch Metrics of a controller on lots of routes
+python3 tinyphysics.py --model_path ./models/tinyphysics.onnx --data_path ./data --num_segs 100 --controller pid
+
+# generate a report comparing two controllers
+python3 eval.py --model_path ./models/tinyphysics.onnx --data_path ./data --num_segs 100 --test_controller mycontroller --baseline_controller pid
+
+python3 eval.py --model_path ./models/tinyphysics.onnx --data_path ./data --num_segs 100 --test_controller mycontroller
+
+
+
+python3 tinyphysics.py --model_path ./models/tinyphysics.onnx --data_path ./data/00004.csv --debug --controller mycontroller 
