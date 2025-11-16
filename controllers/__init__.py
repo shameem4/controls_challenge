@@ -30,6 +30,9 @@ class ControlState:
   def just_activated(self) -> bool:
     return self.previous_phase is ControlPhase.WARMUP and self.phase is ControlPhase.ACTIVE
 
+  def record(self, name: str, value: Any) -> None:
+    self.history.append(name, value)
+
 
 class BaseController(ABC):
   """Common interface for every feedback controller used by the simulator."""
@@ -48,3 +51,7 @@ class BaseController(ABC):
   def reset(self) -> None:
     """Optional hook for controllers keeping internal state (integrators, etc.)."""
     return None
+
+  def on_simulation_update(self, predicted_lataccel: float, control_state: ControlState) -> None:
+    """Hook invoked once the simulator has produced the next lataccel prediction."""
+    del predicted_lataccel, control_state

@@ -80,7 +80,7 @@ class TinyPhysicsSimulator:
     })
     return processed_df
 
-  def sim_step(self, step_idx: int) -> None:
+  def sim_step(self, step_idx: int) -> float:
     pred = self.sim_model.predict_lataccel(
       sim_states=self.history.recent_states(CONTEXT_LENGTH),
       actions=self.history.recent_actions(CONTEXT_LENGTH),
@@ -92,6 +92,7 @@ class TinyPhysicsSimulator:
     else:
       self.current_lataccel = self.get_state_target_futureplan(step_idx)[1]
     self.history.append_current_lataccel(self.current_lataccel)
+    return pred
 
   def control_step(self, step_idx: int, target_lataccel: float, state: State, futureplan: FuturePlan) -> float:
     new_phase = ControlPhase.ACTIVE if step_idx >= CONTROL_START_IDX else ControlPhase.WARMUP
@@ -112,8 +113,8 @@ class TinyPhysicsSimulator:
       control_state=control_state
     )
     if new_phase is ControlPhase.WARMUP:
-      return forced_action if forced_action is not None else 0.0
-    return float(np.clip(action, STEER_RANGE[0], STEER_RANGE[1]))
+      return (forced_action if forced_action is not None else 0.0), control_state
+    return float(np.clip(action, STEER_RANGE[0], STEER_RANGE[1])), control_state
 
   def get_state_target_futureplan(self, step_idx: int) -> Tuple[State, float, FuturePlan]:
     state = self.data.iloc[step_idx]
@@ -136,9 +137,11 @@ class TinyPhysicsSimulator:
   def step(self) -> None:
     state, target, futureplan = self.get_state_target_futureplan(self.step_idx)
     self.history.append_state(state, target)
-    action = self.control_step(self.step_idx, target, state, futureplan)
+    action, control_state = self.control_step(self.step_idx, target, state, futureplan)
     self.history.append_action(action)
-    self.sim_step(self.step_idx)
+    predicted_lataccel = self.sim_step(self.step_idx)
+    self.controller_history.append('predicted_lataccel', predicted_lataccel)
+    self.controller.on_simulation_update(predicted_lataccel, control_state)
     self.step_idx += 1
 
   def compute_cost(self):
