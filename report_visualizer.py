@@ -1,8 +1,10 @@
 import argparse
 from pathlib import Path
-from typing import Tuple
+from typing import Dict, Tuple
 
 import pandas as pd
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 import streamlit as st
 
 from tinyphysics_core.config import CONTROL_START_IDX, DATASET_PATH, DEL_T
@@ -62,9 +64,13 @@ def main(report_path: Path, data_dir: Path) -> None:
     hide_index=True,
     use_container_width=True
   )
-  selected_rows = edited_table[edited_table['selected']]
-  if not selected_rows.empty:
-    st.session_state['selected_segment'] = selected_rows.iloc[0]['segment']
+  edited_selected = edited_table[edited_table['selected']]
+  if len(edited_selected) > 1:
+    first_segment = edited_selected.iloc[0]['segment']
+    st.session_state['selected_segment'] = first_segment
+    edited_table.loc[:, 'selected'] = edited_table['segment'] == first_segment
+  elif len(edited_selected) == 1:
+    st.session_state['selected_segment'] = edited_selected.iloc[0]['segment']
   selected_segment = st.session_state['selected_segment']
 
   st.subheader("Segment Summary")
@@ -99,6 +105,7 @@ def main(report_path: Path, data_dir: Path) -> None:
           plot_df[f"{controller} {label}"] = pivot[controller]
     target_series = segment_steps[['step', 'desired_lataccel']].drop_duplicates('step').set_index('step')['desired_lataccel']
     plot_df['Desired target_lataccel'] = target_series
+  raw_velocity_label = None
   if not segment_df.empty:
     raw_df = segment_df.copy()
     raw_df['step'] = raw_df.index
@@ -113,21 +120,65 @@ def main(report_path: Path, data_dir: Path) -> None:
     for col, label in raw_columns.items():
       if col in raw_df.columns:
         plot_df[label] = raw_df[col]
+        if col == 'vEgo':
+          raw_velocity_label = label
   if plot_df.empty:
     st.info("No data available for combined plot.")
   else:
     available_series = [col for col in plot_df.columns if col != 'step']
     default_series = [series for series in available_series if 'lataccel' in series][:4]
     selected_series = []
+    color_map: Dict[str, str] = {}
+    fallback_colors = [
+      "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b",
+      "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
+    ]
+    color_cycle = iter(fallback_colors)
     with st.expander("Plot Series Selection", expanded=True):
       for series in available_series:
-        checked = st.checkbox(series, value=series in default_series, key=f"plot_{series}_{selected_segment}")
+        if series not in color_map:
+          color_map[series] = next(color_cycle, "#1f77b4")
+        color_box = f"<span style='display:inline-block;width:12px;height:12px;background:{color_map[series]};border-radius:2px;'></span>"
+        check_col, label_col = st.columns([0.1, 0.9])
+        checked = check_col.checkbox(" ", value=series in default_series, key=f"plot_{series}_{selected_segment}", label_visibility='hidden')
+        label_col.markdown(f"<span style='display:flex;align-items:center;gap:8px'>{color_box}<span>{series}</span></span>", unsafe_allow_html=True)
         if checked:
           selected_series.append(series)
     if not selected_series:
       st.info("Select at least one series to visualize.")
     else:
-      st.line_chart(plot_df[selected_series])
+      fig = make_subplots(specs=[[{"secondary_y": True}]])
+      for series in selected_series:
+        use_secondary = bool(raw_velocity_label and series == raw_velocity_label)
+        fig.add_trace(
+          go.Scatter(
+            x=plot_df.index,
+            y=plot_df[series],
+            name=series,
+            line=dict(color=color_map.get(series, None))
+          ),
+          secondary_y=use_secondary
+        )
+      def _symmetric_range(values: pd.Series) -> Tuple[float, float]:
+        max_abs = max(values.abs().max(), 1e-6)
+        padding = max_abs * 0.05
+        return (-max_abs - padding, max_abs + padding)
+
+      primary_values = pd.Series(dtype=float)
+      for series in selected_series:
+        if series != raw_velocity_label:
+          primary_values = pd.concat([primary_values, plot_df[series].dropna()])
+      if not primary_values.empty:
+        fig.update_yaxes(title_text="Primary Metrics", secondary_y=False, range=_symmetric_range(primary_values))
+      else:
+        fig.update_yaxes(title_text="Primary Metrics", secondary_y=False)
+      if raw_velocity_label and raw_velocity_label in selected_series:
+        velocity_values = plot_df[raw_velocity_label].dropna()
+        fig.update_yaxes(title_text="Velocity", secondary_y=True, range=_symmetric_range(velocity_values))
+      else:
+        fig.update_yaxes(title_text="Velocity", secondary_y=True)
+      fig.update_layout(legend=dict(orientation='h'))
+      st.plotly_chart(fig, use_container_width=True)
 
   st.subheader("Detailed Step Table")
   max_rows = st.slider("Rows to display", min_value=100, max_value=2000, value=500, step=100)
