@@ -5,9 +5,18 @@ from typing import Dict, Tuple
 import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+from plotly import colors as plotly_colors
 import streamlit as st
 
 from tinyphysics_core.config import CONTROL_START_IDX, DATASET_PATH, DEL_T
+
+COLOR_PALETTE = list(dict.fromkeys(
+  plotly_colors.qualitative.Alphabet +
+  plotly_colors.qualitative.Bold +
+  plotly_colors.qualitative.Dark24 +
+  plotly_colors.qualitative.Light24 +
+  plotly_colors.qualitative.Plotly
+))
 
 
 @st.cache_data(show_spinner=False)
@@ -56,6 +65,7 @@ def main(report_path: Path, data_dir: Path) -> None:
   segment_table.columns = [f"{controller}_{metric}" for metric, controller in segment_table.columns]
   segment_table.reset_index(inplace=True)
   segment_table.insert(0, 'selected', segment_table['segment'] == st.session_state['selected_segment'])
+  prev_segment = st.session_state['selected_segment']
   edited_table = st.data_editor(
     segment_table,
     column_config={
@@ -64,14 +74,17 @@ def main(report_path: Path, data_dir: Path) -> None:
     hide_index=True,
     width='stretch'
   )
-  edited_selected = edited_table[edited_table['selected']]
-  if len(edited_selected) > 1:
-    first_segment = edited_selected.iloc[0]['segment']
-    st.session_state['selected_segment'] = first_segment
-    edited_table.loc[:, 'selected'] = edited_table['segment'] == first_segment
-  elif len(edited_selected) == 1:
-    st.session_state['selected_segment'] = edited_selected.iloc[0]['segment']
-  selected_segment = st.session_state['selected_segment']
+  added_selection = edited_table['selected'] & ~segment_table['selected']
+  if added_selection.any():
+    selected_segment = edited_table.loc[added_selection, 'segment'].iloc[0]
+  elif edited_table['selected'].any():
+    selected_segment = edited_table.loc[edited_table['selected'], 'segment'].iloc[0]
+  else:
+    selected_segment = prev_segment
+  if selected_segment != prev_segment:
+    st.session_state['selected_segment'] = selected_segment
+    st.rerun()
+  st.session_state['selected_segment'] = selected_segment
 
   st.subheader("Segment Summary")
   display_rows = summary_df[
@@ -127,20 +140,27 @@ def main(report_path: Path, data_dir: Path) -> None:
   else:
     available_series = [col for col in plot_df.columns if col != 'step']
     default_series = [series for series in available_series if 'lataccel' in series][:4]
+    if 'series_selection' not in st.session_state:
+      st.session_state['series_selection'] = {series: (series in default_series) for series in available_series}
+    else:
+      for series in available_series:
+        st.session_state['series_selection'].setdefault(series, series in default_series)
+    if 'series_colors' not in st.session_state:
+      st.session_state['series_colors'] = {}
     selected_series = []
     color_map: Dict[str, str] = {}
-    fallback_colors = [
-      "#1f77b4", "#ff7f0e", "#2ca02c", "#d62728", "#9467bd", "#8c564b",
-      "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"
-    ]
-    color_cycle = iter(fallback_colors)
     with st.expander("Plot Series Selection", expanded=True):
       for series in available_series:
-        if series not in color_map:
-          color_map[series] = next(color_cycle, "#1f77b4")
+        if series not in st.session_state['series_colors']:
+          used_colors = set(st.session_state['series_colors'].values())
+          available_color = next((c for c in COLOR_PALETTE if c not in used_colors), COLOR_PALETTE[len(used_colors) % len(COLOR_PALETTE)])
+          st.session_state['series_colors'][series] = available_color
+        color_map[series] = st.session_state['series_colors'][series]
         color_box = f"<span style='display:inline-block;width:12px;height:12px;background:{color_map[series]};border-radius:2px;'></span>"
         check_col, label_col = st.columns([0.1, 0.9])
-        checked = check_col.checkbox(" ", value=series in default_series, key=f"plot_{series}_{selected_segment}", label_visibility='hidden')
+        checkbox_key = f"plot_series_{series}"
+        checked = check_col.checkbox(" ", value=st.session_state['series_selection'][series], key=checkbox_key, label_visibility='hidden')
+        st.session_state['series_selection'][series] = checked
         label_col.markdown(f"<span style='display:flex;align-items:center;gap:8px'>{color_box}<span>{series}</span></span>", unsafe_allow_html=True)
         if checked:
           selected_series.append(series)
@@ -177,7 +197,7 @@ def main(report_path: Path, data_dir: Path) -> None:
         fig.update_yaxes(title_text="Velocity", secondary_y=True, range=_symmetric_range(velocity_values))
       else:
         fig.update_yaxes(title_text="Velocity", secondary_y=True)
-      fig.update_layout(legend=dict(orientation='h'))
+      fig.update_layout(legend=dict(orientation='h'), title=f"Segment {selected_segment}")
       st.plotly_chart(fig, width='stretch')
 
   st.subheader("Detailed Step Table")
