@@ -5,7 +5,7 @@ from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
-from controllers.pid import Controller as PIDController
+from tinyphysics import get_available_controllers
 from tinyphysics_core.config import (
   CONTROL_START_IDX,
   DATASET_PATH,
@@ -29,10 +29,22 @@ class GainSearchResult:
   cost: Dict[str, float]
 
 
-def run_rollout_with_gains(model: TinyPhysicsModel, segment_path: Path, p_gain: float, i_gain: float, d_gain: float):
+def _load_controller(controller_type: str) -> type:
+  module = __import__(f"controllers.{controller_type}", fromlist=["Controller"])
+  return module.Controller
+
+
+def run_rollout_with_gains(
+  model: TinyPhysicsModel,
+  segment_path: Path,
+  controller_cls: type,
+  p_gain: float,
+  i_gain: float,
+  d_gain: float
+):
   """Execute a rollout with the specified PID gains and return the RolloutResult."""
   model.reset()
-  controller = PIDController(p=p_gain, i=i_gain, d=d_gain)
+  controller = controller_cls(p=p_gain, i=i_gain, d=d_gain)
   simulator = TinyPhysicsSimulator(model, str(segment_path), controller=controller)
   runner = RolloutRunner(simulator, debug=False)
   return runner.run()
@@ -75,12 +87,13 @@ def analyze_gain_behavior(
 def evaluate_gain(
   model: TinyPhysicsModel,
   segment_path: Path,
+  controller_cls: type,
   gain: float,
   min_crossings: int,
   min_amplitude: float
 ) -> GainSearchResult:
   """Run a rollout with only proportional gain and report whether it oscillates."""
-  result = run_rollout_with_gains(model, segment_path, p_gain=gain, i_gain=0.0, d_gain=0.0)
+  result = run_rollout_with_gains(model, segment_path, controller_cls, p_gain=gain, i_gain=0.0, d_gain=0.0)
   target = np.array(result.target_lataccel_history, dtype=float)
   actual = np.array(result.current_lataccel_history, dtype=float)
   steps = np.arange(len(target))
@@ -103,6 +116,7 @@ def evaluate_gain(
 def tune_ultimate_gain(
   model: TinyPhysicsModel,
   segment_path: Path,
+  controller_cls: type,
   start_gain: float,
   max_gain: float,
   growth_factor: float,
@@ -117,7 +131,7 @@ def tune_ultimate_gain(
   first_oscillation: Optional[GainSearchResult] = None
 
   while gain <= max_gain:
-    result = evaluate_gain(model, segment_path, gain, min_crossings, min_amplitude)
+    result = evaluate_gain(model, segment_path, controller_cls, gain, min_crossings, min_amplitude)
     history.append(result)
     if result.oscillating:
       first_oscillation = result
@@ -136,7 +150,7 @@ def tune_ultimate_gain(
 
   for _ in range(refine_steps):
     mid = (low + high) / 2.0
-    result = evaluate_gain(model, segment_path, mid, min_crossings, min_amplitude)
+    result = evaluate_gain(model, segment_path, controller_cls, mid, min_crossings, min_amplitude)
     history.append(result)
     if result.oscillating:
       high = mid
@@ -173,8 +187,8 @@ def resolve_segment_path(data_path: Path, segment_path: Optional[Path], segment_
   return files[segment_index]
 
 
-def verify_gains(model: TinyPhysicsModel, segment_path: Path, kp: float, ki: float, kd: float) -> Dict[str, float]:
-  result = run_rollout_with_gains(model, segment_path, p_gain=kp, i_gain=ki, d_gain=kd)
+def verify_gains(model: TinyPhysicsModel, segment_path: Path, controller_cls: type, kp: float, ki: float, kd: float) -> Dict[str, float]:
+  result = run_rollout_with_gains(model, segment_path, controller_cls, p_gain=kp, i_gain=ki, d_gain=kd)
   return result.cost
 
 
@@ -184,6 +198,7 @@ def main() -> None:
   parser.add_argument("--data_path", type=Path, default=DATASET_PATH, help="Directory containing segment CSV files.")
   parser.add_argument("--segment_path", type=Path, default=None, help="Optional explicit segment CSV path.")
   parser.add_argument("--segment_index", type=int, default=0, help="Index of the CSV file inside data_path to use.")
+  parser.add_argument("--controller", default="pid_opt", choices=get_available_controllers(), help="Controller module to tune.")
   parser.add_argument("--start_gain", type=float, default=0.05, help="Initial proportional gain for the sweep.")
   parser.add_argument("--max_gain", type=float, default=1.0, help="Upper bound for the proportional gain sweep.")
   parser.add_argument("--growth_factor", type=float, default=1.25, help="Multiplier applied after each sweep iteration.")
@@ -197,11 +212,13 @@ def main() -> None:
   data_path.mkdir(parents=True, exist_ok=True)
   segment_path = resolve_segment_path(data_path, args.segment_path, args.segment_index)
   model = TinyPhysicsModel(str(args.model_path))
+  controller_cls = _load_controller(args.controller)
 
   print(f"Tuning PID gains using segment: {segment_path}")
   ultimate_result, history = tune_ultimate_gain(
     model=model,
     segment_path=segment_path,
+    controller_cls=controller_cls,
     start_gain=args.start_gain,
     max_gain=args.max_gain,
     growth_factor=args.growth_factor,
@@ -229,7 +246,7 @@ def main() -> None:
   print(f"Recommended PID gains -> P: {kp:.6f}, I: {ki:.6f}, D: {kd:.6f}")
 
   if args.verify:
-    costs = verify_gains(model, segment_path, kp, ki, kd)
+    costs = verify_gains(model, segment_path, controller_cls, kp, ki, kd)
     print("\nVerification rollout cost:")
     for key, value in costs.items():
       print(f"  {key}: {value:.6f}")
