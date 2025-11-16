@@ -54,7 +54,7 @@ def run_rollout(data_path: Union[str, Path], controller_type: str, model_path: U
   controller.reset()
   simulator = TinyPhysicsSimulator(model, str(data_path), controller=controller)
   runner = RolloutRunner(simulator, debug=debug)
-  result = runner.run().as_tuple()
+  result = runner.run()
   controller.reset()
   return result
 
@@ -96,13 +96,13 @@ if __name__ == "__main__":
 
   data_path = Path(args.data_path)
   if data_path.is_file():
-    cost, _, _ = run_rollout(data_path, args.controller, args.model_path, debug=args.debug)
-    print(f"\nAverage lataccel_cost: {cost['lataccel_cost']:>6.4}, average jerk_cost: {cost['jerk_cost']:>6.4}, average total_cost: {cost['total_cost']:>6.4}")
+    result = run_rollout(data_path, args.controller, args.model_path, debug=args.debug)
+    print(f"\nAverage lataccel_cost: {result.cost['lataccel_cost']:>6.4}, average jerk_cost: {result.cost['jerk_cost']:>6.4}, average total_cost: {result.cost['total_cost']:>6.4}")
   elif data_path.is_dir():
     run_rollout_partial = partial(run_rollout, controller_type=args.controller, model_path=args.model_path, debug=False)
     files = sorted(data_path.iterdir())[:args.num_segs]
     results = process_map(run_rollout_partial, files, max_workers=16, chunksize=10)
-    costs = [result[0] for result in results]
+    costs = [result.cost for result in results]
     costs_df = pd.DataFrame(costs)
     _summarize_costs(costs_df)
   else:

@@ -3,3 +3,5 @@ data/
 report.html
 models/tinyphysics_*.onnx
 *.swp
+report_costs.csv
+report_diagnostics.csv

@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Any, Optional
+from typing import Any, Dict, Optional
 
 from tinyphysics_core.controller_storage import ControllerHistory
 
@@ -55,3 +55,7 @@ class BaseController(ABC):
   def on_simulation_update(self, predicted_lataccel: float, control_state: ControlState) -> None:
     """Hook invoked once the simulator has produced the next lataccel prediction."""
     del predicted_lataccel, control_state
+
+  def get_diagnostics(self) -> Dict[str, Any]:
+    """Return controller-specific summary metrics for analysis."""
+    return {}

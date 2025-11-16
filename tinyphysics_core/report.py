@@ -120,3 +120,15 @@ def save_report(html: str, output_path: Path | str = "report.html") -> None:
   output_path = Path(output_path)
   with open(output_path, "w", encoding='utf-8') as fob:
     fob.write(html)
+
+
+def save_costs_csv(costs: List[Dict], output_path: Path | str = "report_costs.csv") -> None:
+  output_path = Path(output_path)
+  pd.DataFrame(costs).to_csv(output_path, index=False)
+
+
+def save_diagnostics_csv(diag: List[Dict], output_path: Path | str = "report_diagnostics.csv") -> None:
+  if not diag:
+    return
+  output_path = Path(output_path)
+  pd.DataFrame(diag).to_csv(output_path, index=False)

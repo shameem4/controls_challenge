@@ -157,7 +157,8 @@ class TinyPhysicsSimulator:
     return RolloutResult(
       cost=self.compute_cost(),
       target_lataccel_history=list(self.target_lataccel_history),
-      current_lataccel_history=list(self.current_lataccel_history)
+      current_lataccel_history=list(self.current_lataccel_history),
+      diagnostics=self.controller.get_diagnostics()
     )
 
   @property

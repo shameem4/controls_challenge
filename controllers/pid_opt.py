@@ -107,3 +107,10 @@ class Controller(BaseController):
     pid_term = self._pid(target_lataccel, current_lataccel, state.a_ego, control_state)
     feedforward_term = self._feedforward(target_lataccel, state)
     return pid_term + feedforward_term
+
+  def get_diagnostics(self) -> Dict[str, float]:
+    return {
+      'base_feedforward_gain': self.base_feedforward_gain,
+      'integrator': self.integrator,
+      'last_feedforward_err': self.last_feedforward_err
+    }

@@ -9,7 +9,7 @@ from tqdm.contrib.concurrent import process_map
 
 from tinyphysics import get_available_controllers, run_rollout
 from tinyphysics_core.config import DATASET_PATH, DEFAULT_MODEL_PATH
-from tinyphysics_core.report import DEFAULT_COLORS, build_report_html, save_report
+from tinyphysics_core.report import DEFAULT_COLORS, build_report_html, save_report, save_costs_csv, save_diagnostics_csv
 
 sns.set_theme()
 SAMPLE_ROLLOUTS = 5
@@ -31,29 +31,35 @@ if __name__ == "__main__":
   assert data_path.is_dir(), "data_path should be a directory"
 
   costs = []
+  diagnostics = []
   sample_rollouts = []
   files = sorted(data_path.iterdir())[:args.num_segs]
   print("Running rollouts for visualizations...")
   for d, data_file in enumerate(tqdm(files[:SAMPLE_ROLLOUTS], total=SAMPLE_ROLLOUTS)):
-    test_cost, test_target_lataccel, test_current_lataccel = run_rollout(data_file, args.test_controller, args.model_path, debug=False)
-    baseline_cost, baseline_target_lataccel, baseline_current_lataccel = run_rollout(data_file, args.baseline_controller, args.model_path, debug=False)
+    test_result = run_rollout(data_file, args.test_controller, args.model_path, debug=False)
+    baseline_result = run_rollout(data_file, args.baseline_controller, args.model_path, debug=False)
     sample_rollouts.append({
       'seg': data_file.stem,
       'test_controller': args.test_controller,
       'baseline_controller': args.baseline_controller,
-      'desired_lataccel': test_target_lataccel,
-      'test_controller_lataccel': test_current_lataccel,
-      'baseline_controller_lataccel': baseline_current_lataccel,
+      'desired_lataccel': test_result.target_lataccel_history,
+      'test_controller_lataccel': test_result.current_lataccel_history,
+      'baseline_controller_lataccel': baseline_result.current_lataccel_history,
     })
 
-    costs.append({'controller': 'test', **test_cost})
-    costs.append({'controller': 'baseline', **baseline_cost})
+    costs.append({'segment': data_file.stem, 'controller': 'test', **test_result.cost})
+    costs.append({'segment': data_file.stem, 'controller': 'baseline', **baseline_result.cost})
+    diagnostics.append({'segment': data_file.stem, 'controller': 'test', **test_result.diagnostics})
+    diagnostics.append({'segment': data_file.stem, 'controller': 'baseline', **baseline_result.diagnostics})
 
   for controller_cat, controller_type in [('baseline', args.baseline_controller), ('test', args.test_controller)]:
     print(f"Running batch rollouts => {controller_cat} controller: {controller_type}")
     rollout_partial = partial(run_rollout, controller_type=controller_type, model_path=args.model_path, debug=False)
-    results = process_map(rollout_partial, files[SAMPLE_ROLLOUTS:], max_workers=16, chunksize=10)
-    costs += [{'controller': controller_cat, **result[0]} for result in results]
+    segment_files = files[SAMPLE_ROLLOUTS:]
+    results = process_map(rollout_partial, segment_files, max_workers=16, chunksize=10)
+    for seg, result in zip(segment_files, results):
+      costs.append({'segment': seg.stem, 'controller': controller_cat, **result.cost})
+      diagnostics.append({'segment': seg.stem, 'controller': controller_cat, **result.diagnostics})
 
   report_html = build_report_html(
     args.test_controller,
@@ -65,4 +71,6 @@ if __name__ == "__main__":
     expected_sample_plots=SAMPLE_ROLLOUTS
   )
   save_report(report_html)
+  save_costs_csv(costs)
+  save_diagnostics_csv(diagnostics)
   print("Report saved to: './report.html'")
