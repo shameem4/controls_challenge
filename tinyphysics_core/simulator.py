@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 
 from controllers import BaseController, ControlPhase, ControlState
+from tinyphysics_core.controller_storage import ControllerHistory
 from .config import (
   ACC_G,
   CONTROL_START_IDX,
@@ -28,6 +29,7 @@ class TinyPhysicsSimulator:
     self.data_path = Path(data_path)
     self.sim_model = model
     self.controller = controller
+    self.controller_history = ControllerHistory()
     self.data = self.get_data(self.data_path)
     self.history: SimulationHistories
     self.current_lataccel: float = 0.0
@@ -58,6 +60,7 @@ class TinyPhysicsSimulator:
     self.current_lataccel = self.current_lataccel_history[-1]
     self._seed_random()
     self.controller.reset()
+    self.controller_history.reset()
     self._control_phase = ControlPhase.WARMUP
 
   def _seed_random(self) -> None:
@@ -97,7 +100,8 @@ class TinyPhysicsSimulator:
       phase=new_phase,
       previous_phase=self._control_phase,
       step_idx=step_idx,
-      forced_action=forced_action
+      forced_action=forced_action,
+      history=self.controller_history
     )
     self._control_phase = new_phase
     action = self.controller.update(

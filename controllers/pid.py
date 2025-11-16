@@ -1,7 +1,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Tuple
 
-from . import BaseController, ControlPhase, ControlState
+from . import BaseController, ControlState
 
 
 @dataclass
@@ -26,16 +26,12 @@ class Controller(BaseController):
     self.prev_error = error
     return error, error_diff
 
-  def update(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any, control_state: ControlState) -> float:
+  def compute_action(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any, control_state: ControlState) -> float:
     """
     Produce a steering command given the current lateral acceleration error.
 
     The future plan and detailed vehicle state are provided to enable more
     advanced controllers, but this baseline only needs the error terms.
     """
-    if control_state.phase is ControlPhase.WARMUP:
-      return control_state.forced_action if control_state.forced_action is not None else 0.0
-    if control_state.just_activated:
-      self.reset()
     error, error_diff = self._compute_error_terms(target_lataccel, current_lataccel)
     return (self.p * error) + (self.i * self.error_integral) + (self.d * error_diff)

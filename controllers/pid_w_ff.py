@@ -3,7 +3,7 @@ from typing import Any, List
 
 import numpy as np
 
-from . import BaseController, ControlPhase, ControlState
+from . import BaseController, ControlState
 
 
 def _weighted_average(samples: List[float], weights: List[float]) -> float:
@@ -57,11 +57,7 @@ class Controller(BaseController):
     steer_command = 2 * self.steer_command_sat / (1 + np.exp(-steer_command)) - self.steer_command_sat
     return self.feedforward_gain * steer_command
 
-  def update(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any, control_state: ControlState) -> float:
-    if control_state.phase is ControlPhase.WARMUP:
-      return control_state.forced_action if control_state.forced_action is not None else 0.0
-    if control_state.just_activated:
-      self.reset()
+  def compute_action(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any, control_state: ControlState) -> float:
 
     if future_plan and len(future_plan.lataccel) >= 3:
       target_lataccel = self._blend_future_targets(target_lataccel, future_plan)
