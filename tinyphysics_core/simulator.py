@@ -71,6 +71,7 @@ class TinyPhysicsSimulator:
 
   def _init_cost_histories(self) -> None:
     self._cost_histories = {
+      'step_idx': [],
       'lataccel_cost': [],
       'jerk_cost': [],
       'total_cost': []
@@ -107,13 +108,13 @@ class TinyPhysicsSimulator:
     self.history.append_current_lataccel(self.current_lataccel)
     return pred
 
-  def _record_step_cost(self, step_idx: int) -> None:
+  def _record_step_cost(self, step_idx: int) -> Dict[str, float] | None:
     if step_idx < CONTROL_START_IDX:
-      return
+      return None
     if COST_END_IDX is not None and step_idx >= COST_END_IDX:
-      return
+      return None
     if not self.history.current_lataccel or not self.history.target_lataccel:
-      return
+      return None
 
     target = float(self.history.target_lataccel[-1])
     pred = float(self.history.current_lataccel[-1])
@@ -125,15 +126,18 @@ class TinyPhysicsSimulator:
       jerk_cost = (((pred - prev_pred) / DEL_T) ** 2) * 100.0
 
     total_cost = (lataccel_cost * LAT_ACCEL_COST_MULTIPLIER) + jerk_cost
+    self._cost_histories['step_idx'].append(step_idx)
     self._cost_histories['lataccel_cost'].append(lataccel_cost)
     self._cost_histories['jerk_cost'].append(jerk_cost)
     self._cost_histories['total_cost'].append(total_cost)
-    self.controller_history.append('step_cost', {
+    metrics = {
       'step_idx': step_idx,
       'lataccel_cost': lataccel_cost,
       'jerk_cost': jerk_cost,
       'total_cost': total_cost
-    })
+    }
+    self.controller_history.append('step_cost', metrics)
+    return metrics
 
   def control_step(self, step_idx: int, target_lataccel: float, state: State, futureplan: FuturePlan) -> float:
     new_phase = ControlPhase.ACTIVE if step_idx >= CONTROL_START_IDX else ControlPhase.WARMUP
@@ -182,8 +186,8 @@ class TinyPhysicsSimulator:
     self.history.append_action(action)
     predicted_lataccel = self.sim_step(self.step_idx)
     self.controller_history.append('predicted_lataccel', predicted_lataccel)
-    self._record_step_cost(self.step_idx)
-    self.controller.on_simulation_update(predicted_lataccel, control_state)
+    step_metrics = self._record_step_cost(self.step_idx)
+    self.controller.on_simulation_update(predicted_lataccel, control_state, step_metrics=step_metrics)
     self.step_idx += 1
 
   def compute_avg_cost(self) -> Dict[str, float]:
@@ -199,6 +203,7 @@ class TinyPhysicsSimulator:
   def build_rollout_result(self) -> RolloutResult:
     return RolloutResult(
       cost=self.compute_avg_cost(),
+      cost_history={name: list(values) for name, values in self._cost_histories.items()},
       target_lataccel_history=list(self.target_lataccel_history),
       current_lataccel_history=list(self.current_lataccel_history),
       action_history=list(self.action_history),

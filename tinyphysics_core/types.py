@@ -59,6 +59,7 @@ class SimulationHistories:
 @dataclass
 class RolloutResult:
   cost: Dict[str, float]
+  cost_history: Dict[str, List[float]]
   target_lataccel_history: List[float]
   current_lataccel_history: List[float]
   action_history: List[float]

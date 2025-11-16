@@ -52,9 +52,9 @@ class BaseController(ABC):
     """Optional hook for controllers keeping internal state (integrators, etc.)."""
     return None
 
-  def on_simulation_update(self, predicted_lataccel: float, control_state: ControlState) -> None:
-    """Hook invoked once the simulator has produced the next lataccel prediction."""
-    del predicted_lataccel, control_state
+  def on_simulation_update(self, predicted_lataccel: float, control_state: ControlState, step_metrics: Optional[Dict[str, float]] = None) -> None:
+    """Hook invoked once the simulator has produced the next lataccel prediction and per-step metrics."""
+    del predicted_lataccel, control_state, step_metrics
 
   def get_diagnostics(self) -> Dict[str, Any]:
     """Return controller-specific summary metrics for analysis."""
