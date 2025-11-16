@@ -7,6 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly import colors as plotly_colors
 import streamlit as st
+from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
 
 from tinyphysics_core.config import CONTROL_START_IDX, DATASET_PATH, DEL_T
 
@@ -48,11 +49,15 @@ def main(report_path: Path, data_dir: Path) -> None:
 
   controllers = sorted(summary_df['controller'].unique())
   segments = sorted(summary_df['segment'].unique())
-  if 'selected_segment' not in st.session_state:
-    st.session_state['selected_segment'] = segments[0]
+  if not segments:
+    st.warning("No segments available in report.csv")
+    return
 
   st.sidebar.header("Filters")
   selected_controllers = st.sidebar.multiselect("Controllers", controllers, default=controllers)
+  if not selected_controllers:
+    st.warning("Select at least one controller to visualize results.")
+    return
   summary_metrics = st.sidebar.multiselect(
     "Summary Metrics",
     ['total_cost', 'lataccel_cost', 'jerk_cost', 'avg_pid_term_abs', 'max_action_abs', 'integrator_clamp_steps', 'clamp_relief_events'],
@@ -60,42 +65,33 @@ def main(report_path: Path, data_dir: Path) -> None:
   )
 
   st.subheader("Segment Selection")
-  cost_columns = ['total_cost', 'lataccel_cost', 'jerk_cost']
+  cost_columns = ['total_cost']
   segment_table = summary_df.pivot_table(index='segment', columns='controller', values=cost_columns)
   segment_table.columns = [f"{controller}_{metric}" for metric, controller in segment_table.columns]
   segment_table.reset_index(inplace=True)
-  segment_table.insert(0, 'selected', segment_table['segment'] == st.session_state['selected_segment'])
-  prev_segment = st.session_state['selected_segment']
-  edited_table = st.data_editor(
+  builder = GridOptionsBuilder.from_dataframe(segment_table)
+  builder.configure_selection('single', use_checkbox=False)
+  builder.configure_default_column(sortable=True, filter=True)
+  grid_options = builder.build()
+  grid_response = AgGrid(
     segment_table,
-    column_config={
-      'selected': st.column_config.CheckboxColumn('Select', help="Check to view this segment")
-    },
-    hide_index=True,
-    width='stretch'
+    gridOptions=grid_options,
+    height=120,
+    update_mode=GridUpdateMode.SELECTION_CHANGED,
+    theme='streamlit',
+    fit_columns_on_grid_load=True
   )
-  added_selection = edited_table['selected'] & ~segment_table['selected']
-  if added_selection.any():
-    selected_segment = edited_table.loc[added_selection, 'segment'].iloc[0]
-  elif edited_table['selected'].any():
-    selected_segment = edited_table.loc[edited_table['selected'], 'segment'].iloc[0]
+  selected_rows = grid_response.get('selected_rows')
+  if isinstance(selected_rows, pd.DataFrame):
+    selected_rows = selected_rows.to_dict('records')
+  elif selected_rows is None:
+    selected_rows = []
+  if selected_rows:
+    selected_segment = selected_rows[0].get('segment', segments[0])
   else:
-    selected_segment = prev_segment
-  if selected_segment != prev_segment:
-    st.session_state['selected_segment'] = selected_segment
-    st.rerun()
-  st.session_state['selected_segment'] = selected_segment
+    selected_segment = segments[0]
 
-  st.subheader("Segment Summary")
-  display_rows = summary_df[
-    (summary_df['segment'] == selected_segment) &
-    (summary_df['controller'].isin(selected_controllers))
-  ]
-  if display_rows.empty:
-    st.info("No summary rows for the current selection.")
-  else:
-    columns = ['controller'] + summary_metrics
-    st.dataframe(display_rows[columns].set_index('controller'), width='stretch')
+
 
   segment_steps = step_df[step_df['segment'] == selected_segment]
   segment_df = load_segment_csv(selected_segment, data_dir)
@@ -150,14 +146,17 @@ def main(report_path: Path, data_dir: Path) -> None:
     selected_series = []
     color_map: Dict[str, str] = {}
     with st.expander("Plot Series Selection", expanded=True):
-      for series in available_series:
+      selection_area = st.container(height=220)
+      column_wrappers = selection_area.columns(3)
+      for idx, series in enumerate(available_series):
         if series not in st.session_state['series_colors']:
           used_colors = set(st.session_state['series_colors'].values())
           available_color = next((c for c in COLOR_PALETTE if c not in used_colors), COLOR_PALETTE[len(used_colors) % len(COLOR_PALETTE)])
           st.session_state['series_colors'][series] = available_color
         color_map[series] = st.session_state['series_colors'][series]
         color_box = f"<span style='display:inline-block;width:12px;height:12px;background:{color_map[series]};border-radius:2px;'></span>"
-        check_col, label_col = st.columns([0.1, 0.9])
+        col_wrapper = column_wrappers[idx % 3]
+        check_col, label_col = col_wrapper.columns([0.25, 0.75])
         checkbox_key = f"plot_series_{series}"
         checked = check_col.checkbox(" ", value=st.session_state['series_selection'][series], key=checkbox_key, label_visibility='hidden')
         st.session_state['series_selection'][series] = checked
@@ -198,7 +197,19 @@ def main(report_path: Path, data_dir: Path) -> None:
       else:
         fig.update_yaxes(title_text="Velocity", secondary_y=True)
       fig.update_layout(legend=dict(orientation='h'), title=f"Segment {selected_segment}")
-      st.plotly_chart(fig, width='stretch')
+      st.plotly_chart(fig, width='stretch', config={'displaylogo': False, 'responsive': True})
+
+  st.subheader("Segment Summary")
+  display_rows = summary_df[
+    (summary_df['segment'] == selected_segment) &
+    (summary_df['controller'].isin(selected_controllers))
+  ]
+  if display_rows.empty:
+    st.info("No summary rows for the current selection.")
+  else:
+    columns = ['controller'] + summary_metrics
+    st.dataframe(display_rows[columns].set_index('controller'), width='stretch')
+
 
   st.subheader("Detailed Step Table")
   max_rows = st.slider("Rows to display", min_value=100, max_value=2000, value=500, step=100)
