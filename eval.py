@@ -1,5 +1,6 @@
 import argparse
 import seaborn as sns
+import pandas as pd
 
 
 from functools import partial
@@ -73,4 +74,11 @@ if __name__ == "__main__":
   save_report(report_html)
   save_costs_csv(costs)
   save_diagnostics_csv(diagnostics)
+  costs_df = pd.DataFrame(costs)
+  print("\nCost Summary by controller:")
+  print(costs_df.groupby('controller')['total_cost'].describe())
+  for controller in costs_df['controller'].unique():
+    top_segments = costs_df[costs_df['controller'] == controller].nlargest(3, 'total_cost')
+    print(f"\nTop segments for {controller}:")
+    print(top_segments[['segment', 'total_cost', 'lataccel_cost', 'jerk_cost']])
   print("Report saved to: './report.html'")
