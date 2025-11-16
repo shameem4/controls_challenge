@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 from plotly import colors as plotly_colors
 import streamlit as st
-from st_aggrid import AgGrid, GridOptionsBuilder, GridUpdateMode
+from st_aggrid import AgGrid, GridOptionsBuilder
 
 from tinyphysics_core.config import CONTROL_START_IDX, DATASET_PATH, DEL_T
 
@@ -55,16 +55,34 @@ def main(report_path: Path, data_dir: Path) -> None:
   if 'selected_segment' not in st.session_state or st.session_state['selected_segment'] not in segments:
     st.session_state['selected_segment'] = segments[0]
 
-  st.sidebar.header("Filters")
-  selected_controllers = st.sidebar.multiselect("Controllers", controllers, default=controllers)
+  # st.sidebar.header("Filters")
+  # selected_controllers = st.multiselect("Controllers", controllers, default=controllers)
+  selected_controllers = controllers
   if not selected_controllers:
     st.warning("Select at least one controller to visualize results.")
     return
-  summary_metrics = st.sidebar.multiselect(
-    "Summary Metrics",
-    ['total_cost', 'lataccel_cost', 'jerk_cost', 'avg_pid_term_abs', 'max_action_abs', 'integrator_clamp_steps', 'clamp_relief_events'],
-    default=['total_cost', 'lataccel_cost', 'jerk_cost']
-  )
+  metric_options = [
+    'total_cost',
+    'lataccel_cost',
+    'jerk_cost',
+    'avg_pid_term_abs',
+    'max_action_abs',
+    'integrator_clamp_steps',
+    'clamp_relief_events'
+  ]
+  available_metrics = [metric for metric in metric_options if metric in summary_df.columns]
+  default_metrics = [metric for metric in ['total_cost', 'lataccel_cost', 'jerk_cost'] if metric in available_metrics]
+  metric_help = None
+  if len(available_metrics) < len(metric_options):
+    missing = sorted(set(metric_options) - set(available_metrics))
+    metric_help = f"Missing metrics in report.csv: {', '.join(missing)}"
+  # summary_metrics = st.sidebar.multiselect(
+  #   "Summary Metrics",
+  #   available_metrics,
+  #   default=default_metrics,
+  #   help=metric_help
+  # )
+  summary_metrics = default_metrics
 
   # st.subheader("Segment Selection")
   cost_columns = ['total_cost']
@@ -84,9 +102,9 @@ def main(report_path: Path, data_dir: Path) -> None:
     gridOptions=grid_options,
     height=120,
     width='100%',
-    update_mode=GridUpdateMode.SELECTION_CHANGED,
+    update_on=["selectionChanged"],
     theme='streamlit',
-    # fit_columns_on_grid_load=True
+    fit_columns_on_grid_load=True
   )
   selected_rows = grid_response.get('selected_rows')
   if isinstance(selected_rows, pd.DataFrame):
@@ -216,25 +234,22 @@ def main(report_path: Path, data_dir: Path) -> None:
   if display_rows.empty:
     st.info("No summary rows for the current selection.")
   else:
-    columns = ['controller'] + summary_metrics
-    st.dataframe(display_rows[columns].set_index('controller'), width='stretch')
+    columns = ['controller'] + [metric for metric in summary_metrics if metric in display_rows.columns]
+    if len(columns) == 1:
+      st.info("Selected summary metrics are unavailable for this report.")
+    else:
+      st.dataframe(display_rows[columns].set_index('controller'), width='stretch')
 
 
-  st.subheader("Detailed Step Table")
-  max_rows = st.slider("Rows to display", min_value=100, max_value=2000, value=500, step=100)
-  st.dataframe(
-    segment_steps[segment_steps['controller'].isin(selected_controllers)]
-    .sort_values(['controller', 'step'])
-    .head(max_rows)
-  , width='stretch')
+  
 
   if segment_df.empty:
     st.info(f"No CSV found for segment {selected_segment}")
 
-  st.sidebar.markdown("---")
-  st.sidebar.write(f"report: `{report_path}`")
-  st.sidebar.write(f"data dir: `{data_dir}`")
-  st.sidebar.caption(f"Showing steps from CONTROL_START_IDX={CONTROL_START_IDX}")
+  # st.sidebar.markdown("---")
+  # st.sidebar.write(f"report: `{report_path}`")
+  # st.sidebar.write(f"data dir: `{data_dir}`")
+  # st.sidebar.caption(f"Showing steps from CONTROL_START_IDX={CONTROL_START_IDX}")
 
 
 if __name__ == "__main__":

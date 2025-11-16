@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -30,6 +30,7 @@ class TinyPhysicsSimulator:
     self.sim_model = model
     self.controller = controller
     self.controller_history = ControllerHistory()
+    self._cost_histories: Dict[str, List[float]] = {}
     self.data = self.get_data(self.data_path)
     self.history: SimulationHistories
     self.current_lataccel: float = 0.0
@@ -52,6 +53,10 @@ class TinyPhysicsSimulator:
   def action_history(self):
     return self.history.actions
 
+  @property
+  def cost_histories(self) -> Dict[str, List[float]]:
+    return self._cost_histories
+
   def reset(self) -> None:
     self.step_idx = CONTEXT_LENGTH
     bootstrap_data = [self.get_state_target_futureplan(i) for i in range(self.step_idx)]
@@ -61,7 +66,15 @@ class TinyPhysicsSimulator:
     self._seed_random()
     self.controller.reset()
     self.controller_history.reset()
+    self._init_cost_histories()
     self._control_phase = ControlPhase.WARMUP
+
+  def _init_cost_histories(self) -> None:
+    self._cost_histories = {
+      'lataccel_cost': [],
+      'jerk_cost': [],
+      'total_cost': []
+    }
 
   def _seed_random(self) -> None:
     seed = compute_segment_seed(self.data, identifier=self.data_path.name)
@@ -93,6 +106,34 @@ class TinyPhysicsSimulator:
       self.current_lataccel = self.get_state_target_futureplan(step_idx)[1]
     self.history.append_current_lataccel(self.current_lataccel)
     return pred
+
+  def _record_step_cost(self, step_idx: int) -> None:
+    if step_idx < CONTROL_START_IDX:
+      return
+    if COST_END_IDX is not None and step_idx >= COST_END_IDX:
+      return
+    if not self.history.current_lataccel or not self.history.target_lataccel:
+      return
+
+    target = float(self.history.target_lataccel[-1])
+    pred = float(self.history.current_lataccel[-1])
+    lataccel_cost = ((target - pred) ** 2) * 100.0
+
+    jerk_cost = 0.0
+    if len(self.history.current_lataccel) >= 2:
+      prev_pred = float(self.history.current_lataccel[-2])
+      jerk_cost = (((pred - prev_pred) / DEL_T) ** 2) * 100.0
+
+    total_cost = (lataccel_cost * LAT_ACCEL_COST_MULTIPLIER) + jerk_cost
+    self._cost_histories['lataccel_cost'].append(lataccel_cost)
+    self._cost_histories['jerk_cost'].append(jerk_cost)
+    self._cost_histories['total_cost'].append(total_cost)
+    self.controller_history.append('step_cost', {
+      'step_idx': step_idx,
+      'lataccel_cost': lataccel_cost,
+      'jerk_cost': jerk_cost,
+      'total_cost': total_cost
+    })
 
   def control_step(self, step_idx: int, target_lataccel: float, state: State, futureplan: FuturePlan) -> float:
     new_phase = ControlPhase.ACTIVE if step_idx >= CONTROL_START_IDX else ControlPhase.WARMUP
@@ -141,21 +182,23 @@ class TinyPhysicsSimulator:
     self.history.append_action(action)
     predicted_lataccel = self.sim_step(self.step_idx)
     self.controller_history.append('predicted_lataccel', predicted_lataccel)
+    self._record_step_cost(self.step_idx)
     self.controller.on_simulation_update(predicted_lataccel, control_state)
     self.step_idx += 1
 
-  def compute_cost(self):
-    target = np.array(self.target_lataccel_history)[CONTROL_START_IDX:COST_END_IDX]
-    pred = np.array(self.current_lataccel_history)[CONTROL_START_IDX:COST_END_IDX]
+  def compute_avg_cost(self) -> Dict[str, float]:
+    """Return the mean of the recorded per-step costs."""
+    def _mean(values: List[float]) -> float:
+      return float(np.mean(values)) if values else 0.0
 
-    lat_accel_cost = np.mean((target - pred)**2) * 100
-    jerk_cost = np.mean((np.diff(pred) / DEL_T)**2) * 100
-    total_cost = (lat_accel_cost * LAT_ACCEL_COST_MULTIPLIER) + jerk_cost
-    return {'lataccel_cost': lat_accel_cost, 'jerk_cost': jerk_cost, 'total_cost': total_cost}
+    lataccel_cost = _mean(self._cost_histories.get('lataccel_cost', []))
+    jerk_cost = _mean(self._cost_histories.get('jerk_cost', []))
+    total_cost = _mean(self._cost_histories.get('total_cost', []))
+    return {'lataccel_cost': lataccel_cost, 'jerk_cost': jerk_cost, 'total_cost': total_cost}
 
   def build_rollout_result(self) -> RolloutResult:
     return RolloutResult(
-      cost=self.compute_cost(),
+      cost=self.compute_avg_cost(),
       target_lataccel_history=list(self.target_lataccel_history),
       current_lataccel_history=list(self.current_lataccel_history),
       action_history=list(self.action_history),
