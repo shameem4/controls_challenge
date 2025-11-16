@@ -9,7 +9,7 @@ from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
 from tinyphysics import get_available_controllers, run_rollout
-from tinyphysics_core.config import CONTROL_START_IDX, DATASET_PATH, DEFAULT_MODEL_PATH, DEL_T
+from tinyphysics_core.config import CONTROL_START_IDX, DATASET_PATH, DEFAULT_MODEL_PATH, DEL_T, LAT_ACCEL_COST_MULTIPLIER
 from tinyphysics_core.report import DEFAULT_COLORS, build_report_html, save_report, save_metrics_csv
 
 sns.set_theme()
@@ -35,22 +35,12 @@ def _build_step_rows(segment: str, controller_label: str, result) -> List[Dict[s
   target = result.target_lataccel_history
   actual = result.current_lataccel_history
   actions = result.action_history
-  cost_history = getattr(result, 'cost_history', {}) or {}
-  step_indices = cost_history.get('step_idx', [])
-  lat_costs = cost_history.get('lataccel_cost', [])
-  jerk_costs = cost_history.get('jerk_cost', [])
-  total_costs = cost_history.get('total_cost', [])
-  step_cost_map: Dict[int, Dict[str, float]] = {}
-  for idx, step in enumerate(step_indices):
-    step_cost_map[step] = {
-      'lataccel_cost': lat_costs[idx] if idx < len(lat_costs) else None,
-      'jerk_cost': jerk_costs[idx] if idx < len(jerk_costs) else None,
-      'total_cost': total_costs[idx] if idx < len(total_costs) else None
-    }
   for idx in range(CONTROL_START_IDX, len(actual)):
     prev_lataccel = actual[idx - 1] if idx > 0 else actual[idx]
     jerk = (actual[idx] - prev_lataccel) / DEL_T
-    step_costs = step_cost_map.get(idx, {})
+    lataccel_loss = ((target[idx] - actual[idx]) ** 2) * 100
+    jerk_loss = (jerk ** 2) * 100
+    total_loss = (lataccel_loss * LAT_ACCEL_COST_MULTIPLIER) + jerk_loss
     rows.append({
       'row_type': 'step',
       'segment': segment,
@@ -61,9 +51,12 @@ def _build_step_rows(segment: str, controller_label: str, result) -> List[Dict[s
       'lat_error': target[idx] - actual[idx],
       'action': actions[idx] if idx < len(actions) else 0.0,
       'jerk': jerk,
-      'lataccel_cost': step_costs.get('lataccel_cost'),
-      'jerk_cost': step_costs.get('jerk_cost'),
-      'total_cost': step_costs.get('total_cost')
+      'lataccel_cost': lataccel_loss,
+      'jerk_cost': jerk_loss,
+      'total_cost': total_loss,
+      'step_lataccel_cost': lataccel_loss,
+      'step_jerk_cost': jerk_loss,
+      'step_total_cost': total_loss
     })
   return rows
 

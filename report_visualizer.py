@@ -117,7 +117,7 @@ def main(report_path: Path, data_dir: Path) -> None:
     selected_segment = previous_segment
   if selected_segment not in segments:
     selected_segment = segments[0]
-  st.session_state['selected_segment'] = selected_segment
+  # st.session_state['selected_segment'] = selected_segment
 
 
 
