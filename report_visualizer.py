@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from typing import List, Tuple
+from typing import Tuple
 
 import pandas as pd
 import streamlit as st
@@ -26,18 +26,6 @@ def load_segment_csv(segment_id: str, data_dir: Path) -> pd.DataFrame:
   return segment_df
 
 
-def _segment_step_plot(step_df: pd.DataFrame, selected_controllers: List[str], metric: str) -> pd.DataFrame:
-  filtered = step_df[step_df['controller'].isin(selected_controllers)]
-  if filtered.empty:
-    return pd.DataFrame()
-  pivot = filtered.pivot_table(index='step', columns='controller', values=metric)
-  if metric != 'desired_lataccel':
-    target_series = filtered[['step', 'desired_lataccel']].drop_duplicates('step').set_index('step')
-    pivot = pivot.join(target_series.rename(columns={'desired_lataccel': 'desired_lataccel'}), how='left')
-  pivot.sort_index(inplace=True)
-  return pivot
-
-
 def main(report_path: Path, data_dir: Path) -> None:
   st.set_page_config(page_title="Report Visualizer", layout="wide")
   st.title("Comma Controls Challenge: Report Visualizer")
@@ -49,17 +37,35 @@ def main(report_path: Path, data_dir: Path) -> None:
 
   controllers = sorted(summary_df['controller'].unique())
   segments = sorted(summary_df['segment'].unique())
+  if 'selected_segment' not in st.session_state:
+    st.session_state['selected_segment'] = segments[0]
 
   st.sidebar.header("Filters")
   selected_controllers = st.sidebar.multiselect("Controllers", controllers, default=controllers)
-  selected_segment = st.sidebar.selectbox("Segment", segments)
-  metric_options = ['controller_lataccel', 'desired_lataccel', 'lat_error', 'action', 'jerk']
-  selected_metric = st.sidebar.selectbox("Step Metric", metric_options, index=0)
   summary_metrics = st.sidebar.multiselect(
     "Summary Metrics",
     ['total_cost', 'lataccel_cost', 'jerk_cost', 'avg_pid_term_abs', 'max_action_abs', 'integrator_clamp_steps', 'clamp_relief_events'],
     default=['total_cost', 'lataccel_cost', 'jerk_cost']
   )
+
+  st.subheader("Segment Selection")
+  cost_columns = ['total_cost', 'lataccel_cost', 'jerk_cost']
+  segment_table = summary_df.pivot_table(index='segment', columns='controller', values=cost_columns)
+  segment_table.columns = [f"{controller}_{metric}" for metric, controller in segment_table.columns]
+  segment_table.reset_index(inplace=True)
+  segment_table.insert(0, 'selected', segment_table['segment'] == st.session_state['selected_segment'])
+  edited_table = st.data_editor(
+    segment_table,
+    column_config={
+      'selected': st.column_config.CheckboxColumn('Select', help="Check to view this segment")
+    },
+    hide_index=True,
+    use_container_width=True
+  )
+  selected_rows = edited_table[edited_table['selected']]
+  if not selected_rows.empty:
+    st.session_state['selected_segment'] = selected_rows.iloc[0]['segment']
+  selected_segment = st.session_state['selected_segment']
 
   st.subheader("Segment Summary")
   display_rows = summary_df[
@@ -72,13 +78,56 @@ def main(report_path: Path, data_dir: Path) -> None:
     columns = ['controller'] + summary_metrics
     st.dataframe(display_rows[columns].set_index('controller'))
 
-  st.subheader("Step-Level Metrics")
   segment_steps = step_df[step_df['segment'] == selected_segment]
-  step_plot_df = _segment_step_plot(segment_steps, selected_controllers, selected_metric)
-  if step_plot_df.empty:
-    st.info("No step data available for the selection.")
+  segment_df = load_segment_csv(selected_segment, data_dir)
+
+  st.subheader("Combined Step & Raw Metrics")
+  plot_df = pd.DataFrame()
+  if not segment_steps.empty:
+    plot_df['step'] = sorted(segment_steps['step'].unique())
+    plot_df.set_index('step', inplace=True)
+    metric_labels = {
+      'controller_lataccel': 'lataccel',
+      'lat_error': 'lat_error',
+      'action': 'action',
+      'jerk': 'jerk'
+    }
+    for metric, label in metric_labels.items():
+      pivot = segment_steps.pivot_table(index='step', columns='controller', values=metric)
+      for controller in selected_controllers:
+        if controller in pivot.columns:
+          plot_df[f"{controller} {label}"] = pivot[controller]
+    target_series = segment_steps[['step', 'desired_lataccel']].drop_duplicates('step').set_index('step')['desired_lataccel']
+    plot_df['Desired target_lataccel'] = target_series
+  if not segment_df.empty:
+    raw_df = segment_df.copy()
+    raw_df['step'] = raw_df.index
+    raw_df = raw_df.set_index('step')
+    raw_columns = {
+      'targetLateralAcceleration': 'Raw target_lataccel',
+      'steerCommand': 'Raw steer_command',
+      'vEgo': 'Raw v_ego',
+      'aEgo': 'Raw a_ego',
+      'roll': 'Raw roll'
+    }
+    for col, label in raw_columns.items():
+      if col in raw_df.columns:
+        plot_df[label] = raw_df[col]
+  if plot_df.empty:
+    st.info("No data available for combined plot.")
   else:
-    st.line_chart(step_plot_df)
+    available_series = [col for col in plot_df.columns if col != 'step']
+    default_series = [series for series in available_series if 'lataccel' in series][:4]
+    selected_series = []
+    with st.expander("Plot Series Selection", expanded=True):
+      for series in available_series:
+        checked = st.checkbox(series, value=series in default_series, key=f"plot_{series}_{selected_segment}")
+        if checked:
+          selected_series.append(series)
+    if not selected_series:
+      st.info("Select at least one series to visualize.")
+    else:
+      st.line_chart(plot_df[selected_series])
 
   st.subheader("Detailed Step Table")
   max_rows = st.slider("Rows to display", min_value=100, max_value=2000, value=500, step=100)
@@ -88,15 +137,8 @@ def main(report_path: Path, data_dir: Path) -> None:
     .head(max_rows)
   )
 
-  st.subheader("Raw Segment Data")
-  segment_df = load_segment_csv(selected_segment, data_dir)
   if segment_df.empty:
     st.info(f"No CSV found for segment {selected_segment}")
-  else:
-    cols_to_show = ['t', 'targetLateralAcceleration', 'steerCommand', 'vEgo', 'aEgo', 'roll']
-    cols_to_show = [col for col in cols_to_show if col in segment_df.columns]
-    st.line_chart(segment_df[cols_to_show].set_index('t'))
-    st.caption("Raw values loaded from the data directory.")
 
   st.sidebar.markdown("---")
   st.sidebar.write(f"report: `{report_path}`")
