@@ -89,9 +89,16 @@ class TinyPhysicsSimulator:
     self.history.append_current_lataccel(self.current_lataccel)
 
   def control_step(self, step_idx: int, target_lataccel: float, state: State, futureplan: FuturePlan) -> float:
-    if step_idx < CONTROL_START_IDX:
+    control_active = step_idx >= CONTROL_START_IDX
+    action = self.controller.update(
+      target_lataccel,
+      self.current_lataccel,
+      state,
+      future_plan=futureplan,
+      is_control_active=control_active
+    )
+    if not control_active:
       return float(self.data['steer_command'].values[step_idx])
-    action = self.controller.update(target_lataccel, self.current_lataccel, state, future_plan=futureplan)
     return float(np.clip(action, STEER_RANGE[0], STEER_RANGE[1]))
 
   def get_state_target_futureplan(self, step_idx: int) -> Tuple[State, float, FuturePlan]:

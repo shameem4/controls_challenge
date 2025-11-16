@@ -6,13 +6,14 @@ class BaseController(ABC):
   """Common interface for every feedback controller used by the simulator."""
 
   @abstractmethod
-  def update(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any) -> float:
+  def update(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any, is_control_active: bool) -> float:
     """
     Args:
       target_lataccel: Desired lateral acceleration.
       current_lataccel: Current lateral acceleration reported by the simulator.
       state: Vehicle state snapshot for the current timestep.
       future_plan: Planned trajectory (lataccel, roll_lataccel, v_ego, a_ego).
+      is_control_active: True once the controller commands are applied to the plant.
     Returns:
       Steering command to be applied to the vehicle.
     """

@@ -6,5 +6,5 @@ from . import BaseController
 class Controller(BaseController):
   """Controller that intentionally outputs zero torque regardless of inputs."""
 
-  def update(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any) -> float:
+  def update(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any, is_control_active: bool) -> float:
     return 0.0
