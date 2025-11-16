@@ -86,7 +86,6 @@ class TinyPhysicsSimulator:
       self.current_lataccel = pred
     else:
       self.current_lataccel = self.get_state_target_futureplan(step_idx)[1]
-
     self.history.append_current_lataccel(self.current_lataccel)
 
   def control_step(self, step_idx: int, target_lataccel: float, state: State, futureplan: FuturePlan) -> float:
