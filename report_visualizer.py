@@ -62,7 +62,7 @@ def main(report_path: Path, data_dir: Path) -> None:
       'selected': st.column_config.CheckboxColumn('Select', help="Check to view this segment")
     },
     hide_index=True,
-    use_container_width=True
+    width='stretch'
   )
   edited_selected = edited_table[edited_table['selected']]
   if len(edited_selected) > 1:
@@ -82,7 +82,7 @@ def main(report_path: Path, data_dir: Path) -> None:
     st.info("No summary rows for the current selection.")
   else:
     columns = ['controller'] + summary_metrics
-    st.dataframe(display_rows[columns].set_index('controller'))
+    st.dataframe(display_rows[columns].set_index('controller'), width='stretch')
 
   segment_steps = step_df[step_df['segment'] == selected_segment]
   segment_df = load_segment_csv(selected_segment, data_dir)
@@ -178,7 +178,7 @@ def main(report_path: Path, data_dir: Path) -> None:
       else:
         fig.update_yaxes(title_text="Velocity", secondary_y=True)
       fig.update_layout(legend=dict(orientation='h'))
-      st.plotly_chart(fig, use_container_width=True)
+      st.plotly_chart(fig, width='stretch')
 
   st.subheader("Detailed Step Table")
   max_rows = st.slider("Rows to display", min_value=100, max_value=2000, value=500, step=100)
@@ -186,7 +186,7 @@ def main(report_path: Path, data_dir: Path) -> None:
     segment_steps[segment_steps['controller'].isin(selected_controllers)]
     .sort_values(['controller', 'step'])
     .head(max_rows)
-  )
+  , width='stretch')
 
   if segment_df.empty:
     st.info(f"No CSV found for segment {selected_segment}")
