@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Tuple, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -158,9 +158,24 @@ class TinyPhysicsSimulator:
       cost=self.compute_cost(),
       target_lataccel_history=list(self.target_lataccel_history),
       current_lataccel_history=list(self.current_lataccel_history),
-      diagnostics=self.controller.get_diagnostics()
+      diagnostics=self.controller.get_diagnostics(),
+      state_stats=self._compute_state_stats()
     )
 
   @property
   def total_steps(self) -> int:
     return len(self.data)
+
+  def _compute_state_stats(self) -> Dict[str, float]:
+    states = self.state_history
+    v_ego = np.array([s.v_ego for s in states])
+    a_ego = np.array([s.a_ego for s in states])
+    roll_lataccel = np.array([s.roll_lataccel for s in states])
+    target_lataccel = np.array(self.target_lataccel_history)
+    return {
+      'avg_v_ego': float(np.mean(v_ego)),
+      'max_v_ego': float(np.max(v_ego)),
+      'avg_abs_roll_lataccel': float(np.mean(np.abs(roll_lataccel))),
+      'avg_abs_target_lataccel': float(np.mean(np.abs(target_lataccel))),
+      'avg_abs_a_ego': float(np.mean(np.abs(a_ego)))
+    }

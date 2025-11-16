@@ -10,7 +10,7 @@ from tqdm.contrib.concurrent import process_map
 
 from tinyphysics import get_available_controllers, run_rollout
 from tinyphysics_core.config import DATASET_PATH, DEFAULT_MODEL_PATH
-from tinyphysics_core.report import DEFAULT_COLORS, build_report_html, save_report, save_costs_csv, save_diagnostics_csv
+from tinyphysics_core.report import DEFAULT_COLORS, build_report_html, save_report, save_metrics_csv
 
 sns.set_theme()
 SAMPLE_ROLLOUTS = 5
@@ -31,8 +31,7 @@ if __name__ == "__main__":
   data_path = Path(args.data_path)
   assert data_path.is_dir(), "data_path should be a directory"
 
-  costs = []
-  diagnostics = []
+  combined_rows = []
   sample_rollouts = []
   files = sorted(data_path.iterdir())[:args.num_segs]
   print("Running rollouts for visualizations...")
@@ -48,10 +47,8 @@ if __name__ == "__main__":
       'baseline_controller_lataccel': baseline_result.current_lataccel_history,
     })
 
-    costs.append({'segment': data_file.stem, 'controller': 'test', **test_result.cost})
-    costs.append({'segment': data_file.stem, 'controller': 'baseline', **baseline_result.cost})
-    diagnostics.append({'segment': data_file.stem, 'controller': 'test', **test_result.diagnostics})
-    diagnostics.append({'segment': data_file.stem, 'controller': 'baseline', **baseline_result.diagnostics})
+    combined_rows.append({'segment': data_file.stem, 'controller': 'test', **test_result.cost, **test_result.diagnostics, **test_result.state_stats})
+    combined_rows.append({'segment': data_file.stem, 'controller': 'baseline', **baseline_result.cost, **baseline_result.diagnostics, **baseline_result.state_stats})
 
   for controller_cat, controller_type in [('baseline', args.baseline_controller), ('test', args.test_controller)]:
     print(f"Running batch rollouts => {controller_cat} controller: {controller_type}")
@@ -59,22 +56,20 @@ if __name__ == "__main__":
     segment_files = files[SAMPLE_ROLLOUTS:]
     results = process_map(rollout_partial, segment_files, max_workers=16, chunksize=10)
     for seg, result in zip(segment_files, results):
-      costs.append({'segment': seg.stem, 'controller': controller_cat, **result.cost})
-      diagnostics.append({'segment': seg.stem, 'controller': controller_cat, **result.diagnostics})
+      combined_rows.append({'segment': seg.stem, 'controller': controller_cat, **result.cost, **result.diagnostics, **result.state_stats})
 
   report_html = build_report_html(
     args.test_controller,
     args.baseline_controller,
     sample_rollouts,
-    costs,
+    combined_rows,
     len(files),
     colors=COLORS,
     expected_sample_plots=SAMPLE_ROLLOUTS
   )
   save_report(report_html)
-  save_costs_csv(costs)
-  save_diagnostics_csv(diagnostics)
-  costs_df = pd.DataFrame(costs)
+  save_metrics_csv(combined_rows)
+  costs_df = pd.DataFrame(combined_rows)
   print("\nCost Summary by controller:")
   print(costs_df.groupby('controller')['total_cost'].describe())
   for controller in costs_df['controller'].unique():

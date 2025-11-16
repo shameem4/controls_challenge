@@ -41,11 +41,15 @@ class Controller(BaseController):
   adaptive_learning_rate: float = 0.01
   prediction_threshold: float = 0.05
   integrator_freeze_threshold: float = 0.15
+  jerk_threshold: float = 5.0
   integrator: float = field(default=0.0, init=False)
   prev_error: float = field(default=0.0, init=False)
   last_feedforward_err: float = field(default=0.0, init=False)
   last_feedforward_term: float = field(default=0.0, init=False)
   _feedforward_saturated: bool = field(default=False, init=False)
+  last_lataccel: float = field(default=0.0, init=False)
+  integrator_clamp_hits: int = field(default=0, init=False)
+  integrator_freeze_steps: int = field(default=0, init=False)
 
   def reset(self) -> None:
     self.integrator = 0.0
@@ -53,17 +57,26 @@ class Controller(BaseController):
     self.last_feedforward_err = 0.0
     self.last_feedforward_term = 0.0
     self._feedforward_saturated = False
+    self.last_lataccel = 0.0
+    self.integrator_clamp_hits = 0
+    self.integrator_freeze_steps = 0
 
   def _blend_future_targets(self, current_target: float, future_plan: Any) -> float:
     future_targets = future_plan.lataccel if future_plan else []
     blended = _weighted_average([current_target] + future_targets, self.future_weights)
     return blended if blended else current_target
 
-  def _pid(self, target_lataccel: float, current_lataccel: float, longitudinal_accel: float, control_state: ControlState) -> float:
+  def _pid(self, target_lataccel: float, current_lataccel: float, longitudinal_accel: float, freeze_integrator: bool) -> float:
     error = target_lataccel - current_lataccel
-    if not (self._feedforward_saturated and abs(error) < self.integrator_freeze_threshold):
+    if freeze_integrator:
+      self.integrator *= 0.9
+      self.integrator_freeze_steps += 1
+    else:
       self.integrator += error
-    self.integrator = float(np.clip(self.integrator, -8.0, 8.0))
+    prev_integrator = self.integrator
+    self.integrator = float(np.clip(self.integrator, -4.0, 4.0))
+    if self.integrator != prev_integrator:
+      self.integrator_clamp_hits += 1
     error_diff = error - self.prev_error
     self.prev_error = error
 
@@ -119,7 +132,11 @@ class Controller(BaseController):
 
     self._update_adaptive_terms(control_state, target_lataccel, current_lataccel)
 
-    pid_term = self._pid(target_lataccel, current_lataccel, state.a_ego, control_state)
+    jerk = abs(current_lataccel - self.last_lataccel)
+    self.last_lataccel = current_lataccel
+    freeze_integrator = jerk > self.jerk_threshold or (self._feedforward_saturated and abs(target_lataccel - current_lataccel) < self.integrator_freeze_threshold)
+
+    pid_term = self._pid(target_lataccel, current_lataccel, state.a_ego, freeze_integrator)
     feedforward_term = self._feedforward(target_lataccel, state)
     return pid_term + feedforward_term
 
@@ -129,5 +146,7 @@ class Controller(BaseController):
       'integrator': self.integrator,
       'last_feedforward_err': self.last_feedforward_err,
       'last_feedforward_term': self.last_feedforward_term,
-      'feedforward_saturated': float(self._feedforward_saturated)
+      'feedforward_saturated': float(self._feedforward_saturated),
+      'integrator_clamp_hits': float(self.integrator_clamp_hits),
+      'integrator_freeze_steps': float(self.integrator_freeze_steps)
     }

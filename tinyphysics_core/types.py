@@ -62,6 +62,7 @@ class RolloutResult:
   target_lataccel_history: List[float]
   current_lataccel_history: List[float]
   diagnostics: Dict[str, float]
+  state_stats: Dict[str, float]
 
   def as_tuple(self):
     return self.cost, self.target_lataccel_history, self.current_lataccel_history
