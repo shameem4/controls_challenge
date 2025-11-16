@@ -38,8 +38,9 @@ def plot_cost_distributions(costs_df: pd.DataFrame, colors: Dict[str, str]) -> s
   return encoded
 
 
-def plot_sample_rollouts(sample_rollouts: List[Dict], colors: Dict[str, str]) -> str:
-  rows = max(1, len(sample_rollouts))
+def plot_sample_rollouts(sample_rollouts: List[Dict], colors: Dict[str, str], expected_rows: int | None = None) -> str:
+  rows = expected_rows if expected_rows is not None else len(sample_rollouts)
+  rows = max(1, rows)
   fig, axs = plt.subplots(ncols=1, nrows=rows, figsize=(15, 3 * rows), sharex=True)
   if rows == 1:
     axs = [axs]
@@ -52,13 +53,15 @@ def plot_sample_rollouts(sample_rollouts: List[Dict], colors: Dict[str, str]) ->
     ax.set_title(f"Segment: {rollout['seg']}")
     ax.axline((CONTROL_START_IDX, 0), (CONTROL_START_IDX, 1), color='black', linestyle='--', alpha=0.5, label='Control Start')
     ax.legend()
+  for ax in axs[len(sample_rollouts):]:
+    ax.set_visible(False)
   fig.tight_layout()
   encoded = _img2base64(fig)
   plt.close(fig)
   return encoded
 
 
-def build_report_html(test: str, baseline: str, sample_rollouts: List[Dict], costs: List[Dict], num_segs: int, colors: Dict[str, str] | None = None) -> str:
+def build_report_html(test: str, baseline: str, sample_rollouts: List[Dict], costs: List[Dict], num_segs: int, colors: Dict[str, str] | None = None, expected_sample_plots: int | None = None) -> str:
   if not costs:
     raise ValueError("No cost entries available to render the report.")
   colors = {**DEFAULT_COLORS, **(colors or {})}
@@ -107,7 +110,7 @@ def build_report_html(test: str, baseline: str, sample_rollouts: List[Dict], cos
 
   res.append("<hr style='border: #ddd 1px solid; width: 80%'>")
   res.append("<h2  style='font-size: 30px; margin-top: 50px'>Sample Rollouts</h2>")
-  rollout_plot = plot_sample_rollouts(sample_rollouts, colors)
+  rollout_plot = plot_sample_rollouts(sample_rollouts, colors, expected_rows=expected_sample_plots)
   res.append(f'<img style="max-width:100%" src="data:image/png;base64,{rollout_plot}" alt="Plot">')
   res.append("</body></html>")
   return "\n".join(res)

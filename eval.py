@@ -55,6 +55,14 @@ if __name__ == "__main__":
     results = process_map(rollout_partial, files[SAMPLE_ROLLOUTS:], max_workers=16, chunksize=10)
     costs += [{'controller': controller_cat, **result[0]} for result in results]
 
-  report_html = build_report_html(args.test_controller, args.baseline_controller, sample_rollouts, costs, len(files), colors=COLORS)
+  report_html = build_report_html(
+    args.test_controller,
+    args.baseline_controller,
+    sample_rollouts,
+    costs,
+    len(files),
+    colors=COLORS,
+    expected_sample_plots=SAMPLE_ROLLOUTS
+  )
   save_report(report_html)
   print("Report saved to: './report.html'")
