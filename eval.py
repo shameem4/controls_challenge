@@ -12,7 +12,8 @@ from pathlib import Path
 from tqdm import tqdm
 from tqdm.contrib.concurrent import process_map
 
-from tinyphysics import CONTROL_START_IDX, get_available_controllers, run_rollout
+from tinyphysics import get_available_controllers, run_rollout
+from tinyphysics_core.config import CONTROL_START_IDX, DATASET_PATH, DEFAULT_MODEL_PATH
 
 sns.set_theme()
 SAMPLE_ROLLOUTS = 5
@@ -101,8 +102,8 @@ def create_report(test, baseline, sample_rollouts, costs, num_segs):
 if __name__ == "__main__":
   available_controllers = get_available_controllers()
   parser = argparse.ArgumentParser()
-  parser.add_argument("--model_path", type=str, required=True)
-  parser.add_argument("--data_path", type=str, required=True)
+  parser.add_argument("--model_path", type=str, default=str(DEFAULT_MODEL_PATH))
+  parser.add_argument("--data_path", type=str, default=str(DATASET_PATH))
   parser.add_argument("--num_segs", type=int, default=100)
   parser.add_argument("--test_controller", default='pid', choices=available_controllers)
   parser.add_argument("--baseline_controller", default='pid', choices=available_controllers)

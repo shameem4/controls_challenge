@@ -1,12 +1,22 @@
-class BaseController:
-  def update(self, target_lataccel, current_lataccel, state, future_plan):
+from abc import ABC, abstractmethod
+from typing import Any
+
+
+class BaseController(ABC):
+  """Common interface for every feedback controller used by the simulator."""
+
+  @abstractmethod
+  def update(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any) -> float:
     """
     Args:
-      target_lataccel: The target lateral acceleration.
-      current_lataccel: The current lateral acceleration.
-      state: The current state of the vehicle.
-      future_plan: The future plan for the next N frames.
+      target_lataccel: Desired lateral acceleration.
+      current_lataccel: Current lateral acceleration reported by the simulator.
+      state: Vehicle state snapshot for the current timestep.
+      future_plan: Planned trajectory (lataccel, roll_lataccel, v_ego, a_ego).
     Returns:
-      The control signal to be applied to the vehicle.
+      Steering command to be applied to the vehicle.
     """
-    raise NotImplementedError
+
+  def reset(self) -> None:
+    """Optional hook for controllers keeping internal state (integrators, etc.)."""
+    return None
