@@ -4,7 +4,7 @@ from typing import Tuple, Union
 import numpy as np
 import pandas as pd
 
-from controllers import BaseController
+from controllers import BaseController, ControlPhase, ControlState
 from .config import (
   ACC_G,
   CONTROL_START_IDX,
@@ -31,6 +31,7 @@ class TinyPhysicsSimulator:
     self.data = self.get_data(self.data_path)
     self.history: SimulationHistories
     self.current_lataccel: float = 0.0
+    self._control_phase = ControlPhase.WARMUP
     self.reset()
 
   @property
@@ -57,6 +58,7 @@ class TinyPhysicsSimulator:
     self.current_lataccel = self.current_lataccel_history[-1]
     self._seed_random()
     self.controller.reset()
+    self._control_phase = ControlPhase.WARMUP
 
   def _seed_random(self) -> None:
     seed = compute_segment_seed(self.data, identifier=self.data_path.name)
@@ -89,16 +91,24 @@ class TinyPhysicsSimulator:
     self.history.append_current_lataccel(self.current_lataccel)
 
   def control_step(self, step_idx: int, target_lataccel: float, state: State, futureplan: FuturePlan) -> float:
-    control_active = step_idx >= CONTROL_START_IDX
+    new_phase = ControlPhase.ACTIVE if step_idx >= CONTROL_START_IDX else ControlPhase.WARMUP
+    forced_action = float(self.data['steer_command'].values[step_idx]) if new_phase is ControlPhase.WARMUP else None
+    control_state = ControlState(
+      phase=new_phase,
+      previous_phase=self._control_phase,
+      step_idx=step_idx,
+      forced_action=forced_action
+    )
+    self._control_phase = new_phase
     action = self.controller.update(
       target_lataccel,
       self.current_lataccel,
       state,
       future_plan=futureplan,
-      is_control_active=control_active
+      control_state=control_state
     )
-    if not control_active:
-      return float(self.data['steer_command'].values[step_idx])
+    if new_phase is ControlPhase.WARMUP:
+      return forced_action if forced_action is not None else 0.0
     return float(np.clip(action, STEER_RANGE[0], STEER_RANGE[1]))
 
   def get_state_target_futureplan(self, step_idx: int) -> Tuple[State, float, FuturePlan]:

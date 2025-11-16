@@ -59,7 +59,9 @@ def plot_sample_rollouts(sample_rollouts: List[Dict], colors: Dict[str, str]) ->
 
 
 def build_report_html(test: str, baseline: str, sample_rollouts: List[Dict], costs: List[Dict], num_segs: int, colors: Dict[str, str] | None = None) -> str:
-  colors = colors or DEFAULT_COLORS
+  if not costs:
+    raise ValueError("No cost entries available to render the report.")
+  colors = {**DEFAULT_COLORS, **(colors or {})}
   res = []
   res.append("""
   <html>
@@ -87,7 +89,12 @@ def build_report_html(test: str, baseline: str, sample_rollouts: List[Dict], cos
   agg_df = res_df.groupby('controller').agg({'lataccel_cost': 'mean', 'jerk_cost': 'mean', 'total_cost': 'mean'}).round(3).reset_index()
   res.append(agg_df.to_html(index=False))
 
-  passed_baseline = agg_df[agg_df['controller'] == 'test']['total_cost'].values[0] < agg_df[agg_df['controller'] == 'baseline']['total_cost'].values[0]
+  try:
+    test_total = agg_df.loc[agg_df['controller'] == 'test', 'total_cost'].iloc[0]
+    baseline_total = agg_df.loc[agg_df['controller'] == 'baseline', 'total_cost'].iloc[0]
+  except IndexError as err:
+    raise ValueError("Costs must include both 'test' and 'baseline' entries to build the report.") from err
+  passed_baseline = test_total < baseline_total
   if passed_baseline:
     res.append(f"<h3 style='font-size: 20px; color: #27ae60'> ✅ Test Controller ({test}) passed Baseline Controller ({baseline})! ✅ </h3>")
     res.append("""<p>Check the leaderboard
