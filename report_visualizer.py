@@ -52,6 +52,8 @@ def main(report_path: Path, data_dir: Path) -> None:
   if not segments:
     st.warning("No segments available in report.csv")
     return
+  if 'selected_segment' not in st.session_state or st.session_state['selected_segment'] not in segments:
+    st.session_state['selected_segment'] = segments[0]
 
   st.sidebar.header("Filters")
   selected_controllers = st.sidebar.multiselect("Controllers", controllers, default=controllers)
@@ -64,22 +66,27 @@ def main(report_path: Path, data_dir: Path) -> None:
     default=['total_cost', 'lataccel_cost', 'jerk_cost']
   )
 
-  st.subheader("Segment Selection")
+  # st.subheader("Segment Selection")
   cost_columns = ['total_cost']
   segment_table = summary_df.pivot_table(index='segment', columns='controller', values=cost_columns)
   segment_table.columns = [f"{controller}_{metric}" for metric, controller in segment_table.columns]
   segment_table.reset_index(inplace=True)
+  previous_segment = st.session_state['selected_segment']
+  default_idx = segment_table.index[segment_table['segment'] == previous_segment].tolist()
+  if not default_idx:
+    default_idx = [0]
   builder = GridOptionsBuilder.from_dataframe(segment_table)
-  builder.configure_selection('single', use_checkbox=False)
+  builder.configure_selection('single', use_checkbox=False, pre_selected_rows=default_idx[:1])
   builder.configure_default_column(sortable=True, filter=True)
   grid_options = builder.build()
   grid_response = AgGrid(
     segment_table,
     gridOptions=grid_options,
     height=120,
+    width='100%',
     update_mode=GridUpdateMode.SELECTION_CHANGED,
     theme='streamlit',
-    fit_columns_on_grid_load=True
+    # fit_columns_on_grid_load=True
   )
   selected_rows = grid_response.get('selected_rows')
   if isinstance(selected_rows, pd.DataFrame):
@@ -87,16 +94,19 @@ def main(report_path: Path, data_dir: Path) -> None:
   elif selected_rows is None:
     selected_rows = []
   if selected_rows:
-    selected_segment = selected_rows[0].get('segment', segments[0])
+    selected_segment = selected_rows[0].get('segment', previous_segment)
   else:
+    selected_segment = previous_segment
+  if selected_segment not in segments:
     selected_segment = segments[0]
+  st.session_state['selected_segment'] = selected_segment
 
 
 
   segment_steps = step_df[step_df['segment'] == selected_segment]
   segment_df = load_segment_csv(selected_segment, data_dir)
 
-  st.subheader("Combined Step & Raw Metrics")
+  # st.subheader("Combined Step & Raw Metrics")
   plot_df = pd.DataFrame()
   if not segment_steps.empty:
     plot_df['step'] = sorted(segment_steps['step'].unique())
@@ -145,24 +155,23 @@ def main(report_path: Path, data_dir: Path) -> None:
       st.session_state['series_colors'] = {}
     selected_series = []
     color_map: Dict[str, str] = {}
-    with st.expander("Plot Series Selection", expanded=True):
-      selection_area = st.container(height=220)
-      column_wrappers = selection_area.columns(3)
-      for idx, series in enumerate(available_series):
-        if series not in st.session_state['series_colors']:
-          used_colors = set(st.session_state['series_colors'].values())
-          available_color = next((c for c in COLOR_PALETTE if c not in used_colors), COLOR_PALETTE[len(used_colors) % len(COLOR_PALETTE)])
-          st.session_state['series_colors'][series] = available_color
-        color_map[series] = st.session_state['series_colors'][series]
-        color_box = f"<span style='display:inline-block;width:12px;height:12px;background:{color_map[series]};border-radius:2px;'></span>"
-        col_wrapper = column_wrappers[idx % 3]
-        check_col, label_col = col_wrapper.columns([0.25, 0.75])
-        checkbox_key = f"plot_series_{series}"
-        checked = check_col.checkbox(" ", value=st.session_state['series_selection'][series], key=checkbox_key, label_visibility='hidden')
-        st.session_state['series_selection'][series] = checked
-        label_col.markdown(f"<span style='display:flex;align-items:center;gap:8px'>{color_box}<span>{series}</span></span>", unsafe_allow_html=True)
-        if checked:
-          selected_series.append(series)
+    selection_area = st.container(height=160)
+    column_wrappers = selection_area.columns(3)
+    for idx, series in enumerate(available_series):
+      if series not in st.session_state['series_colors']:
+        used_colors = set(st.session_state['series_colors'].values())
+        available_color = next((c for c in COLOR_PALETTE if c not in used_colors), COLOR_PALETTE[len(used_colors) % len(COLOR_PALETTE)])
+        st.session_state['series_colors'][series] = available_color
+      color_map[series] = st.session_state['series_colors'][series]
+      color_box = f"<span style='display:inline-block;width:12px;height:12px;background:{color_map[series]};border-radius:2px;'></span>"
+      col_wrapper = column_wrappers[idx % 3]
+      check_col, label_col = col_wrapper.columns([0.25, 0.75])
+      checkbox_key = f"plot_series_{series}"
+      checked = check_col.checkbox(" ", value=st.session_state['series_selection'][series], key=checkbox_key, label_visibility='hidden')
+      st.session_state['series_selection'][series] = checked
+      label_col.markdown(f"<span style='display:flex;align-items:center;gap:8px'>{color_box}<span>{series}</span></span>", unsafe_allow_html=True)
+      if checked:
+        selected_series.append(series)
     if not selected_series:
       st.info("Select at least one series to visualize.")
     else:
