@@ -61,6 +61,7 @@ class RolloutResult:
   cost: Dict[str, float]
   target_lataccel_history: List[float]
   current_lataccel_history: List[float]
+  action_history: List[float]
   diagnostics: Dict[str, float]
   state_stats: Dict[str, float]
 

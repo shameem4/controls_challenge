@@ -4,6 +4,7 @@ from typing import Any, Dict, List
 import numpy as np
 
 from . import BaseController, ControlState
+from tinyphysics_core.config import DEL_T, LAT_ACCEL_COST_MULTIPLIER
 
 
 def _weighted_average(samples: List[float], weights: List[float]) -> float:
@@ -28,9 +29,9 @@ class Controller(BaseController):
   longitudinal_gain_scale: float = 12.0
   minimum_velocity: float = 1.0
   steer_command_sat: float = 2.0
-  base_feedforward_gain: float = 0.9
-  nominal_feedforward_gain: float = 0.9
-  feedforward_leak: float = 0.05
+  base_feedforward_gain: float = 1.0
+  nominal_feedforward_gain: float = 1.0
+  feedforward_leak: float = 0.1
   speed_gain_schedule: Dict[float, float] = field(default_factory=lambda: {
     0: 12.0,
     10: 13.0,
@@ -38,10 +39,19 @@ class Controller(BaseController):
     30: 15.0,
     40: 16.5
   })
-  adaptive_learning_rate: float = 0.01
+  adaptive_learning_rate: float = 0.04
   prediction_threshold: float = 0.05
   integrator_freeze_threshold: float = 0.15
-  jerk_threshold: float = 5.0
+  jerk_threshold: float = 40.0
+  integrator_clamp_limit: float = 4.0
+  freeze_decay: float = 0.9
+  jerk_decay_factor: float = 0.5
+  saturation_decay: float = 0.85
+  clamp_relief_error_threshold: float = 0.25
+  clamp_relief_steps: int = 8
+  clamp_relief_rate: float = 0.4
+  mismatch_relief_rate: float = 0.15
+  mismatch_feedforward_scale: float = 0.6
   integrator: float = field(default=0.0, init=False)
   prev_error: float = field(default=0.0, init=False)
   last_feedforward_err: float = field(default=0.0, init=False)
@@ -50,6 +60,14 @@ class Controller(BaseController):
   last_lataccel: float = field(default=0.0, init=False)
   integrator_clamp_hits: int = field(default=0, init=False)
   integrator_freeze_steps: int = field(default=0, init=False)
+  integrator_clamp_steps: int = field(default=0, init=False)
+  pid_abs_sum: float = field(default=0.0, init=False)
+  max_action_abs: float = field(default=0.0, init=False)
+  lataccel_error_sum: float = field(default=0.0, init=False)
+  jerk_error_sum: float = field(default=0.0, init=False)
+  control_steps: int = field(default=0, init=False)
+  _clamp_error_steps: int = field(default=0, init=False)
+  clamp_relief_events: int = field(default=0, init=False)
 
   def reset(self) -> None:
     self.integrator = 0.0
@@ -60,6 +78,15 @@ class Controller(BaseController):
     self.last_lataccel = 0.0
     self.integrator_clamp_hits = 0
     self.integrator_freeze_steps = 0
+    self.integrator_clamp_steps = 0
+    self.pid_abs_sum = 0.0
+    self.max_action_abs = 0.0
+    self.lataccel_error_sum = 0.0
+    self.jerk_error_sum = 0.0
+    self.control_steps = 0
+    self.base_feedforward_gain = self.nominal_feedforward_gain
+    self._clamp_error_steps = 0
+    self.clamp_relief_events = 0
 
   def _blend_future_targets(self, current_target: float, future_plan: Any) -> float:
     future_targets = future_plan.lataccel if future_plan else []
@@ -69,14 +96,18 @@ class Controller(BaseController):
   def _pid(self, target_lataccel: float, current_lataccel: float, longitudinal_accel: float, freeze_integrator: bool) -> float:
     error = target_lataccel - current_lataccel
     if freeze_integrator:
-      self.integrator *= 0.9
+      self.integrator *= self.freeze_decay
       self.integrator_freeze_steps += 1
     else:
       self.integrator += error
     prev_integrator = self.integrator
-    self.integrator = float(np.clip(self.integrator, -4.0, 4.0))
-    if self.integrator != prev_integrator:
+    was_clamped = abs(prev_integrator) > self.integrator_clamp_limit
+    clipped = float(np.clip(self.integrator, -self.integrator_clamp_limit, self.integrator_clamp_limit))
+    if was_clamped:
       self.integrator_clamp_hits += 1
+      self.integrator_clamp_steps += 1
+      clipped *= self.saturation_decay
+    self.integrator = clipped
     error_diff = error - self.prev_error
     self.prev_error = error
 
@@ -112,6 +143,25 @@ class Controller(BaseController):
     self.last_feedforward_term = term
     return term
 
+  def _apply_recovery_controls(self, error: float, pid_term: float, feedforward_term: float) -> float:
+    near_clamp = abs(self.integrator) >= self.integrator_clamp_limit * 0.9
+    if near_clamp and abs(error) > self.clamp_relief_error_threshold:
+      self._clamp_error_steps += 1
+    else:
+      self._clamp_error_steps = max(0, self._clamp_error_steps - 1)
+    if self._clamp_error_steps >= self.clamp_relief_steps:
+      self.base_feedforward_gain += (self.nominal_feedforward_gain - self.base_feedforward_gain) * self.clamp_relief_rate
+      self.integrator *= self.freeze_decay
+      self.clamp_relief_events += 1
+      self._clamp_error_steps = 0
+    action = pid_term + feedforward_term
+    mismatch = (error * action) < 0 and abs(error) > self.clamp_relief_error_threshold
+    if mismatch:
+      feedforward_term *= self.mismatch_feedforward_scale
+      self.base_feedforward_gain += (self.nominal_feedforward_gain - self.base_feedforward_gain) * self.mismatch_relief_rate
+    self.base_feedforward_gain = float(np.clip(self.base_feedforward_gain, 0.7, 1.2))
+    return feedforward_term
+
   def _update_adaptive_terms(self, control_state: ControlState, target_lataccel: float, current_lataccel: float) -> None:
     prediction = control_state.history.latest('predicted_lataccel')
     if prediction is None:
@@ -132,15 +182,34 @@ class Controller(BaseController):
 
     self._update_adaptive_terms(control_state, target_lataccel, current_lataccel)
 
-    jerk = abs(current_lataccel - self.last_lataccel)
-    self.last_lataccel = current_lataccel
-    freeze_integrator = jerk > self.jerk_threshold or (self._feedforward_saturated and abs(target_lataccel - current_lataccel) < self.integrator_freeze_threshold)
+    jerk = abs(current_lataccel - self.last_lataccel) / DEL_T if self.control_steps > 0 else 0.0
+    jerk_spike = jerk > self.jerk_threshold
+    if jerk_spike:
+      self.integrator *= self.jerk_decay_factor
+    freeze_integrator = jerk_spike or (self._feedforward_saturated and abs(target_lataccel - current_lataccel) < self.integrator_freeze_threshold)
 
     pid_term = self._pid(target_lataccel, current_lataccel, state.a_ego, freeze_integrator)
     feedforward_term = self._feedforward(target_lataccel, state)
-    return pid_term + feedforward_term
+    error = target_lataccel - current_lataccel
+    feedforward_term = self._apply_recovery_controls(error, pid_term, feedforward_term)
+    action = pid_term + feedforward_term
+
+    self.control_steps += 1
+    self.pid_abs_sum += abs(pid_term)
+    self.max_action_abs = max(self.max_action_abs, abs(action))
+    error = target_lataccel - current_lataccel
+    self.lataccel_error_sum += error**2
+    if self.control_steps > 1:
+      self.jerk_error_sum += jerk**2
+    self.last_lataccel = current_lataccel
+    return action
 
   def get_diagnostics(self) -> Dict[str, float]:
+    avg_pid_term = self.pid_abs_sum / self.control_steps if self.control_steps else 0.0
+    lataccel_cost = (self.lataccel_error_sum / max(1, self.control_steps)) * 100.0
+    jerk_denominator = max(1, self.control_steps - 1)
+    jerk_cost = (self.jerk_error_sum / jerk_denominator) * 100.0
+    total_cost = lataccel_cost * LAT_ACCEL_COST_MULTIPLIER + jerk_cost
     return {
       'base_feedforward_gain': self.base_feedforward_gain,
       'integrator': self.integrator,
@@ -148,5 +217,12 @@ class Controller(BaseController):
       'last_feedforward_term': self.last_feedforward_term,
       'feedforward_saturated': float(self._feedforward_saturated),
       'integrator_clamp_hits': float(self.integrator_clamp_hits),
-      'integrator_freeze_steps': float(self.integrator_freeze_steps)
+      'integrator_freeze_steps': float(self.integrator_freeze_steps),
+      'integrator_clamp_steps': float(self.integrator_clamp_steps),
+      'avg_pid_term_abs': avg_pid_term,
+      'max_action_abs': self.max_action_abs,
+      'lataccel_cost_estimate': lataccel_cost,
+      'jerk_cost_estimate': jerk_cost,
+      'total_cost_estimate': total_cost,
+      'clamp_relief_events': float(self.clamp_relief_events)
     }

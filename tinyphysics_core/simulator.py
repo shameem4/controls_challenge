@@ -158,6 +158,7 @@ class TinyPhysicsSimulator:
       cost=self.compute_cost(),
       target_lataccel_history=list(self.target_lataccel_history),
       current_lataccel_history=list(self.current_lataccel_history),
+      action_history=list(self.action_history),
       diagnostics=self.controller.get_diagnostics(),
       state_stats=self._compute_state_stats()
     )
