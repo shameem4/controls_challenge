@@ -25,6 +25,11 @@ class Controller(BaseController):
   steer_sat_v: float = 20.0
   steer_command_sat: float = 2.0
   feedforward_gain: float = 0.8
+  future_weights: List[float] = field(default_factory=lambda: [5, 6, 7, 8])
+  pid_target_scale_threshold: float = 1.0
+  pid_target_scale_rate: float = 0.23
+  longitudinal_gain_scale: float = 10.0
+  minimum_velocity: float = 1.0
   integrator: float = field(default=0.0, init=False)
   prev_error: float = field(default=0.0, init=False)
   control_steps: int = field(default=0, init=False)
@@ -36,8 +41,7 @@ class Controller(BaseController):
 
   def _blend_future_targets(self, current_target: float, future_plan: Any) -> float:
     future_targets = future_plan.lataccel if future_plan else []
-    weights = [5, 6, 7, 8]
-    blended = _weighted_average([current_target] + future_targets, weights)
+    blended = _weighted_average([current_target] + future_targets, self.future_weights)
     return blended if blended else current_target
 
   def _pid(self, target_lataccel: float, current_lataccel: float, longitudinal_accel: float) -> float:
@@ -46,13 +50,13 @@ class Controller(BaseController):
     error_diff = error - self.prev_error
     self.prev_error = error
 
-    pid_factor = min(1.0, 1.0 - max(0.0, abs(target_lataccel) - 1.0) * 0.23)
-    proportional_gain = self.p - abs(longitudinal_accel) / 10.0
+    pid_factor = min(1.0, 1.0 - max(0.0, abs(target_lataccel) - self.pid_target_scale_threshold) * self.pid_target_scale_rate)
+    proportional_gain = self.p - abs(longitudinal_accel) / self.longitudinal_gain_scale
     return (proportional_gain * error + self.i * self.integrator + self.d * error_diff) * pid_factor
 
   def _feedforward(self, target_lataccel: float, state: Any) -> float:
     steer_accel_target = target_lataccel - state.roll_lataccel
-    denom = max(self.steer_sat_v, max(1.0, state.v_ego))
+    denom = max(self.steer_sat_v, max(self.minimum_velocity, state.v_ego))
     steer_command = (steer_accel_target * self.steer_factor) / denom
     steer_command = 2 * self.steer_command_sat / (1 + np.exp(-steer_command)) - self.steer_command_sat
     return self.feedforward_gain * steer_command
