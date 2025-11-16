@@ -37,6 +37,8 @@ def _get_or_create_model(model_path: Union[str, Path], debug: bool) -> TinyPhysi
   key = (str(Path(model_path).resolve()), debug)
   if key not in _MODEL_CACHE:
     _MODEL_CACHE[key] = TinyPhysicsModel(str(model_path), debug=debug)
+  else:
+    _MODEL_CACHE[key].reset()
   return _MODEL_CACHE[key]
 
 
@@ -49,9 +51,12 @@ def get_available_controllers() -> List[str]:
 def run_rollout(data_path: Union[str, Path], controller_type: str, model_path: Union[str, Path], debug: bool = False):
   model = _get_or_create_model(model_path, debug=debug)
   controller = importlib.import_module(f'controllers.{controller_type}').Controller()
+  controller.reset()
   simulator = TinyPhysicsSimulator(model, str(data_path), controller=controller)
   runner = RolloutRunner(simulator, debug=debug)
-  return runner.run().as_tuple()
+  result = runner.run().as_tuple()
+  controller.reset()
+  return result
 
 
 def download_dataset() -> None:

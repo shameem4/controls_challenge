@@ -42,6 +42,10 @@ class BasePhysicsModel(ABC):
     """Optional hook to seed internal RNG state."""
     return None
 
+  def reset(self) -> None:
+    """Optional hook to reset internal state between runs."""
+    return None
+
 
 class TinyPhysicsModel(BasePhysicsModel):
   """Wrapper around the ONNX-based simulator that predicts lateral acceleration."""
@@ -61,6 +65,9 @@ class TinyPhysicsModel(BasePhysicsModel):
 
   def seed(self, seed: int) -> None:
     self._rng = np.random.default_rng(seed)
+
+  def reset(self) -> None:
+    self._rng = np.random.default_rng()
 
   def _softmax(self, x, axis=-1):
     e_x = np.exp(x - np.max(x, axis=axis, keepdims=True))

@@ -29,6 +29,7 @@ class Controller(BaseController):
   minimum_velocity: float = 1.0
   steer_command_sat: float = 2.0
   base_feedforward_gain: float = 0.9
+  feedforward_leak: float = 0.01
   speed_gain_schedule: Dict[float, float] = field(default_factory=lambda: {
     0: 12.0,
     10: 13.0,
@@ -36,7 +37,7 @@ class Controller(BaseController):
     30: 15.0,
     40: 16.5
   })
-  adaptive_learning_rate: float = 0.05
+  adaptive_learning_rate: float = 0.02
   integrator: float = field(default=0.0, init=False)
   prev_error: float = field(default=0.0, init=False)
   last_feedforward_err: float = field(default=0.0, init=False)
@@ -54,7 +55,7 @@ class Controller(BaseController):
   def _pid(self, target_lataccel: float, current_lataccel: float, longitudinal_accel: float, control_state: ControlState) -> float:
     error = target_lataccel - current_lataccel
     self.integrator += error
-    self.integrator = float(np.clip(self.integrator, -5.0, 5.0))
+    self.integrator = float(np.clip(self.integrator, -8.0, 8.0))
     error_diff = error - self.prev_error
     self.prev_error = error
 
@@ -64,8 +65,20 @@ class Controller(BaseController):
     return (proportional_gain * error + self.i * self.integrator + self.d * error_diff) * pid_factor
 
   def _lookup_steer_factor(self, v_ego: float) -> float:
-    applicable = max([speed for speed in self.speed_gain_schedule if speed <= v_ego], default=0)
-    return self.speed_gain_schedule.get(applicable, self.speed_gain_schedule[min(self.speed_gain_schedule.keys())])
+    speeds = sorted(self.speed_gain_schedule.keys())
+    if not speeds:
+      return 12.0
+    if v_ego <= speeds[0]:
+      return self.speed_gain_schedule[speeds[0]]
+    if v_ego >= speeds[-1]:
+      return self.speed_gain_schedule[speeds[-1]]
+    for low, high in zip(speeds[:-1], speeds[1:]):
+      if low <= v_ego <= high:
+        low_gain = self.speed_gain_schedule[low]
+        high_gain = self.speed_gain_schedule[high]
+        ratio = (v_ego - low) / (high - low)
+        return low_gain + (high_gain - low_gain) * ratio
+    return self.speed_gain_schedule[speeds[0]]
 
   def _feedforward(self, target_lataccel: float, state: Any) -> float:
     steer_factor = self._lookup_steer_factor(state.v_ego)
@@ -79,10 +92,11 @@ class Controller(BaseController):
     prediction = control_state.history.latest('predicted_lataccel')
     if prediction is None:
       return
-    error = target_lataccel - prediction
-    delta = (error - self.last_feedforward_err) * self.adaptive_learning_rate
-    self.last_feedforward_err = error
-    self.base_feedforward_gain = float(np.clip(self.base_feedforward_gain + delta, 0.5, 1.5))
+    actual_error = target_lataccel - current_lataccel
+    prediction_error = target_lataccel - prediction
+    delta = (prediction_error - self.last_feedforward_err) * self.adaptive_learning_rate
+    self.last_feedforward_err = prediction_error
+    self.base_feedforward_gain = float(np.clip((self.base_feedforward_gain * (1 - self.feedforward_leak)) + delta + 0.001 * actual_error, 0.5, 1.3))
 
   def compute_action(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any, control_state: ControlState) -> float:
     if future_plan and len(future_plan.lataccel) >= 3:
