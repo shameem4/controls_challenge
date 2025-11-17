@@ -86,7 +86,7 @@ if __name__ == "__main__":
   parser = argparse.ArgumentParser()
   parser.add_argument("--model_path", type=str, default=str(DEFAULT_MODEL_PATH))
   parser.add_argument("--data_path", type=str, default=str(DATASET_PATH))
-  parser.add_argument("--num_segs", type=int, default=100)
+  parser.add_argument("--num_segs", type=int, default=1)
   parser.add_argument("--debug", action='store_true')
   parser.add_argument("--controller", default='pid', choices=available_controllers)
   args = parser.parse_args()

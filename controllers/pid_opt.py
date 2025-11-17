@@ -1,201 +1,415 @@
 from dataclasses import dataclass, field
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
+
+import numpy as np
 
 from . import BaseController, ControlState
 
 
+def _weighted_average(samples: List[float], weights: List[float]) -> float:
+  """Compute weighted average of samples."""
+  valid_count = min(len(samples), len(weights))
+  if valid_count == 0:
+    return 0.0
+  samples = samples[:valid_count]
+  weights = weights[:valid_count]
+  return float(np.average(samples, weights=weights))
+
+
+@dataclass
+class SegmentCharacteristics:
+  """Estimated characteristics of the current driving segment."""
+  avg_v_ego: float = 0.0
+  std_v_ego: float = 0.0
+  avg_abs_roll_lataccel: float = 0.0
+  avg_abs_target_lataccel: float = 0.0
+  avg_abs_target_lataccel_change: float = 0.0
+  max_abs_target_lataccel: float = 0.0
+  max_abs_target_change: float = 0.0  # NEW: Track maximum single target jump
+  velocity_target_product: float = 0.0  # NEW: v_ego * |Δtarget| - difficulty metric
+  target_variability: float = 0.0  # NEW: Standard deviation of targets
+  num_large_target_changes: int = 0  # NEW: Count of changes > 0.05 m/s²
+  num_samples: int = 0
+
+  def update_online(self, v_ego: float, roll_lataccel: float, target_lataccel: float, prev_target_lataccel: Optional[float]) -> None:
+    """Update running statistics with new observation."""
+    n = self.num_samples
+
+    # Update velocity statistics (Welford's online algorithm)
+    delta = v_ego - self.avg_v_ego
+    self.avg_v_ego += delta / (n + 1)
+    if n > 0:
+      # Running variance approximation
+      self.std_v_ego = np.sqrt((n * self.std_v_ego**2 + delta * (v_ego - self.avg_v_ego)) / (n + 1))
+
+    # Update roll lateral acceleration
+    self.avg_abs_roll_lataccel = (self.avg_abs_roll_lataccel * n + abs(roll_lataccel)) / (n + 1)
+
+    # Update target lateral acceleration
+    abs_target = abs(target_lataccel)
+    self.avg_abs_target_lataccel = (self.avg_abs_target_lataccel * n + abs_target) / (n + 1)
+    self.max_abs_target_lataccel = max(self.max_abs_target_lataccel, abs_target)
+
+    # Update target variability (running standard deviation)
+    if n > 0:
+      delta_target = target_lataccel - (self.avg_abs_target_lataccel if n == 1 else 0)  # Simplified for online calc
+      self.target_variability = np.sqrt((n * self.target_variability**2 + abs_target**2) / (n + 1))
+
+    # Update target change rate
+    if prev_target_lataccel is not None:
+      target_change = abs(target_lataccel - prev_target_lataccel)
+      self.avg_abs_target_lataccel_change = (self.avg_abs_target_lataccel_change * n + target_change) / (n + 1)
+      self.max_abs_target_change = max(self.max_abs_target_change, target_change)
+
+      # NEW: Track combined difficulty metric
+      combined_difficulty = v_ego * target_change
+      self.velocity_target_product = (self.velocity_target_product * n + combined_difficulty) / (n + 1)
+
+      # NEW: Count large target changes
+      if target_change > 0.05:
+        self.num_large_target_changes += 1
+
+    self.num_samples += 1
+
+
 @dataclass
 class Controller(BaseController):
-  """Adaptive PID controller that retunes gains during a rollout."""
-  p: float = 0.2
-  i: float = 0.12
-  d: float = 0.01
-  tuning_window: int = 25
-  tuning_interval: int = 5
-  error_target: float = 0.04
-  bias_target: float = 0.01
-  jerk_target: float = 120.0
-  adaptation_alpha: float = 0.2
-  p_learning_rate: float = 0.002
-  i_learning_rate: float = 0.0004
-  d_learning_rate: float = 0.001
-  p_bounds: Tuple[float, float] = (0.05, 0.5)
-  i_bounds: Tuple[float, float] = (0.0, 0.4)
-  d_bounds: Tuple[float, float] = (-0.25, -0.005)
-  integral_limit: float = 1.5
-  integral_leak: float = 0.05
-  integral_flip_decay: float = 0.75
-  max_derivative_ratio: float = 0.85
-  derivative_floor: float = 0.02
+  """
+  Adaptive PID controller with feedforward that estimates segment characteristics and adjusts gains.
+
+  Key adaptive strategies based on correlation analysis:
+  1. Velocity adaptation: Adjust gains based on speed (high correlation for pid_w_ff)
+  2. Roll compensation: Scale control effort with roll-induced lateral acceleration
+  3. Target aggressiveness: Dampen response when targets change rapidly
+  4. Integral management: Limit windup based on segment dynamics
+  5. Feedforward control: Use velocity-dependent feedforward for better tracking
+  """
+
+  # Base PID gains (tuned for use with feedforward)
+  p_base: float = 0.24
+  i_base: float = 0.08
+  d_base: float = -0.09
+
+  # Adaptive gain limits
+  p_min: float = 0.18
+  p_max: float = 0.30
+  i_min: float = 0.05
+  i_max: float = 0.12
+  d_min: float = -0.12
+  d_max: float = -0.05
+
+  # Feedforward parameters (simplified from pid_w_ff)
+  steer_factor: float = 13.0
+  steer_sat_v: float = 20.0
+  steer_command_sat: float = 2.0
+  feedforward_gain_base: float = 0.75  # Slightly lower than pid_w_ff
+  minimum_velocity: float = 1.0
+
+  # Future plan blending (optional - use if available)
+  future_weights: List[float] = field(default_factory=lambda: [5, 6, 7, 8])
+  use_future_blending: bool = True
+
+  # Adaptation parameters (conservative)
+  velocity_scale_threshold: float = 25.0  # m/s
+  velocity_scale_rate: float = 0.003  # Small adjustments
+  high_roll_threshold: float = 0.5  # m/s^2
+  aggressive_target_threshold: float = 0.015  # m/s^2 per step
+  max_integral_base: float = 8.0  # Smaller base since feedforward helps
+  integral_decay_rate: float = 0.98
+
+  # NEW: High-difficulty scenario thresholds (from analysis)
+  extreme_target_threshold: float = 2.0  # m/s² - extreme lateral demand (raised threshold)
+  very_aggressive_threshold: float = 0.025  # m/s²/step - very rapid changes (raised)
+  high_speed_threshold: float = 28.0  # m/s - high speed
+  velocity_target_difficulty_threshold: float = 0.5  # Combined difficulty metric (raised)
+
+  # NEW: High-demand scenario thresholds (where pid_w_ff excels)
+  # Based on analysis: FF wins when avg_abs_target +38.9%, max_abs_target +79%
+  high_demand_avg_threshold: float = 0.25  # m/s² avg target (FF wins at 0.297 vs 0.214)
+  high_demand_max_threshold: float = 1.2  # m/s² max target (FF wins at 1.565 vs 0.874)
+
+  # Estimation window for segment characteristics
+  estimation_window: int = 35  # Build confidence before adapting
+
+  # Internal state
   error_integral: float = field(default=0.0, init=False)
   prev_error: float = field(default=0.0, init=False)
-  error_ma: float = field(default=0.0, init=False)
-  jerk_ma: float = field(default=0.0, init=False)
-  lat_cost_ma: float = field(default=0.0, init=False)
-  _error_ma_initialized: bool = field(default=False, init=False)
-  _jerk_ma_initialized: bool = field(default=False, init=False)
-  _lat_cost_ma_initialized: bool = field(default=False, init=False)
-  _last_tuned_step: int = field(default=0, init=False)
-  _baseline_gains: Tuple[float, float, float] = field(init=False, repr=False)
+  prev_target_lataccel: Optional[float] = field(default=None, init=False)
+  segment_chars: SegmentCharacteristics = field(default_factory=SegmentCharacteristics, init=False)
 
-  def __post_init__(self) -> None:
-    self._baseline_gains = (self.p, self.i, self.d)
+  # Running buffers for recent history
+  recent_v_ego: List[float] = field(default_factory=list, init=False)
+  recent_targets: List[float] = field(default_factory=list, init=False)
+  recent_errors: List[float] = field(default_factory=list, init=False)
+
+  # Adaptive gains (computed)
+  p_adaptive: float = field(default=0.24, init=False)
+  i_adaptive: float = field(default=0.08, init=False)
+  d_adaptive: float = field(default=-0.09, init=False)
+  feedforward_gain_adaptive: float = field(default=0.75, init=False)
 
   def reset(self) -> None:
     """Clear any accumulated state so the controller can be reused."""
-    self.p, self.i, self.d = self._baseline_gains
     self.error_integral = 0.0
     self.prev_error = 0.0
-    self.error_ma = 0.0
-    self.jerk_ma = 0.0
-    self.lat_cost_ma = 0.0
-    self._error_ma_initialized = False
-    self._jerk_ma_initialized = False
-    self._lat_cost_ma_initialized = False
-    self._last_tuned_step = 0
+    self.prev_target_lataccel = None
+    self.segment_chars = SegmentCharacteristics()
+    self.recent_v_ego = []
+    self.recent_targets = []
+    self.recent_errors = []
+    self.p_adaptive = self.p_base
+    self.i_adaptive = self.i_base
+    self.d_adaptive = self.d_base
+    self.feedforward_gain_adaptive = self.feedforward_gain_base
 
-  def _limit_integral(self) -> None:
-    limit = self.integral_limit
-    self.error_integral = max(-limit, min(limit, self.error_integral))
+  def _update_segment_characteristics(self, target_lataccel: float, state: Any) -> None:
+    """Update running estimates of segment characteristics."""
+    self.segment_chars.update_online(
+      v_ego=state.v_ego,
+      roll_lataccel=state.roll_lataccel,
+      target_lataccel=target_lataccel,
+      prev_target_lataccel=self.prev_target_lataccel
+    )
 
-  def _compute_error_terms(self, target_lataccel: float, current_lataccel: float) -> Tuple[float, float]:
-    """Return the proportional error and its first derivative."""
+    # Update recent history buffers (keep last 20 samples)
+    self.recent_v_ego.append(state.v_ego)
+    self.recent_targets.append(target_lataccel)
+    if len(self.recent_v_ego) > 20:
+      self.recent_v_ego.pop(0)
+      self.recent_targets.pop(0)
+
+    self.prev_target_lataccel = target_lataccel
+
+  def _blend_future_targets(self, current_target: float, future_plan: Any) -> float:
+    """Blend current target with future plan for anticipatory control."""
+    if not self.use_future_blending or not future_plan:
+      return current_target
+    future_targets = future_plan.lataccel if future_plan else []
+    if len(future_targets) < 3:
+      return current_target
+    blended = _weighted_average([current_target] + future_targets, self.future_weights)
+    return blended if blended else current_target
+
+  def _compute_adaptive_gains(self, state: Any) -> Tuple[float, float, float, float]:
+    """
+    Compute adaptive PID and feedforward gains based on segment characteristics.
+
+    Strategy:
+    - High velocity -> Rely more on feedforward, less on PID
+    - High roll -> Increase P gain (more responsive)
+    - Aggressive targets -> Lower I gain (less windup), higher D (smoother)
+    - Low velocity variance -> Can increase I gain (more stable)
+    - NEW: Extreme scenarios -> Emergency damping mode
+    """
+    chars = self.segment_chars
+
+    # Start with base gains
+    p_gain = self.p_base
+    i_gain = self.i_base
+    d_gain = self.d_base
+    ff_gain = self.feedforward_gain_base
+
+    # Only start adapting after we have enough samples
+    if chars.num_samples < self.estimation_window:
+      return p_gain, i_gain, d_gain, ff_gain
+
+    # NEW: Strategy 0b - Detect extreme high-difficulty scenarios
+    # Only trigger on truly extreme cases - be very selective
+    # Priority: If extreme, skip high-demand mode later
+    is_extreme_scenario = (
+      (chars.max_abs_target_lataccel > self.extreme_target_threshold and
+       chars.avg_abs_target_lataccel_change > self.aggressive_target_threshold) or
+      chars.avg_abs_target_lataccel_change > self.very_aggressive_threshold
+    )
+
+    if is_extreme_scenario:
+      # Extreme scenario mode: subtle adjustments only + modest FF boost
+      i_gain *= 0.75  # Reduce integral gain to prevent windup
+      d_gain *= 1.10  # Increase damping slightly
+      ff_gain *= 1.12  # Modest FF boost (less aggressive than high-demand mode)
+
+    # Strategy 1: Velocity-based adaptation - balance PID vs feedforward
+    # At high speeds, feedforward is more effective; at low speeds, PID is better
+    if chars.avg_v_ego > 28.0:  # High speed - rely more on feedforward
+      ff_gain *= 1.1
+      p_gain *= 0.95  # Reduce PID aggressiveness
+      i_gain *= 0.9
+    elif chars.avg_v_ego < 15.0:  # Low speed - rely more on PID
+      ff_gain *= 0.85
+      p_gain *= 1.05
+      i_gain *= 1.05
+
+    # Strategy 2: Roll compensation - feedforward handles this better
+    # High roll situations - boost feedforward and P slightly
+    if chars.avg_abs_roll_lataccel > self.high_roll_threshold:
+      roll_factor = min(1.5, chars.avg_abs_roll_lataccel / self.high_roll_threshold)
+      ff_gain *= (1.0 + 0.08 * (roll_factor - 1.0))  # Increase FF by up to 8%
+      p_gain *= (1.0 + 0.04 * (roll_factor - 1.0))  # Increase P by up to 4%
+
+    # Strategy 3: Target aggressiveness - key insight from analysis
+    # This is where both controllers struggle - reduce I, increase D and FF
+    if chars.avg_abs_target_lataccel_change > self.aggressive_target_threshold:
+      aggression_factor = min(2.5, chars.avg_abs_target_lataccel_change / self.aggressive_target_threshold)
+      i_gain *= max(0.7, 1.0 - 0.2 * (aggression_factor - 1.0))  # Reduce I by up to 30%
+      d_gain *= (1.0 + 0.08 * (aggression_factor - 1.0))  # Increase D magnitude
+      ff_gain *= (1.0 + 0.05 * (aggression_factor - 1.0))  # Slight FF boost for responsiveness
+
+    # Strategy 4: Boost I slightly in very stable conditions
+    if chars.std_v_ego < 2.0 and chars.avg_abs_target_lataccel_change < self.aggressive_target_threshold * 0.5:
+      i_gain *= 1.08  # Small increase in stable conditions
+
+    # NEW: Strategy 5 - Detect and handle extreme target variability
+    # High target variability with many large changes indicates challenging segment
+    if chars.target_variability > 0.4 and chars.num_large_target_changes > 20:
+      i_gain *= 0.8  # Further reduce integral to prevent accumulation
+      d_gain *= 1.15  # More damping for stability
+
+    # NEW: Strategy 6 - HIGH-PRIORITY: High-demand scenarios (where pid_w_ff wins)
+    # Based on analysis: FF excels when avg_abs_target > 0.25 AND max_abs_target > 1.2
+    # This runs LAST to override other strategies in high-demand situations
+    # UNLESS it's an extreme scenario (which gets more conservative treatment)
+    is_high_demand = (
+      chars.avg_abs_target_lataccel > self.high_demand_avg_threshold and
+      chars.max_abs_target_lataccel > self.high_demand_max_threshold and
+      not is_extreme_scenario  # Don't override extreme scenario handling
+    )
+
+    if is_high_demand:
+      # High-demand mode: boost feedforward significantly, reduce PID slightly
+      # Apply these as absolute multipliers on top of all other adaptations
+      ff_gain *= 1.22  # Strong boost to match pid_w_ff behavior
+      p_gain *= 0.92  # Let feedforward dominate
+      i_gain *= 0.85  # Reduce integral to prevent interference with FF
+
+    # Clamp gains to safe ranges
+    p_gain = np.clip(p_gain, self.p_min, self.p_max)
+    i_gain = np.clip(i_gain, self.i_min, self.i_max)
+    d_gain = np.clip(d_gain, self.d_min, self.d_max)
+    ff_gain = np.clip(ff_gain, 0.5, 1.15)  # Allow higher FF gain for high-demand scenarios
+
+    return p_gain, i_gain, d_gain, ff_gain
+
+  def _compute_adaptive_integral_limit(self) -> float:
+    """Compute maximum integral value based on segment characteristics."""
+    chars = self.segment_chars
+
+    max_integral = self.max_integral_base
+
+    # NEW: Limit integral in extreme difficulty scenarios
+    if chars.velocity_target_product > self.velocity_target_difficulty_threshold:
+      max_integral *= 0.7  # Reduce for high-difficulty scenarios
+
+    # NEW: Limit for extreme target demands
+    if chars.max_abs_target_lataccel > self.extreme_target_threshold:
+      max_integral *= 0.75
+
+    # Reduce integral limit modestly for aggressive segments
+    if chars.avg_abs_target_lataccel_change > self.aggressive_target_threshold * 1.5:
+      max_integral *= 0.8
+
+    # Reduce for very high roll situations
+    if chars.avg_abs_roll_lataccel > self.high_roll_threshold * 1.2:
+      max_integral *= 0.85
+
+    # Small reduction for high-speed segments
+    if chars.avg_v_ego > 32.0:
+      max_integral *= 0.85
+
+    # Small increase for stable segments
+    if chars.avg_v_ego < 15.0 and chars.std_v_ego < 2.0:
+      max_integral *= 1.15
+
+    return max_integral
+
+  def _compute_error_terms(self, target_lataccel: float, current_lataccel: float, state: Any) -> Tuple[float, float]:
+    """Return the proportional error and its first derivative with adaptive integral limiting."""
     error = target_lataccel - current_lataccel
-    if self.error_integral != 0.0 and (self.error_integral > 0 > error or self.error_integral < 0 < error):
-      self.error_integral *= (1 - self.integral_flip_decay)
-    self.error_integral *= (1 - self.integral_leak)
+
+    # Update integral with anti-windup
+    max_integral = self._compute_adaptive_integral_limit()
     self.error_integral += error
-    self._limit_integral()
+    self.error_integral = np.clip(self.error_integral, -max_integral, max_integral)
+
+    # Only decay integral in extremely dynamic conditions
+    if self.segment_chars.avg_abs_target_lataccel_change > self.aggressive_target_threshold * 2.0:
+      self.error_integral *= self.integral_decay_rate
+
+    # Compute derivative
     error_diff = error - self.prev_error
     self.prev_error = error
+
+    # Track recent errors for diagnostics
+    self.recent_errors.append(abs(error))
+    if len(self.recent_errors) > 20:
+      self.recent_errors.pop(0)
+
     return error, error_diff
 
-  def _update_average(self, attr: str, flag_attr: str, new_value: float) -> float:
-    initialized = getattr(self, flag_attr)
-    if not initialized:
-      setattr(self, flag_attr, True)
-      setattr(self, attr, new_value)
-      return new_value
-    current = getattr(self, attr)
-    updated = (1 - self.adaptation_alpha) * current + self.adaptation_alpha * new_value
-    setattr(self, attr, updated)
-    return updated
+  def _feedforward(self, target_lataccel: float, state: Any) -> float:
+    """
+    Compute feedforward control term based on target and vehicle state.
 
-  def _apply_adjustment(self, attr: str, delta: float, bounds: Tuple[float, float], max_step: Optional[float] = None) -> None:
-    if delta == 0.0:
-      return
-    if max_step is not None and max_step > 0:
-      delta = max(-max_step, min(max_step, delta))
-    lower, upper = bounds
-    new_value = getattr(self, attr) + delta
-    setattr(self, attr, max(lower, min(upper, new_value)))
+    This anticipates the steering needed based on the desired lateral acceleration,
+    compensating for roll and scaling by velocity.
+    """
+    # Compensate for roll-induced lateral acceleration
+    steer_accel_target = target_lataccel - state.roll_lataccel
 
-  def _limit_derivative_term(self, d_term: float, p_term: float, i_term: float) -> float:
-    denom = abs(p_term) + abs(i_term) + self.derivative_floor
-    max_term = self.max_derivative_ratio * denom
-    return max(-max_term, min(max_term, d_term))
+    # Velocity-dependent steering gain (higher speed = less steering needed)
+    denom = max(self.steer_sat_v, max(self.minimum_velocity, state.v_ego))
+    steer_command = (steer_accel_target * self.steer_factor) / denom
 
-  def _reset_on_spike(self, lat_cost: Optional[float], jerk_cost: Optional[float], step_idx: int) -> bool:
-    lat_trigger = lat_cost is not None and lat_cost > (self.error_target * 600)
-    jerk_trigger = jerk_cost is not None and jerk_cost > (self.jerk_target * 6)
-    if not (lat_trigger or jerk_trigger):
-      return False
-    self.p, self.i, self.d = self._baseline_gains
-    self.error_integral = 0.0
-    self.prev_error = 0.0
-    self._limit_integral()
-    self._last_tuned_step = step_idx
-    return True
+    # Apply sigmoid saturation for smooth limiting
+    steer_command = 2 * self.steer_command_sat / (1 + np.exp(-steer_command)) - self.steer_command_sat
 
-  def _recover_if_unstable(self) -> None:
-    error_overflow = self.error_ma > (self.error_target * 12)
-    jerk_overflow = self.jerk_ma > (self.jerk_target * 8)
-    lat_cost_overflow = self.lat_cost_ma > (self.error_target * 800)
-    if (error_overflow and jerk_overflow) or lat_cost_overflow:
-      self.p, self.i, self.d = self._baseline_gains
-      self.error_integral *= 0.5
-      self._limit_integral()
-      self._last_tuned_step = 0
+    return self.feedforward_gain_adaptive * steer_command
 
   def compute_action(self, target_lataccel: float, current_lataccel: float, state: Any, future_plan: Any, control_state: ControlState) -> float:
     """
-    Produce a steering command given the current lateral acceleration error.
-
-    The future plan and detailed vehicle state are provided to enable more
-    advanced controllers, but this baseline only needs the error terms.
+    Adaptive PID + Feedforward control with online segment characteristic estimation.
     """
-    error, error_diff = self._compute_error_terms(target_lataccel, current_lataccel)
-    control_state.record('lat_error', error)
-    control_state.record('error_diff', error_diff)
-    p_term = self.p * error
-    i_term = self.i * self.error_integral
-    d_term = self.d * error_diff
-    d_term = self._limit_derivative_term(d_term, p_term, i_term)
-    control_state.record('pid_p_term', p_term)
-    control_state.record('pid_i_term', i_term)
-    control_state.record('pid_d_term', d_term)
-    return p_term + i_term + d_term
+    # Optionally blend future targets for anticipatory control
+    if self.use_future_blending and future_plan and len(future_plan.lataccel) >= 3:
+      target_lataccel = self._blend_future_targets(target_lataccel, future_plan)
 
-  def on_simulation_update(self, predicted_lataccel: float, control_state: ControlState, step_metrics: Optional[Dict[str, float]] = None) -> None:
-    del predicted_lataccel
-    if step_metrics is None or not control_state.is_control_active:
-      return
-    if control_state.step_idx - self._last_tuned_step < self.tuning_interval:
-      return
-    errors = control_state.history.recent('lat_error', self.tuning_window)
-    if len(errors) < self.tuning_window:
-      return
+    # Update segment characteristics
+    self._update_segment_characteristics(target_lataccel, state)
 
-    mean_abs_error = sum(abs(err) for err in errors) / len(errors)
-    mean_error = sum(errors) / len(errors)
-    lat_cost = step_metrics.get('lataccel_cost')
-    jerk_cost = step_metrics.get('jerk_cost')
-    if self._reset_on_spike(lat_cost, jerk_cost, control_state.step_idx):
-      return
+    # Compute adaptive gains (including feedforward gain)
+    self.p_adaptive, self.i_adaptive, self.d_adaptive, self.feedforward_gain_adaptive = self._compute_adaptive_gains(state)
 
-    self._update_average('error_ma', '_error_ma_initialized', mean_abs_error)
-    if lat_cost is not None:
-      self._update_average('lat_cost_ma', '_lat_cost_ma_initialized', lat_cost)
-      if lat_cost > (self.error_target * 400):
-        self.error_integral *= 0.7
-        self._limit_integral()
-    if jerk_cost is not None:
-      self._update_average('jerk_ma', '_jerk_ma_initialized', jerk_cost)
+    # Compute error terms with adaptive integral limiting
+    error, error_diff = self._compute_error_terms(target_lataccel, current_lataccel, state)
 
-    stability_pressure = 0.0
-    if jerk_cost is not None and self.jerk_target > 0.0:
-      stability_pressure = max(0.0, (self.jerk_ma - self.jerk_target) / self.jerk_target)
+    # Compute PID term
+    pid_term = (self.p_adaptive * error) + (self.i_adaptive * self.error_integral) + (self.d_adaptive * error_diff)
 
-    if self.error_target > 0.0:
-      error_pressure = (self.error_ma - self.error_target) / self.error_target
-      max_p_step = self.p_learning_rate * 4
-      self._apply_adjustment('p', self.p_learning_rate * error_pressure, self.p_bounds, max_step=max_p_step)
+    # Compute feedforward term
+    feedforward_term = self._feedforward(target_lataccel, state)
 
-    if abs(mean_error) > self.bias_target:
-      bias_sign = 1.0 if mean_error > 0 else -1.0
-      self._apply_adjustment('i', self.i_learning_rate * bias_sign, self.i_bounds, max_step=self.i_learning_rate * 3)
-    else:
-      decay = -self.i_learning_rate * 0.2 if self.i > self.i_bounds[0] else 0.0
-      self._apply_adjustment('i', decay, self.i_bounds, max_step=self.i_learning_rate * 3)
+    # Combine PID and feedforward
+    action = pid_term + feedforward_term
 
-    if jerk_cost is not None and self.jerk_target > 0.0:
-      jerk_pressure = (self.jerk_ma - self.jerk_target) / self.jerk_target
-      # When jerk is high we want a more negative derivative gain to dampen oscillations.
-      self._apply_adjustment('d', -self.d_learning_rate * jerk_pressure, self.d_bounds, max_step=self.d_learning_rate * 4)
+    return action
 
-    if stability_pressure > 0.0:
-      self._apply_adjustment('p', -self.p_learning_rate * 2.0 * min(2.0, stability_pressure), self.p_bounds, max_step=self.p_learning_rate * 3)
-      self._apply_adjustment('i', -self.i_learning_rate * 0.5 * min(2.0, stability_pressure), self.i_bounds, max_step=self.i_learning_rate * 2)
-
-    self._last_tuned_step = control_state.step_idx
-    self._recover_if_unstable()
-
-  def get_diagnostics(self) -> Dict[str, float]:
+  def get_diagnostics(self) -> Dict[str, Any]:
+    """Return controller diagnostics for analysis."""
+    chars = self.segment_chars
     return {
-      'pid_p_gain': self.p,
-      'pid_i_gain': self.i,
-      'pid_d_gain': self.d,
-      'pid_error_ma': self.error_ma,
-      'pid_jerk_ma': self.jerk_ma,
-      'pid_lat_cost_ma': self.lat_cost_ma
+      'p_adaptive': self.p_adaptive,
+      'i_adaptive': self.i_adaptive,
+      'd_adaptive': self.d_adaptive,
+      'feedforward_gain_adaptive': self.feedforward_gain_adaptive,
+      'error_integral': self.error_integral,
+      'estimated_avg_v_ego': chars.avg_v_ego,
+      'estimated_std_v_ego': chars.std_v_ego,
+      'estimated_avg_abs_roll_lataccel': chars.avg_abs_roll_lataccel,
+      'estimated_avg_abs_target_lataccel': chars.avg_abs_target_lataccel,
+      'estimated_avg_abs_target_lataccel_change': chars.avg_abs_target_lataccel_change,
+      'velocity_target_product': chars.velocity_target_product,
+      'max_abs_target_lataccel': chars.max_abs_target_lataccel,
+      'target_variability': chars.target_variability,
+      'num_large_target_changes': chars.num_large_target_changes,
+      'avg_recent_error': np.mean(self.recent_errors) if self.recent_errors else 0.0,
+      'num_samples': chars.num_samples,
     }
