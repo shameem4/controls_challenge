@@ -1,9 +1,12 @@
 """Neural network for adaptive PID gain tuning."""
 import numpy as np
-from typing import Tuple, Optional
+from typing import Tuple, Optional, TYPE_CHECKING
 import pickle
 from pathlib import Path
-from controllers.pid_adaptive import AdaptiveGains
+
+if TYPE_CHECKING:
+  from controllers.pid_adaptive import AdaptiveGains
+
 
 class GainAdapterNetwork:
   """Simple neural network for predicting PID gains based on driving context."""

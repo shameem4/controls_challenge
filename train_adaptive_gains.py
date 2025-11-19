@@ -97,12 +97,9 @@ class AdaptiveGainTrainer:
       experiences: List of (features, gains, step_cost) tuples
       total_cost: Total cost for the segment
     """
-    # Create controller with custom gain adapter
-    controller = Controller()
-    controller.use_adaptive_gains = True
-
-    experiences = []
-    step_costs = []
+    from tinyphysics_core.model import TinyPhysicsModel
+    from tinyphysics_core.simulator import TinyPhysicsSimulator
+    from tinyphysics_core.runner import RolloutRunner
 
     # Custom gain adapter that logs experiences
     class ExperienceCollector:
@@ -122,19 +119,28 @@ class AdaptiveGainTrainer:
         self.gains_log.append((gains.p, gains.i, gains.d, gains.feedforward_gain))
         return gains
 
+    # Create controller with custom gain adapter
+    controller = Controller()
+    controller.use_adaptive_gains = True
     collector = ExperienceCollector(self, use_exploration)
     controller.gain_adapter = collector
 
-    # Run simulation
+    # Run simulation with our custom controller
     try:
-      result = run_rollout(segment_path, 'pid_adaptive', DEFAULT_MODEL_PATH, debug=False)
+      model = TinyPhysicsModel(str(DEFAULT_MODEL_PATH), debug=False)
+      simulator = TinyPhysicsSimulator(model, str(segment_path), controller=controller)
+      runner = RolloutRunner(simulator, debug=False)
+      result = runner.run()
+
       total_cost = result.cost['total_cost']
 
       # Extract per-step costs from cost_history
+      step_costs = []
       if 'total_cost' in result.cost_history:
         step_costs = result.cost_history['total_cost']
 
       # Create experiences with per-step costs
+      experiences = []
       for i, (features, gains) in enumerate(zip(collector.features_log, collector.gains_log)):
         step_cost = step_costs[i] if i < len(step_costs) else total_cost / max(1, len(collector.features_log))
         experiences.append((features, np.array(gains, dtype=np.float32), step_cost))
@@ -143,6 +149,8 @@ class AdaptiveGainTrainer:
 
     except Exception as e:
       print(f"Error running segment {segment_path}: {e}")
+      import traceback
+      traceback.print_exc()
       return [], float('inf')
 
   def train_epoch(self, epoch: int) -> dict:
