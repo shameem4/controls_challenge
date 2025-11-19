@@ -24,6 +24,7 @@ def main():
   parser.add_argument("--num_epochs", type=int, default=30, help="Number of epochs")
   parser.add_argument("--output", type=str, default="models/gain_adapter_targeted.pkl", help="Output path")
   parser.add_argument("--all_segments", action="store_true", help="Use all segments, not just worst")
+  parser.add_argument("--num_segments", type=int, default=None, help="Number of segments to use (default: all worst segments or all available)")
 
   args = parser.parse_args()
 
@@ -32,13 +33,20 @@ def main():
   if args.all_segments:
     # Use all available segments
     data_paths = sorted(list(data_path.glob("*.csv")))
-    print(f"Training on all {len(data_paths)} segments")
+    print(f"Found {len(data_paths)} total segments")
   else:
     # Focus on worst segments
     data_paths = [data_path / f"{seg}.csv" for seg in WORST_SEGMENTS]
     data_paths = [p for p in data_paths if p.exists()]
-    print(f"Training on {len(data_paths)} worst-performing segments:")
-    print("  " + ", ".join(WORST_SEGMENTS))
+    print(f"Found {len(data_paths)} worst-performing segments")
+
+  # Limit number of segments if specified
+  if args.num_segments is not None:
+    data_paths = data_paths[:args.num_segments]
+    print(f"Using {len(data_paths)} segments for training")
+
+  if not args.all_segments:
+    print("Segments: " + ", ".join([p.stem for p in data_paths]))
 
   if len(data_paths) == 0:
     raise ValueError(f"No segments found in {data_path}")
@@ -65,9 +73,16 @@ def main():
   print(f"  Initial exploration: {config.exploration_rate}")
   print(f"  Output: {config.network_path}\n")
 
-  # Train
-  trainer = AdaptiveGainTrainer(config, data_paths)
+  # Train (always resume from best checkpoint in quick train)
+  trainer = AdaptiveGainTrainer(config, data_paths, resume=True)
   trainer.train()
+
+  # Also copy best checkpoint to output path if different
+  best_checkpoint = Path(config.network_path).parent / "gain_adapter_best.pkl"
+  if best_checkpoint.exists() and str(best_checkpoint) != config.network_path:
+    import shutil
+    shutil.copy(best_checkpoint, config.network_path)
+    print(f"\nCopied best checkpoint to {config.network_path}")
 
   print("\n" + "=" * 60)
   print("Training complete!")

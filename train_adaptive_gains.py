@@ -40,12 +40,30 @@ class TrainingConfig:
 class AdaptiveGainTrainer:
   """Trainer for adaptive gain network using self-supervised learning."""
 
-  def __init__(self, config: TrainingConfig, data_paths: List[Path]):
+  def __init__(self, config: TrainingConfig, data_paths: List[Path], resume: bool = True):
     self.config = config
     self.data_paths = data_paths[:config.segment_limit]
-    self.network = GainAdapterNetwork(learning_rate=config.learning_rate)
     self.buffer = ReplayBuffer(capacity=config.buffer_capacity)
     self.exploration_rate = config.exploration_rate
+
+    # Best checkpoint tracking
+    self.best_cost = float('inf')
+    self.best_checkpoint_path = Path(config.network_path).parent / "gain_adapter_best.pkl"
+
+    # Try to load previous best checkpoint
+    if resume and self.best_checkpoint_path.exists():
+      try:
+        self.network = GainAdapterNetwork.load(str(self.best_checkpoint_path))
+        self.network.learning_rate = config.learning_rate  # Update learning rate
+        print(f"Loaded best checkpoint from {self.best_checkpoint_path}")
+      except Exception as e:
+        print(f"Failed to load best checkpoint: {e}")
+        print("Initializing new network")
+        self.network = GainAdapterNetwork(learning_rate=config.learning_rate)
+    else:
+      self.network = GainAdapterNetwork(learning_rate=config.learning_rate)
+      if resume:
+        print("No previous best checkpoint found, initializing new network")
 
     # Gain exploration ranges
     self.gain_ranges = {
@@ -258,12 +276,20 @@ class AdaptiveGainTrainer:
       print(f"  Exploration Rate: {epoch_stats['exploration_rate']:.3f}")
       print(f"  Buffer Size: {len(self.buffer)}")
 
-      # Save checkpoint
+      # Save best checkpoint if this is the best avg cost so far
+      current_cost = epoch_stats.get('avg_cost_with_network', epoch_stats['avg_cost'])
+      if current_cost < self.best_cost:
+        self.best_cost = current_cost
+        Path(self.best_checkpoint_path).parent.mkdir(parents=True, exist_ok=True)
+        self.network.save(str(self.best_checkpoint_path))
+        print(f"  New best cost: {self.best_cost:.4f} - Saved to {self.best_checkpoint_path}")
+
+      # Save periodic checkpoint
       if (epoch + 1) % 10 == 0:
         checkpoint_path = f"models/gain_adapter_epoch_{epoch + 1}.pkl"
         Path(checkpoint_path).parent.mkdir(exist_ok=True)
         self.network.save(checkpoint_path)
-        print(f"  Saved checkpoint to {checkpoint_path}")
+        print(f"  Saved periodic checkpoint to {checkpoint_path}")
 
     # Save final model
     Path(self.config.network_path).parent.mkdir(exist_ok=True)
@@ -286,6 +312,7 @@ def main():
   parser.add_argument("--learning_rate", type=float, default=0.001, help="Learning rate")
   parser.add_argument("--segment_limit", type=int, default=100, help="Maximum segments to use")
   parser.add_argument("--output_path", type=str, default="models/gain_adapter.pkl", help="Output model path")
+  parser.add_argument("--no-resume", action="store_true", help="Don't resume from best checkpoint")
 
   args = parser.parse_args()
 
@@ -312,7 +339,8 @@ def main():
   )
 
   # Train
-  trainer = AdaptiveGainTrainer(config, data_paths)
+  resume = not args.no_resume
+  trainer = AdaptiveGainTrainer(config, data_paths, resume=resume)
   trainer.train()
 
 

@@ -80,6 +80,15 @@ Basic training:
 python train_adaptive_gains.py
 ```
 
+Quick training on worst segments:
+```bash
+# Train on first 10 worst segments
+python quick_train_adaptive.py --num_segments 10
+
+# Train on all 26 worst segments
+python quick_train_adaptive.py
+```
+
 Advanced options:
 ```bash
 python train_adaptive_gains.py \
@@ -89,7 +98,8 @@ python train_adaptive_gains.py \
   --batch_size 32 \
   --learning_rate 0.001 \
   --segment_limit 100 \
-  --output_path models/gain_adapter.pkl
+  --output_path models/gain_adapter.pkl \
+  --no-resume  # Start fresh, don't load previous best checkpoint
 ```
 
 Parameters:
@@ -99,14 +109,17 @@ Parameters:
 - `--learning_rate`: Learning rate (default: 0.001)
 - `--segment_limit`: Maximum segments to use from dataset (default: 100)
 - `--output_path`: Where to save the trained model
+- `--no-resume`: Don't resume from best checkpoint (default: False, will resume)
 
 The script will:
-- Automatically explore different gain combinations
+- **Automatically resume from best checkpoint** (unless `--no-resume` is specified)
+- Explore different gain combinations
 - Collect experiences in a replay buffer
 - Train the network to predict good gains
 - Evaluate every 5 epochs
-- Save checkpoints every 10 epochs
-- Save training history to JSON
+- **Save best checkpoint whenever a new best avg cost is achieved**
+- Save periodic checkpoints every 10 epochs
+- Save final model and training history to JSON
 
 ### 2. Evaluating the Network
 
