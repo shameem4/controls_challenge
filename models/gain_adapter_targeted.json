@@ -1,235 +1,235 @@
 [
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.4
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.376
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.35344
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.33223359999999996
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.31229958399999996,
-    "avg_cost_with_network": 87.19673538611303,
-    "avg_cost_baseline": 87.19673538611303,
+    "avg_cost_with_network": 55.968227478395384,
+    "avg_cost_baseline": 55.968227478395384,
     "improvement": 0.0,
     "improvement_pct": 0.0
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.29356160895999994
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.2759479124223999
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.2593910376770559
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.24382757541643255
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.22919792089144658,
-    "avg_cost_with_network": 87.19673538611303,
-    "avg_cost_baseline": 87.19673538611303,
+    "avg_cost_with_network": 55.968227478395384,
+    "avg_cost_baseline": 55.968227478395384,
     "improvement": 0.0,
     "improvement_pct": 0.0
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.21544604563795977
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.20251928289968218
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.19036812592570124
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.17894603837015916
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.1682092760679496,
-    "avg_cost_with_network": 87.19673538611303,
-    "avg_cost_baseline": 87.19673538611303,
+    "avg_cost_with_network": 55.968227478395384,
+    "avg_cost_baseline": 55.968227478395384,
     "improvement": 0.0,
     "improvement_pct": 0.0
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.15811671950387263
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.14862971633364025
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.13971193335362184
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.13132921735240452
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.12344946431126025,
-    "avg_cost_with_network": 87.19673538611303,
-    "avg_cost_baseline": 87.19673538611303,
+    "avg_cost_with_network": 55.968227478395384,
+    "avg_cost_baseline": 55.968227478395384,
     "improvement": 0.0,
     "improvement_pct": 0.0
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.11604249645258463
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.10907994666542954
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.10253514986550376
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.09638304087357352
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.0906000584211591,
-    "avg_cost_with_network": 87.19673538611303,
-    "avg_cost_baseline": 87.19673538611303,
+    "avg_cost_with_network": 55.968227478395384,
+    "avg_cost_baseline": 55.968227478395384,
     "improvement": 0.0,
     "improvement_pct": 0.0
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.08516405491588955
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.08005421162093616
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.07525095892367999
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.07073590138825918
   },
   {
-    "avg_cost": 80.69014899162855,
-    "min_cost": 66.22855468220075,
+    "avg_cost": 48.997328592066886,
+    "min_cost": 4.668335147785938,
     "max_cost": 114.63488249764953,
     "avg_loss": 0.0,
     "exploration_rate": 0.06649174730496363,
-    "avg_cost_with_network": 87.19673538611303,
-    "avg_cost_baseline": 87.19673538611303,
+    "avg_cost_with_network": 55.968227478395384,
+    "avg_cost_baseline": 55.968227478395384,
     "improvement": 0.0,
     "improvement_pct": 0.0
   }
