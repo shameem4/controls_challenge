@@ -1,0 +1,2434 @@
+{
+  "baseline": {
+    "summary": {
+      "num_segments": 100,
+      "successful_segments": 100,
+      "avg_total_cost": 48.997328592066886,
+      "std_total_cost": 25.13947171815157,
+      "min_total_cost": 4.668335147785938,
+      "max_total_cost": 114.63488249764953,
+      "avg_lataccel_cost": 0.5752094077772878,
+      "avg_jerk_cost": 20.23685820320249
+    },
+    "segments": [
+      {
+        "segment": "00000",
+        "lataccel_cost": 0.7601549790489776,
+        "jerk_cost": 29.537082096798734,
+        "total_cost": 67.5448310492476,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00001",
+        "lataccel_cost": 0.40833144678321587,
+        "jerk_cost": 9.21862550502344,
+        "total_cost": 29.63519784418423,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00002",
+        "lataccel_cost": 0.7141772219873083,
+        "jerk_cost": 22.67992120067637,
+        "total_cost": 58.38878230004178,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00003",
+        "lataccel_cost": 0.4270200516491798,
+        "jerk_cost": 17.37054191537408,
+        "total_cost": 38.721544497833065,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00004",
+        "lataccel_cost": 0.4026506810408542,
+        "jerk_cost": 8.115100302675415,
+        "total_cost": 28.247634354718127,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00005",
+        "lataccel_cost": 0.49780252033539973,
+        "jerk_cost": 13.386258630903836,
+        "total_cost": 38.27638464767382,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00006",
+        "lataccel_cost": 0.9029951659135733,
+        "jerk_cost": 31.24129340052303,
+        "total_cost": 76.3910516962017,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00007",
+        "lataccel_cost": 0.12689782058503948,
+        "jerk_cost": 2.4382058715378805,
+        "total_cost": 8.783096900789854,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00008",
+        "lataccel_cost": 0.6215968573803381,
+        "jerk_cost": 21.50928739635942,
+        "total_cost": 52.58913026537633,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00009",
+        "lataccel_cost": 0.4290956045676772,
+        "jerk_cost": 14.937646586873647,
+        "total_cost": 36.3924268152575,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00010",
+        "lataccel_cost": 0.6127619089507381,
+        "jerk_cost": 24.685259476175688,
+        "total_cost": 55.32335492371259,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00011",
+        "lataccel_cost": 0.16639129547550877,
+        "jerk_cost": 3.5924820243721687,
+        "total_cost": 11.912046798147607,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00012",
+        "lataccel_cost": 1.0428040323625705,
+        "jerk_cost": 23.80066718804934,
+        "total_cost": 75.94086880617786,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00013",
+        "lataccel_cost": 0.6267288526908537,
+        "jerk_cost": 19.225126302712976,
+        "total_cost": 50.56156893725566,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00014",
+        "lataccel_cost": 0.8966967064339672,
+        "jerk_cost": 32.903265187472236,
+        "total_cost": 77.73810050917058,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00015",
+        "lataccel_cost": 0.4074852695668115,
+        "jerk_cost": 7.807471559929938,
+        "total_cost": 28.181735038270514,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00016",
+        "lataccel_cost": 0.6379233413210104,
+        "jerk_cost": 28.025653186547682,
+        "total_cost": 59.9218202525982,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00017",
+        "lataccel_cost": 0.732673461979347,
+        "jerk_cost": 23.789147957253398,
+        "total_cost": 60.42282105622075,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00018",
+        "lataccel_cost": 0.6851666546756614,
+        "jerk_cost": 19.904757895811677,
+        "total_cost": 54.163090629594755,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00019",
+        "lataccel_cost": 0.8726158262474822,
+        "jerk_cost": 42.07287746412134,
+        "total_cost": 85.70366877649545,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00020",
+        "lataccel_cost": 0.37060051959334234,
+        "jerk_cost": 10.154095416284957,
+        "total_cost": 28.68412139595207,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00021",
+        "lataccel_cost": 1.0067137732453164,
+        "jerk_cost": 41.4537464255544,
+        "total_cost": 91.78943508782022,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00022",
+        "lataccel_cost": 0.6151761194230015,
+        "jerk_cost": 18.080459650107215,
+        "total_cost": 48.83926562125729,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00023",
+        "lataccel_cost": 0.771762095649915,
+        "jerk_cost": 23.251657365196582,
+        "total_cost": 61.83976214769235,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00024",
+        "lataccel_cost": 0.3908461605165824,
+        "jerk_cost": 10.272974507895501,
+        "total_cost": 29.815282533724613,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00025",
+        "lataccel_cost": 0.06737054927213927,
+        "jerk_cost": 1.2998076841789754,
+        "total_cost": 4.668335147785938,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00026",
+        "lataccel_cost": 0.6776151952340683,
+        "jerk_cost": 48.00844739638419,
+        "total_cost": 81.88920715808761,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00027",
+        "lataccel_cost": 0.9982452425484906,
+        "jerk_cost": 24.568234354567338,
+        "total_cost": 74.48049648199186,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00028",
+        "lataccel_cost": 0.6367388781995759,
+        "jerk_cost": 18.317206525084835,
+        "total_cost": 50.15415043506362,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00029",
+        "lataccel_cost": 0.36763317050837846,
+        "jerk_cost": 7.7868383988281655,
+        "total_cost": 26.168496924247094,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00030",
+        "lataccel_cost": 0.9504082017521185,
+        "jerk_cost": 27.368891996677807,
+        "total_cost": 74.88930208428374,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00031",
+        "lataccel_cost": 0.0678679530149334,
+        "jerk_cost": 2.3148946450456407,
+        "total_cost": 5.708292295792311,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00032",
+        "lataccel_cost": 0.7873284001881694,
+        "jerk_cost": 27.318419948798137,
+        "total_cost": 66.68483995820661,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00033",
+        "lataccel_cost": 0.3626131405349298,
+        "jerk_cost": 22.904837612017328,
+        "total_cost": 41.035494638763815,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00034",
+        "lataccel_cost": 0.16967953436010422,
+        "jerk_cost": 8.169903318012894,
+        "total_cost": 16.653880036018105,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00035",
+        "lataccel_cost": 0.3987060356493258,
+        "jerk_cost": 10.043217391264875,
+        "total_cost": 29.97851917373116,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00036",
+        "lataccel_cost": 0.8017939464840999,
+        "jerk_cost": 37.751677139439856,
+        "total_cost": 77.84137446364485,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00037",
+        "lataccel_cost": 0.10959180291974509,
+        "jerk_cost": 1.0501570247676757,
+        "total_cost": 6.52974717075493,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00038",
+        "lataccel_cost": 0.3639346045488338,
+        "jerk_cost": 7.39729694609362,
+        "total_cost": 25.594027173535313,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00039",
+        "lataccel_cost": 0.2267694871814742,
+        "jerk_cost": 10.014605718688506,
+        "total_cost": 21.353080077762215,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00040",
+        "lataccel_cost": 0.5620378537854326,
+        "jerk_cost": 14.934207480522296,
+        "total_cost": 43.03610016979392,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00041",
+        "lataccel_cost": 0.5116366112464189,
+        "jerk_cost": 14.683822792679225,
+        "total_cost": 40.26565335500017,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00042",
+        "lataccel_cost": 0.7949864863802231,
+        "jerk_cost": 23.766459605149247,
+        "total_cost": 63.5157839241604,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00043",
+        "lataccel_cost": 0.32552827520029637,
+        "jerk_cost": 13.729950583824438,
+        "total_cost": 30.00636434383926,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00044",
+        "lataccel_cost": 0.7036311395181718,
+        "jerk_cost": 25.591033070512687,
+        "total_cost": 60.772590046421286,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00045",
+        "lataccel_cost": 0.7995544546392306,
+        "jerk_cost": 15.97094818700386,
+        "total_cost": 55.948670918965384,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00046",
+        "lataccel_cost": 0.8266165540550995,
+        "jerk_cost": 28.266270661666212,
+        "total_cost": 69.59709836442119,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00047",
+        "lataccel_cost": 0.07056513810919161,
+        "jerk_cost": 2.117762999397746,
+        "total_cost": 5.646019904857326,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00048",
+        "lataccel_cost": 0.7429651939187033,
+        "jerk_cost": 17.897823186137142,
+        "total_cost": 55.04608288207231,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00049",
+        "lataccel_cost": 0.6142633691925385,
+        "jerk_cost": 19.741782950650293,
+        "total_cost": 50.45495141027722,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00050",
+        "lataccel_cost": 0.6020575371688828,
+        "jerk_cost": 27.29686908040701,
+        "total_cost": 57.399745938851154,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00051",
+        "lataccel_cost": 0.6295757612993516,
+        "jerk_cost": 27.72201049794442,
+        "total_cost": 59.200798562912006,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00052",
+        "lataccel_cost": 0.7622844731292596,
+        "jerk_cost": 30.22020938258012,
+        "total_cost": 68.3344330390431,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00053",
+        "lataccel_cost": 0.46279476268517394,
+        "jerk_cost": 19.44312268614034,
+        "total_cost": 42.582860820399034,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00054",
+        "lataccel_cost": 0.9427323109965122,
+        "jerk_cost": 39.894155828822285,
+        "total_cost": 87.0307713786479,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00055",
+        "lataccel_cost": 0.7297706326197365,
+        "jerk_cost": 24.733455406701278,
+        "total_cost": 61.2219870376881,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00056",
+        "lataccel_cost": 1.1386088882833463,
+        "jerk_cost": 26.96204197140345,
+        "total_cost": 83.89248638557075,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00057",
+        "lataccel_cost": 0.24739370903263364,
+        "jerk_cost": 5.77674114880756,
+        "total_cost": 18.14642660043924,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00058",
+        "lataccel_cost": 0.7450710493020616,
+        "jerk_cost": 28.975002217097682,
+        "total_cost": 66.22855468220075,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00059",
+        "lataccel_cost": 0.41262983394305713,
+        "jerk_cost": 15.503021888628746,
+        "total_cost": 36.134513585781605,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00060",
+        "lataccel_cost": 0.21209546423676578,
+        "jerk_cost": 6.212766586097326,
+        "total_cost": 16.817539797935616,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00061",
+        "lataccel_cost": 0.6380760283017132,
+        "jerk_cost": 22.41807220185704,
+        "total_cost": 54.32187361694268,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00062",
+        "lataccel_cost": 0.20954970156346675,
+        "jerk_cost": 6.442004440461047,
+        "total_cost": 16.919489518634382,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00063",
+        "lataccel_cost": 0.725913453292111,
+        "jerk_cost": 55.72845064773531,
+        "total_cost": 92.02412331234085,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00064",
+        "lataccel_cost": 0.1630232633163655,
+        "jerk_cost": 2.9343379134736565,
+        "total_cost": 11.085501079291932,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00065",
+        "lataccel_cost": 0.5572650878944158,
+        "jerk_cost": 14.527786214164793,
+        "total_cost": 42.39104060888559,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00066",
+        "lataccel_cost": 0.12248892123333617,
+        "jerk_cost": 4.849929427516164,
+        "total_cost": 10.974375489182973,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00067",
+        "lataccel_cost": 0.5452951720331994,
+        "jerk_cost": 21.671957721433067,
+        "total_cost": 48.936716323093044,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00068",
+        "lataccel_cost": 0.34148568389848194,
+        "jerk_cost": 18.281483000140984,
+        "total_cost": 35.355767195065084,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00069",
+        "lataccel_cost": 1.094146086778296,
+        "jerk_cost": 25.843883673323436,
+        "total_cost": 80.55118801223824,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00070",
+        "lataccel_cost": 0.7748070538667483,
+        "jerk_cost": 20.827754559158244,
+        "total_cost": 59.56810725249566,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00071",
+        "lataccel_cost": 1.1052150220076564,
+        "jerk_cost": 51.24238990440087,
+        "total_cost": 106.5031410047837,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00072",
+        "lataccel_cost": 0.6553255537608246,
+        "jerk_cost": 16.196871397799352,
+        "total_cost": 48.96314908584058,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00073",
+        "lataccel_cost": 0.5092652954694862,
+        "jerk_cost": 14.191065449980337,
+        "total_cost": 39.65433022345464,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00074",
+        "lataccel_cost": 0.20097697279100085,
+        "jerk_cost": 7.3869252952853275,
+        "total_cost": 17.43577393483537,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00075",
+        "lataccel_cost": 0.5840916326062284,
+        "jerk_cost": 28.918307830920654,
+        "total_cost": 58.12288946123208,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00076",
+        "lataccel_cost": 0.19822969464625279,
+        "jerk_cost": 19.708819825363683,
+        "total_cost": 29.620304557676324,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00077",
+        "lataccel_cost": 1.0698756225924728,
+        "jerk_cost": 21.60131177113858,
+        "total_cost": 75.09509290076222,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00078",
+        "lataccel_cost": 0.3459524797739333,
+        "jerk_cost": 7.700821387653791,
+        "total_cost": 24.998445376350457,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00079",
+        "lataccel_cost": 0.08944022542557008,
+        "jerk_cost": 1.2181391850620173,
+        "total_cost": 5.690150456340521,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00080",
+        "lataccel_cost": 0.38302597258567417,
+        "jerk_cost": 15.896645801069052,
+        "total_cost": 35.04794443035276,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00081",
+        "lataccel_cost": 0.6096843526904255,
+        "jerk_cost": 17.469666939144695,
+        "total_cost": 47.953884573665974,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00082",
+        "lataccel_cost": 0.6817067734979207,
+        "jerk_cost": 34.31432067703399,
+        "total_cost": 68.39965935193003,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00083",
+        "lataccel_cost": 0.642737076314729,
+        "jerk_cost": 18.553008201289902,
+        "total_cost": 50.689862017026364,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00084",
+        "lataccel_cost": 0.34962774202118974,
+        "jerk_cost": 38.133319485078665,
+        "total_cost": 55.614706586138155,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00085",
+        "lataccel_cost": 0.9548187326538725,
+        "jerk_cost": 20.150345929503175,
+        "total_cost": 67.8912825621968,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00086",
+        "lataccel_cost": 0.5384189935157081,
+        "jerk_cost": 29.260633268831015,
+        "total_cost": 56.18158294461642,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00087",
+        "lataccel_cost": 0.29667730341731924,
+        "jerk_cost": 5.972596868300798,
+        "total_cost": 20.80646203916676,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00088",
+        "lataccel_cost": 0.6491782316244212,
+        "jerk_cost": 18.927587004288544,
+        "total_cost": 51.38649858550961,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00089",
+        "lataccel_cost": 1.2431210484258521,
+        "jerk_cost": 34.99549024703137,
+        "total_cost": 97.15154266832397,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00090",
+        "lataccel_cost": 0.09317654575762187,
+        "jerk_cost": 3.6450192385533615,
+        "total_cost": 8.303846526434457,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00091",
+        "lataccel_cost": 0.9211689661079105,
+        "jerk_cost": 36.85376225179827,
+        "total_cost": 82.91221055719379,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00092",
+        "lataccel_cost": 0.5918199506474909,
+        "jerk_cost": 22.665063264626014,
+        "total_cost": 52.256060797000565,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00093",
+        "lataccel_cost": 0.9863843913711915,
+        "jerk_cost": 29.598610289628567,
+        "total_cost": 78.91782985818814,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00094",
+        "lataccel_cost": 1.1264264510464164,
+        "jerk_cost": 58.3135599453287,
+        "total_cost": 114.63488249764953,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00095",
+        "lataccel_cost": 0.7587630205217204,
+        "jerk_cost": 37.83953267163392,
+        "total_cost": 75.77768369771994,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00096",
+        "lataccel_cost": 0.4815122314263271,
+        "jerk_cost": 20.025612992656114,
+        "total_cost": 44.10122456397247,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00097",
+        "lataccel_cost": 0.23848751373517543,
+        "jerk_cost": 5.940710200203329,
+        "total_cost": 17.865085886962103,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00098",
+        "lataccel_cost": 0.7986973963581977,
+        "jerk_cost": 22.071561875665317,
+        "total_cost": 62.006431693575195,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      },
+      {
+        "segment": "00099",
+        "lataccel_cost": 0.29492112419591576,
+        "jerk_cost": 8.160962495461861,
+        "total_cost": 22.907018705257645,
+        "diagnostics": {
+          "adaptive_p": 0.3,
+          "adaptive_i": 0.07,
+          "adaptive_d": -0.1,
+          "adaptive_ff_gain": 0.8
+        }
+      }
+    ]
+  },
+  "adaptive": {
+    "summary": {
+      "num_segments": 100,
+      "successful_segments": 100,
+      "avg_total_cost": 62.96609731329797,
+      "std_total_cost": 60.58419779972259,
+      "min_total_cost": 4.524655631921739,
+      "max_total_cost": 538.2176636071504,
+      "avg_lataccel_cost": 0.635333522095543,
+      "avg_jerk_cost": 31.199421208520825
+    },
+    "segments": [
+      {
+        "segment": "00000",
+        "lataccel_cost": 0.7303478105544662,
+        "jerk_cost": 39.498583402543716,
+        "total_cost": 76.01597393026702,
+        "diagnostics": {
+          "adaptive_p": 0.38740635755603386,
+          "adaptive_i": 0.09136057870375183,
+          "adaptive_d": -0.06026293766854516,
+          "adaptive_ff_gain": 0.7783868887356216
+        }
+      },
+      {
+        "segment": "00001",
+        "lataccel_cost": 0.33376594432548073,
+        "jerk_cost": 10.035611943048568,
+        "total_cost": 26.723909159322602,
+        "diagnostics": {
+          "adaptive_p": 0.3870086277068085,
+          "adaptive_i": 0.09149995390500198,
+          "adaptive_d": -0.0604262904675266,
+          "adaptive_ff_gain": 0.777916071964115
+        }
+      },
+      {
+        "segment": "00002",
+        "lataccel_cost": 0.5685705256852988,
+        "jerk_cost": 30.106853469156267,
+        "total_cost": 58.53537975342121,
+        "diagnostics": {
+          "adaptive_p": 0.3868500715610615,
+          "adaptive_i": 0.09157978900887995,
+          "adaptive_d": -0.06050834725848407,
+          "adaptive_ff_gain": 0.7763699668008004
+        }
+      },
+      {
+        "segment": "00003",
+        "lataccel_cost": 0.4514074159278747,
+        "jerk_cost": 19.83105662638543,
+        "total_cost": 42.401427422779165,
+        "diagnostics": {
+          "adaptive_p": 0.2963391370116308,
+          "adaptive_i": 0.07882087252135865,
+          "adaptive_d": -0.09698018147171984,
+          "adaptive_ff_gain": 0.8163021430419792
+        }
+      },
+      {
+        "segment": "00004",
+        "lataccel_cost": 0.46298341776276364,
+        "jerk_cost": 11.731818042938698,
+        "total_cost": 34.88098893107688,
+        "diagnostics": {
+          "adaptive_p": 0.3540226444435766,
+          "adaptive_i": 0.08179529465933198,
+          "adaptive_d": -0.08151790310532739,
+          "adaptive_ff_gain": 0.8587550497393899
+        }
+      },
+      {
+        "segment": "00005",
+        "lataccel_cost": 0.36146549871206846,
+        "jerk_cost": 15.423947027498674,
+        "total_cost": 33.49722196310209,
+        "diagnostics": {
+          "adaptive_p": 0.3672369472917943,
+          "adaptive_i": 0.08899502356007967,
+          "adaptive_d": -0.06745788740479015,
+          "adaptive_ff_gain": 0.7622527641628223
+        }
+      },
+      {
+        "segment": "00006",
+        "lataccel_cost": 1.0411106246205533,
+        "jerk_cost": 51.66356550191722,
+        "total_cost": 103.71909673294489,
+        "diagnostics": {
+          "adaptive_p": 0.38784884042876305,
+          "adaptive_i": 0.09138910059124757,
+          "adaptive_d": -0.0598954481045469,
+          "adaptive_ff_gain": 0.7813346785228225
+        }
+      },
+      {
+        "segment": "00007",
+        "lataccel_cost": 0.11766483006967171,
+        "jerk_cost": 2.7893667089346454,
+        "total_cost": 8.672608212418233,
+        "diagnostics": {
+          "adaptive_p": 0.38881598273222195,
+          "adaptive_i": 0.09113778370878971,
+          "adaptive_d": -0.05920623644771619,
+          "adaptive_ff_gain": 0.7880921924857142
+        }
+      },
+      {
+        "segment": "00008",
+        "lataccel_cost": 0.6491644009281373,
+        "jerk_cost": 26.024212448603542,
+        "total_cost": 58.482432495010414,
+        "diagnostics": {
+          "adaptive_p": 0.3883346541157717,
+          "adaptive_i": 0.09127841972284752,
+          "adaptive_d": -0.05968200709829948,
+          "adaptive_ff_gain": 0.7830977673315687
+        }
+      },
+      {
+        "segment": "00009",
+        "lataccel_cost": 0.4353989046883108,
+        "jerk_cost": 19.075133460147104,
+        "total_cost": 40.84507869456264,
+        "diagnostics": {
+          "adaptive_p": 0.38780708465458713,
+          "adaptive_i": 0.0914468621242034,
+          "adaptive_d": -0.059988033292033414,
+          "adaptive_ff_gain": 0.7806188965496283
+        }
+      },
+      {
+        "segment": "00010",
+        "lataccel_cost": 0.6179225634737284,
+        "jerk_cost": 35.52346845079557,
+        "total_cost": 66.41959662448198,
+        "diagnostics": {
+          "adaptive_p": 0.3873120632060416,
+          "adaptive_i": 0.09101723051929271,
+          "adaptive_d": -0.06031593498471347,
+          "adaptive_ff_gain": 0.7777552594215578
+        }
+      },
+      {
+        "segment": "00011",
+        "lataccel_cost": 0.12910492662119424,
+        "jerk_cost": 4.464411994779104,
+        "total_cost": 10.919658325838816,
+        "diagnostics": {
+          "adaptive_p": 0.3861793517988192,
+          "adaptive_i": 0.09136516575298509,
+          "adaptive_d": -0.061081083590147224,
+          "adaptive_ff_gain": 0.7736374385944342
+        }
+      },
+      {
+        "segment": "00012",
+        "lataccel_cost": 0.8743249740688946,
+        "jerk_cost": 31.313598028952924,
+        "total_cost": 75.02984673239766,
+        "diagnostics": {
+          "adaptive_p": 0.38708491462758926,
+          "adaptive_i": 0.09150046107002098,
+          "adaptive_d": -0.060470586304047926,
+          "adaptive_ff_gain": 0.7755749685382253
+        }
+      },
+      {
+        "segment": "00013",
+        "lataccel_cost": 0.5235683826095188,
+        "jerk_cost": 25.359691135603406,
+        "total_cost": 51.538110266079336,
+        "diagnostics": {
+          "adaptive_p": 0.3872084299315063,
+          "adaptive_i": 0.09136655099635593,
+          "adaptive_d": -0.06030889578516343,
+          "adaptive_ff_gain": 0.7788423981902115
+        }
+      },
+      {
+        "segment": "00014",
+        "lataccel_cost": 1.2570591301712262,
+        "jerk_cost": 53.63130999081741,
+        "total_cost": 116.4842664993787,
+        "diagnostics": {
+          "adaptive_p": 0.3871372260238199,
+          "adaptive_i": 0.09147812994298038,
+          "adaptive_d": -0.06029096124574645,
+          "adaptive_ff_gain": 0.7796076779500458
+        }
+      },
+      {
+        "segment": "00015",
+        "lataccel_cost": 0.3214786460964376,
+        "jerk_cost": 8.247019818984393,
+        "total_cost": 24.320952123806272,
+        "diagnostics": {
+          "adaptive_p": 0.38586623189342256,
+          "adaptive_i": 0.09138463198047041,
+          "adaptive_d": -0.06090618733573532,
+          "adaptive_ff_gain": 0.7789917407268284
+        }
+      },
+      {
+        "segment": "00016",
+        "lataccel_cost": 0.6918148386637597,
+        "jerk_cost": 38.79219668414787,
+        "total_cost": 73.38293861733584,
+        "diagnostics": {
+          "adaptive_p": 0.386951407513798,
+          "adaptive_i": 0.09154664197081848,
+          "adaptive_d": -0.060544230844464086,
+          "adaptive_ff_gain": 0.7758659895166378
+        }
+      },
+      {
+        "segment": "00017",
+        "lataccel_cost": 0.7908602421754918,
+        "jerk_cost": 35.60917396704386,
+        "total_cost": 75.15218607581845,
+        "diagnostics": {
+          "adaptive_p": 0.38755769660384154,
+          "adaptive_i": 0.09141146531970945,
+          "adaptive_d": -0.06010358186175075,
+          "adaptive_ff_gain": 0.7797717798403602
+        }
+      },
+      {
+        "segment": "00018",
+        "lataccel_cost": 0.7034398816436778,
+        "jerk_cost": 27.601630127732616,
+        "total_cost": 62.773624209916505,
+        "diagnostics": {
+          "adaptive_p": 0.38716212856091614,
+          "adaptive_i": 0.09148982404951167,
+          "adaptive_d": -0.06037895913042695,
+          "adaptive_ff_gain": 0.7771298692705478
+        }
+      },
+      {
+        "segment": "00019",
+        "lataccel_cost": 5.377106738513273,
+        "jerk_cost": 269.36232668148665,
+        "total_cost": 538.2176636071504,
+        "diagnostics": {
+          "adaptive_p": 0.3874655125622054,
+          "adaptive_i": 0.09102497555403383,
+          "adaptive_d": -0.06025041993169736,
+          "adaptive_ff_gain": 0.778286118218044
+        }
+      },
+      {
+        "segment": "00020",
+        "lataccel_cost": 0.33795693659303483,
+        "jerk_cost": 12.83199540758954,
+        "total_cost": 29.729842237241282,
+        "diagnostics": {
+          "adaptive_p": 0.3877455511240933,
+          "adaptive_i": 0.09118373579060222,
+          "adaptive_d": -0.06011449012338802,
+          "adaptive_ff_gain": 0.7779032511017343
+        }
+      },
+      {
+        "segment": "00021",
+        "lataccel_cost": 0.9594932526977848,
+        "jerk_cost": 53.76348652831313,
+        "total_cost": 101.73814916320237,
+        "diagnostics": {
+          "adaptive_p": 0.38762859497896474,
+          "adaptive_i": 0.09159126387523102,
+          "adaptive_d": -0.06010184205863828,
+          "adaptive_ff_gain": 0.7798323720212754
+        }
+      },
+      {
+        "segment": "00022",
+        "lataccel_cost": 0.5675707191212238,
+        "jerk_cost": 24.41807666788695,
+        "total_cost": 52.79661262394814,
+        "diagnostics": {
+          "adaptive_p": 0.3875850085860293,
+          "adaptive_i": 0.09123938241488092,
+          "adaptive_d": -0.060250838462062,
+          "adaptive_ff_gain": 0.7791567744683883
+        }
+      },
+      {
+        "segment": "00023",
+        "lataccel_cost": 0.7181765370845556,
+        "jerk_cost": 34.636912814400546,
+        "total_cost": 70.54573966862834,
+        "diagnostics": {
+          "adaptive_p": 0.38730641609742295,
+          "adaptive_i": 0.0920097255741855,
+          "adaptive_d": -0.06020603659293514,
+          "adaptive_ff_gain": 0.77930396953159
+        }
+      },
+      {
+        "segment": "00024",
+        "lataccel_cost": 0.3702885046590127,
+        "jerk_cost": 13.717695103311389,
+        "total_cost": 32.23212033626202,
+        "diagnostics": {
+          "adaptive_p": 0.385999865408121,
+          "adaptive_i": 0.09186769326714549,
+          "adaptive_d": -0.06096046401543562,
+          "adaptive_ff_gain": 0.772299171348973
+        }
+      },
+      {
+        "segment": "00025",
+        "lataccel_cost": 0.06096146208854771,
+        "jerk_cost": 1.4765825274943538,
+        "total_cost": 4.524655631921739,
+        "diagnostics": {
+          "adaptive_p": 0.37642237451735827,
+          "adaptive_i": 0.0885517175550234,
+          "adaptive_d": -0.06449150629239872,
+          "adaptive_ff_gain": 0.7785373009983353
+        }
+      },
+      {
+        "segment": "00026",
+        "lataccel_cost": 0.8600858539522926,
+        "jerk_cost": 67.92485143420474,
+        "total_cost": 110.92914413181936,
+        "diagnostics": {
+          "adaptive_p": 0.3847767691015107,
+          "adaptive_i": 0.09046323899491919,
+          "adaptive_d": -0.061292336024491086,
+          "adaptive_ff_gain": 0.7833240525682894
+        }
+      },
+      {
+        "segment": "00027",
+        "lataccel_cost": 0.7950460210811607,
+        "jerk_cost": 32.4060486912938,
+        "total_cost": 72.15834974535184,
+        "diagnostics": {
+          "adaptive_p": 0.3878455275969089,
+          "adaptive_i": 0.09132389677054215,
+          "adaptive_d": -0.059978200671824265,
+          "adaptive_ff_gain": 0.780913753496162
+        }
+      },
+      {
+        "segment": "00028",
+        "lataccel_cost": 0.7893348251165837,
+        "jerk_cost": 30.352228965934543,
+        "total_cost": 69.81897022176372,
+        "diagnostics": {
+          "adaptive_p": 0.38768554991921794,
+          "adaptive_i": 0.09136818665872062,
+          "adaptive_d": -0.06000949170620625,
+          "adaptive_ff_gain": 0.7806306957095441
+        }
+      },
+      {
+        "segment": "00029",
+        "lataccel_cost": 0.3632533003461462,
+        "jerk_cost": 9.90813651861271,
+        "total_cost": 28.070801535920022,
+        "diagnostics": {
+          "adaptive_p": 0.3343534389566332,
+          "adaptive_i": 0.07295136303464024,
+          "adaptive_d": -0.09170016575429064,
+          "adaptive_ff_gain": 0.8048002839222841
+        }
+      },
+      {
+        "segment": "00030",
+        "lataccel_cost": 0.8234829767454707,
+        "jerk_cost": 37.43550266871843,
+        "total_cost": 78.60965150599196,
+        "diagnostics": {
+          "adaptive_p": 0.38782637961323396,
+          "adaptive_i": 0.09080005979485568,
+          "adaptive_d": -0.06000435238235725,
+          "adaptive_ff_gain": 0.7818354026930922
+        }
+      },
+      {
+        "segment": "00031",
+        "lataccel_cost": 0.08601259737909929,
+        "jerk_cost": 2.8752979827021186,
+        "total_cost": 7.175927851657084,
+        "diagnostics": {
+          "adaptive_p": 0.381965358088616,
+          "adaptive_i": 0.08248597635820044,
+          "adaptive_d": -0.06353059033133895,
+          "adaptive_ff_gain": 0.8178301119644357
+        }
+      },
+      {
+        "segment": "00032",
+        "lataccel_cost": 0.7190094164736226,
+        "jerk_cost": 34.11230717027025,
+        "total_cost": 70.06277799395137,
+        "diagnostics": {
+          "adaptive_p": 0.387182000291023,
+          "adaptive_i": 0.09134155193692069,
+          "adaptive_d": -0.06029439417121755,
+          "adaptive_ff_gain": 0.7777170025667389
+        }
+      },
+      {
+        "segment": "00033",
+        "lataccel_cost": 0.3883711670080406,
+        "jerk_cost": 29.194677645117213,
+        "total_cost": 48.61323599551925,
+        "diagnostics": {
+          "adaptive_p": 0.3826357933036367,
+          "adaptive_i": 0.09279341457449622,
+          "adaptive_d": -0.0697407621456738,
+          "adaptive_ff_gain": 0.7938282384394921
+        }
+      },
+      {
+        "segment": "00034",
+        "lataccel_cost": 0.18179673881434333,
+        "jerk_cost": 10.580252195110418,
+        "total_cost": 19.67008913582758,
+        "diagnostics": {
+          "adaptive_p": 0.38665931984182506,
+          "adaptive_i": 0.09163840295721284,
+          "adaptive_d": -0.060598625380865086,
+          "adaptive_ff_gain": 0.775244039345256
+        }
+      },
+      {
+        "segment": "00035",
+        "lataccel_cost": 0.3454494783318507,
+        "jerk_cost": 12.599286071635888,
+        "total_cost": 29.871759988228423,
+        "diagnostics": {
+          "adaptive_p": 0.38744729778641845,
+          "adaptive_i": 0.09149476822306783,
+          "adaptive_d": -0.06021269277858771,
+          "adaptive_ff_gain": 0.7781461640511645
+        }
+      },
+      {
+        "segment": "00036",
+        "lataccel_cost": 0.8959606817223777,
+        "jerk_cost": 61.59239249467609,
+        "total_cost": 106.390426580795,
+        "diagnostics": {
+          "adaptive_p": 0.3879309645913066,
+          "adaptive_i": 0.09136425932793348,
+          "adaptive_d": -0.059962296302870796,
+          "adaptive_ff_gain": 0.7803539238491949
+        }
+      },
+      {
+        "segment": "00037",
+        "lataccel_cost": 0.10268060642093993,
+        "jerk_cost": 1.1695994864672559,
+        "total_cost": 6.303629807514252,
+        "diagnostics": {
+          "adaptive_p": 0.3683215539981657,
+          "adaptive_i": 0.0750777376778101,
+          "adaptive_d": -0.07189334143384142,
+          "adaptive_ff_gain": 0.8204716851568694
+        }
+      },
+      {
+        "segment": "00038",
+        "lataccel_cost": 0.30174284893317865,
+        "jerk_cost": 8.26444921803257,
+        "total_cost": 23.351591664691504,
+        "diagnostics": {
+          "adaptive_p": 0.3871730134655604,
+          "adaptive_i": 0.09151351956070607,
+          "adaptive_d": -0.060427344838326257,
+          "adaptive_ff_gain": 0.7762130427674743
+        }
+      },
+      {
+        "segment": "00039",
+        "lataccel_cost": 0.21623364392077446,
+        "jerk_cost": 13.12010972287759,
+        "total_cost": 23.931791918916314,
+        "diagnostics": {
+          "adaptive_p": 0.38760171217008665,
+          "adaptive_i": 0.09096472510996115,
+          "adaptive_d": -0.060198973362828936,
+          "adaptive_ff_gain": 0.7787879976400714
+        }
+      },
+      {
+        "segment": "00040",
+        "lataccel_cost": 0.456491301459166,
+        "jerk_cost": 20.989940288691,
+        "total_cost": 43.814505361649296,
+        "diagnostics": {
+          "adaptive_p": 0.38796347677025905,
+          "adaptive_i": 0.09136943141709129,
+          "adaptive_d": -0.05989098169369116,
+          "adaptive_ff_gain": 0.7809825575019388
+        }
+      },
+      {
+        "segment": "00041",
+        "lataccel_cost": 0.44388055099663604,
+        "jerk_cost": 18.443871486982022,
+        "total_cost": 40.63789903681383,
+        "diagnostics": {
+          "adaptive_p": 0.38748901339585606,
+          "adaptive_i": 0.09146887106845228,
+          "adaptive_d": -0.060182696595744246,
+          "adaptive_ff_gain": 0.7788109076667602
+        }
+      },
+      {
+        "segment": "00042",
+        "lataccel_cost": 0.7634704177971505,
+        "jerk_cost": 31.92915743769856,
+        "total_cost": 70.10267832755609,
+        "diagnostics": {
+          "adaptive_p": 0.3874606597644682,
+          "adaptive_i": 0.09165220853010332,
+          "adaptive_d": -0.06026159674660586,
+          "adaptive_ff_gain": 0.7789452835407205
+        }
+      },
+      {
+        "segment": "00043",
+        "lataccel_cost": 0.33532609183808193,
+        "jerk_cost": 16.966841295883068,
+        "total_cost": 33.73314588778717,
+        "diagnostics": {
+          "adaptive_p": 0.38732518206306943,
+          "adaptive_i": 0.09145315700716862,
+          "adaptive_d": -0.06023724353823247,
+          "adaptive_ff_gain": 0.778324111781136
+        }
+      },
+      {
+        "segment": "00044",
+        "lataccel_cost": 0.7773248104297471,
+        "jerk_cost": 34.22433420215835,
+        "total_cost": 73.0905747236457,
+        "diagnostics": {
+          "adaptive_p": 0.38612461189142666,
+          "adaptive_i": 0.09129122489699146,
+          "adaptive_d": -0.06108920208717481,
+          "adaptive_ff_gain": 0.7731765232413235
+        }
+      },
+      {
+        "segment": "00045",
+        "lataccel_cost": 0.7703853661555341,
+        "jerk_cost": 21.654020514669874,
+        "total_cost": 60.17328882244659,
+        "diagnostics": {
+          "adaptive_p": 0.38808141918223205,
+          "adaptive_i": 0.09143493402111083,
+          "adaptive_d": -0.05979176445104942,
+          "adaptive_ff_gain": 0.7832180413410592
+        }
+      },
+      {
+        "segment": "00046",
+        "lataccel_cost": 0.8066432807527556,
+        "jerk_cost": 41.03228096811732,
+        "total_cost": 81.36444500575512,
+        "diagnostics": {
+          "adaptive_p": 0.3873407235346874,
+          "adaptive_i": 0.09133033675079855,
+          "adaptive_d": -0.060236406092794716,
+          "adaptive_ff_gain": 0.7799119980374357
+        }
+      },
+      {
+        "segment": "00047",
+        "lataccel_cost": 0.05860957454733961,
+        "jerk_cost": 2.284982445777158,
+        "total_cost": 5.215461173144138,
+        "diagnostics": {
+          "adaptive_p": 0.3861419054467041,
+          "adaptive_i": 0.09126927590120303,
+          "adaptive_d": -0.06077147065046192,
+          "adaptive_ff_gain": 0.7796321206550825
+        }
+      },
+      {
+        "segment": "00048",
+        "lataccel_cost": 0.5878854386441408,
+        "jerk_cost": 22.226417998129932,
+        "total_cost": 51.62068993033697,
+        "diagnostics": {
+          "adaptive_p": 0.3870014342126955,
+          "adaptive_i": 0.09154959896960504,
+          "adaptive_d": -0.06046029773899632,
+          "adaptive_ff_gain": 0.7763000460300139
+        }
+      },
+      {
+        "segment": "00049",
+        "lataccel_cost": 0.5781317033315786,
+        "jerk_cost": 25.30302396738275,
+        "total_cost": 54.209609133961685,
+        "diagnostics": {
+          "adaptive_p": 0.38689204764176865,
+          "adaptive_i": 0.09159696367929887,
+          "adaptive_d": -0.06051820282532236,
+          "adaptive_ff_gain": 0.7753205713354275
+        }
+      },
+      {
+        "segment": "00050",
+        "lataccel_cost": 0.6348645508271412,
+        "jerk_cost": 36.89765415181925,
+        "total_cost": 68.64088169317633,
+        "diagnostics": {
+          "adaptive_p": 0.38808564828194625,
+          "adaptive_i": 0.09130098136501802,
+          "adaptive_d": -0.059772717552550765,
+          "adaptive_ff_gain": 0.7823958042162292
+        }
+      },
+      {
+        "segment": "00051",
+        "lataccel_cost": 0.6174801155702486,
+        "jerk_cost": 36.82352607945242,
+        "total_cost": 67.69753185796486,
+        "diagnostics": {
+          "adaptive_p": 0.3874258381441752,
+          "adaptive_i": 0.09140482012535117,
+          "adaptive_d": -0.060187999448211904,
+          "adaptive_ff_gain": 0.7787598747588514
+        }
+      },
+      {
+        "segment": "00052",
+        "lataccel_cost": 0.9044772929878157,
+        "jerk_cost": 51.25402688787615,
+        "total_cost": 96.47789153726696,
+        "diagnostics": {
+          "adaptive_p": 0.387955076860203,
+          "adaptive_i": 0.09158943029668809,
+          "adaptive_d": -0.05977861269663614,
+          "adaptive_ff_gain": 0.780056246154597
+        }
+      },
+      {
+        "segment": "00053",
+        "lataccel_cost": 0.4563115229805015,
+        "jerk_cost": 24.175433018677705,
+        "total_cost": 46.99100916770278,
+        "diagnostics": {
+          "adaptive_p": 0.38712049385267505,
+          "adaptive_i": 0.09161482364503121,
+          "adaptive_d": -0.0603587342126007,
+          "adaptive_ff_gain": 0.7775947325587487
+        }
+      },
+      {
+        "segment": "00054",
+        "lataccel_cost": 1.1692801792110958,
+        "jerk_cost": 64.11947591073114,
+        "total_cost": 122.58348487128593,
+        "diagnostics": {
+          "adaptive_p": 0.38694602462515626,
+          "adaptive_i": 0.09101482497915334,
+          "adaptive_d": -0.06039157297795718,
+          "adaptive_ff_gain": 0.7790204221070575
+        }
+      },
+      {
+        "segment": "00055",
+        "lataccel_cost": 0.6580694637926223,
+        "jerk_cost": 33.48858784928049,
+        "total_cost": 66.39206103891162,
+        "diagnostics": {
+          "adaptive_p": 0.3877802182456545,
+          "adaptive_i": 0.09143529433940246,
+          "adaptive_d": -0.05999565197725687,
+          "adaptive_ff_gain": 0.7802181689164907
+        }
+      },
+      {
+        "segment": "00056",
+        "lataccel_cost": 0.918959895918531,
+        "jerk_cost": 37.05254113578397,
+        "total_cost": 83.00053593171052,
+        "diagnostics": {
+          "adaptive_p": 0.3874046993924216,
+          "adaptive_i": 0.0915290688398816,
+          "adaptive_d": -0.06020527445832277,
+          "adaptive_ff_gain": 0.7779287808335813
+        }
+      },
+      {
+        "segment": "00057",
+        "lataccel_cost": 0.20248185976933264,
+        "jerk_cost": 7.518212240387437,
+        "total_cost": 17.64230522885407,
+        "diagnostics": {
+          "adaptive_p": 0.38155906677505524,
+          "adaptive_i": 0.07189087775723717,
+          "adaptive_d": -0.06623976809453061,
+          "adaptive_ff_gain": 0.7827322498474313
+        }
+      },
+      {
+        "segment": "00058",
+        "lataccel_cost": 0.7783962314895657,
+        "jerk_cost": 44.6960190259964,
+        "total_cost": 83.6158306004747,
+        "diagnostics": {
+          "adaptive_p": 0.38771293847366795,
+          "adaptive_i": 0.0919229480868139,
+          "adaptive_d": -0.06017220804279205,
+          "adaptive_ff_gain": 0.7777124529688603
+        }
+      },
+      {
+        "segment": "00059",
+        "lataccel_cost": 0.44417508483019824,
+        "jerk_cost": 18.36486327095069,
+        "total_cost": 40.573617512460594,
+        "diagnostics": {
+          "adaptive_p": 0.3879287544873242,
+          "adaptive_i": 0.09101783304624522,
+          "adaptive_d": -0.059815836153764866,
+          "adaptive_ff_gain": 0.7813528929754314
+        }
+      },
+      {
+        "segment": "00060",
+        "lataccel_cost": 0.17947069749390812,
+        "jerk_cost": 7.6986308096401,
+        "total_cost": 16.672165684335507,
+        "diagnostics": {
+          "adaptive_p": 0.38746185753225804,
+          "adaptive_i": 0.09149518727887873,
+          "adaptive_d": -0.06020174194562518,
+          "adaptive_ff_gain": 0.7785178825908236
+        }
+      },
+      {
+        "segment": "00061",
+        "lataccel_cost": 0.7512798308411314,
+        "jerk_cost": 35.528076798002964,
+        "total_cost": 73.09206834005955,
+        "diagnostics": {
+          "adaptive_p": 0.3870141603364615,
+          "adaptive_i": 0.09192764869193368,
+          "adaptive_d": -0.06043043116241244,
+          "adaptive_ff_gain": 0.7775078925976034
+        }
+      },
+      {
+        "segment": "00062",
+        "lataccel_cost": 0.17458454412566454,
+        "jerk_cost": 7.536097389629199,
+        "total_cost": 16.265324595912425,
+        "diagnostics": {
+          "adaptive_p": 0.38662960509913175,
+          "adaptive_i": 0.0911602536722802,
+          "adaptive_d": -0.060342087843800546,
+          "adaptive_ff_gain": 0.7843267851332815
+        }
+      },
+      {
+        "segment": "00063",
+        "lataccel_cost": 1.1024927109451865,
+        "jerk_cost": 94.24864454584993,
+        "total_cost": 149.37328009310926,
+        "diagnostics": {
+          "adaptive_p": 0.38721023649991426,
+          "adaptive_i": 0.0913095251324775,
+          "adaptive_d": -0.06014372270301586,
+          "adaptive_ff_gain": 0.7788498321460705
+        }
+      },
+      {
+        "segment": "00064",
+        "lataccel_cost": 0.13738760261036587,
+        "jerk_cost": 3.572160658949414,
+        "total_cost": 10.441540789467709,
+        "diagnostics": {
+          "adaptive_p": 0.3864947471356228,
+          "adaptive_i": 0.09092854912562312,
+          "adaptive_d": -0.06052410124282939,
+          "adaptive_ff_gain": 0.77971377982683
+        }
+      },
+      {
+        "segment": "00065",
+        "lataccel_cost": 0.49038858599340557,
+        "jerk_cost": 18.655717690502282,
+        "total_cost": 43.17514699017257,
+        "diagnostics": {
+          "adaptive_p": 0.3870042022304482,
+          "adaptive_i": 0.09148741940704203,
+          "adaptive_d": -0.06046886394751338,
+          "adaptive_ff_gain": 0.7768851465451295
+        }
+      },
+      {
+        "segment": "00066",
+        "lataccel_cost": 0.14424498829194682,
+        "jerk_cost": 7.896763001577228,
+        "total_cost": 15.109012416174568,
+        "diagnostics": {
+          "adaptive_p": 0.38599555439119293,
+          "adaptive_i": 0.08712697569544926,
+          "adaptive_d": -0.06163842580766837,
+          "adaptive_ff_gain": 0.8015549379362914
+        }
+      },
+      {
+        "segment": "00067",
+        "lataccel_cost": 0.4555080465770979,
+        "jerk_cost": 29.777323172366582,
+        "total_cost": 52.552725501221474,
+        "diagnostics": {
+          "adaptive_p": 0.3864727058277121,
+          "adaptive_i": 0.09124912807284262,
+          "adaptive_d": -0.06096992535864464,
+          "adaptive_ff_gain": 0.7749567431631786
+        }
+      },
+      {
+        "segment": "00068",
+        "lataccel_cost": 0.3799501389288868,
+        "jerk_cost": 25.25214506492849,
+        "total_cost": 44.24965201137283,
+        "diagnostics": {
+          "adaptive_p": 0.3873010865311324,
+          "adaptive_i": 0.09144288560015754,
+          "adaptive_d": -0.060239426676199165,
+          "adaptive_ff_gain": 0.7786966725769079
+        }
+      },
+      {
+        "segment": "00069",
+        "lataccel_cost": 1.5442042078921374,
+        "jerk_cost": 39.4316581162677,
+        "total_cost": 116.64186851087457,
+        "diagnostics": {
+          "adaptive_p": 0.34092911110210844,
+          "adaptive_i": 0.07606498167846053,
+          "adaptive_d": -0.08997977083571172,
+          "adaptive_ff_gain": 0.8168761688012173
+        }
+      },
+      {
+        "segment": "00070",
+        "lataccel_cost": 0.6162746999804406,
+        "jerk_cost": 28.252297978404144,
+        "total_cost": 59.066032977426175,
+        "diagnostics": {
+          "adaptive_p": 0.386977881999626,
+          "adaptive_i": 0.09166984729698396,
+          "adaptive_d": -0.06042829013386323,
+          "adaptive_ff_gain": 0.7767314648229684
+        }
+      },
+      {
+        "segment": "00071",
+        "lataccel_cost": 1.9883613620750373,
+        "jerk_cost": 133.38615992892954,
+        "total_cost": 232.8042280326814,
+        "diagnostics": {
+          "adaptive_p": 0.3869958069509316,
+          "adaptive_i": 0.09143384112468662,
+          "adaptive_d": -0.06050453126468476,
+          "adaptive_ff_gain": 0.778514928012259
+        }
+      },
+      {
+        "segment": "00072",
+        "lataccel_cost": 0.4756909268164625,
+        "jerk_cost": 20.021419021419902,
+        "total_cost": 43.80596536224302,
+        "diagnostics": {
+          "adaptive_p": 0.3870534681969129,
+          "adaptive_i": 0.09188294985421629,
+          "adaptive_d": -0.06037748673352943,
+          "adaptive_ff_gain": 0.7778597991613058
+        }
+      },
+      {
+        "segment": "00073",
+        "lataccel_cost": 0.5209462722956303,
+        "jerk_cost": 19.408312177017994,
+        "total_cost": 45.455625791799505,
+        "diagnostics": {
+          "adaptive_p": 0.3874693260090565,
+          "adaptive_i": 0.09137054186481919,
+          "adaptive_d": -0.060184380890207535,
+          "adaptive_ff_gain": 0.7794309535475069
+        }
+      },
+      {
+        "segment": "00074",
+        "lataccel_cost": 0.18211093112859914,
+        "jerk_cost": 9.020898171335581,
+        "total_cost": 18.126444727765538,
+        "diagnostics": {
+          "adaptive_p": 0.3880193776758307,
+          "adaptive_i": 0.091412655869608,
+          "adaptive_d": -0.05982515807268757,
+          "adaptive_ff_gain": 0.781063623842798
+        }
+      },
+      {
+        "segment": "00075",
+        "lataccel_cost": 0.6408995369856879,
+        "jerk_cost": 38.71258969028622,
+        "total_cost": 70.75756653957062,
+        "diagnostics": {
+          "adaptive_p": 0.3877158118756894,
+          "adaptive_i": 0.09143962737503081,
+          "adaptive_d": -0.060000472301096994,
+          "adaptive_ff_gain": 0.7803005513207658
+        }
+      },
+      {
+        "segment": "00076",
+        "lataccel_cost": 0.2483923031166115,
+        "jerk_cost": 22.393886364370246,
+        "total_cost": 34.81350152020082,
+        "diagnostics": {
+          "adaptive_p": 0.38721963805618936,
+          "adaptive_i": 0.09164142271926075,
+          "adaptive_d": -0.06028326723532871,
+          "adaptive_ff_gain": 0.7775756706522345
+        }
+      },
+      {
+        "segment": "00077",
+        "lataccel_cost": 0.7874957278337104,
+        "jerk_cost": 35.86513054730248,
+        "total_cost": 75.23991693898799,
+        "diagnostics": {
+          "adaptive_p": 0.38752892078905804,
+          "adaptive_i": 0.09116729964958142,
+          "adaptive_d": -0.060157034706002595,
+          "adaptive_ff_gain": 0.7801877460329247
+        }
+      },
+      {
+        "segment": "00078",
+        "lataccel_cost": 0.3051343202710896,
+        "jerk_cost": 8.897634853883591,
+        "total_cost": 24.15435086743807,
+        "diagnostics": {
+          "adaptive_p": 0.387473969039156,
+          "adaptive_i": 0.09152809183705941,
+          "adaptive_d": -0.06013590636687109,
+          "adaptive_ff_gain": 0.7791810097190965
+        }
+      },
+      {
+        "segment": "00079",
+        "lataccel_cost": 0.07812200153728723,
+        "jerk_cost": 1.6051327609686568,
+        "total_cost": 5.511232837833018,
+        "diagnostics": {
+          "adaptive_p": 0.3883869151958415,
+          "adaptive_i": 0.09092317985256888,
+          "adaptive_d": -0.05942213506722828,
+          "adaptive_ff_gain": 0.789764958506418
+        }
+      },
+      {
+        "segment": "00080",
+        "lataccel_cost": 0.3541430578798728,
+        "jerk_cost": 18.978261312918217,
+        "total_cost": 36.68541420691186,
+        "diagnostics": {
+          "adaptive_p": 0.38821476820095613,
+          "adaptive_i": 0.09126976161687994,
+          "adaptive_d": -0.059727802386694784,
+          "adaptive_ff_gain": 0.783047572644832
+        }
+      },
+      {
+        "segment": "00081",
+        "lataccel_cost": 0.5113881622165797,
+        "jerk_cost": 22.90907664494358,
+        "total_cost": 48.47848475577257,
+        "diagnostics": {
+          "adaptive_p": 0.38766768616028247,
+          "adaptive_i": 0.09141597718496097,
+          "adaptive_d": -0.06004156563512674,
+          "adaptive_ff_gain": 0.7798433712609354
+        }
+      },
+      {
+        "segment": "00082",
+        "lataccel_cost": 1.1841870485288322,
+        "jerk_cost": 63.539502205687285,
+        "total_cost": 122.74885463212891,
+        "diagnostics": {
+          "adaptive_p": 0.3878087986532767,
+          "adaptive_i": 0.09172582240376727,
+          "adaptive_d": -0.059964395984095795,
+          "adaptive_ff_gain": 0.7808534397755946
+        }
+      },
+      {
+        "segment": "00083",
+        "lataccel_cost": 0.5870775303936695,
+        "jerk_cost": 25.444838241355672,
+        "total_cost": 54.79871476103914,
+        "diagnostics": {
+          "adaptive_p": 0.38745845498774345,
+          "adaptive_i": 0.0914913057615701,
+          "adaptive_d": -0.06016758727226235,
+          "adaptive_ff_gain": 0.7805545706485472
+        }
+      },
+      {
+        "segment": "00084",
+        "lataccel_cost": 0.451036061952353,
+        "jerk_cost": 52.61452354153576,
+        "total_cost": 75.16632663915343,
+        "diagnostics": {
+          "adaptive_p": 0.2982028282803477,
+          "adaptive_i": 0.07824024579887943,
+          "adaptive_d": -0.0953162121885724,
+          "adaptive_ff_gain": 0.8129656653233732
+        }
+      },
+      {
+        "segment": "00085",
+        "lataccel_cost": 0.766901728410514,
+        "jerk_cost": 26.996787834123108,
+        "total_cost": 65.34187425464879,
+        "diagnostics": {
+          "adaptive_p": 0.38813232798135683,
+          "adaptive_i": 0.09125180382842399,
+          "adaptive_d": -0.05976331166899907,
+          "adaptive_ff_gain": 0.7823235788774981
+        }
+      },
+      {
+        "segment": "00086",
+        "lataccel_cost": 0.7151487071658466,
+        "jerk_cost": 48.60792321492902,
+        "total_cost": 84.36535857322134,
+        "diagnostics": {
+          "adaptive_p": 0.38726121624016424,
+          "adaptive_i": 0.0914785144115626,
+          "adaptive_d": -0.060347461345285895,
+          "adaptive_ff_gain": 0.7776275180199556
+        }
+      },
+      {
+        "segment": "00087",
+        "lataccel_cost": 0.23457414013380196,
+        "jerk_cost": 6.803916401729874,
+        "total_cost": 18.532623408419973,
+        "diagnostics": {
+          "adaptive_p": 0.37097920133933293,
+          "adaptive_i": 0.08205005569349064,
+          "adaptive_d": -0.08270506707767385,
+          "adaptive_ff_gain": 0.8069747254888138
+        }
+      },
+      {
+        "segment": "00088",
+        "lataccel_cost": 0.7387881231541626,
+        "jerk_cost": 28.413707312469224,
+        "total_cost": 65.35311347017736,
+        "diagnostics": {
+          "adaptive_p": 0.387324135728526,
+          "adaptive_i": 0.09127439343961524,
+          "adaptive_d": -0.06035262338444415,
+          "adaptive_ff_gain": 0.7767986968281027
+        }
+      },
+      {
+        "segment": "00089",
+        "lataccel_cost": 1.1126545608194918,
+        "jerk_cost": 47.448561303829585,
+        "total_cost": 103.08128934480415,
+        "diagnostics": {
+          "adaptive_p": 0.38657962827292475,
+          "adaptive_i": 0.09159275565925623,
+          "adaptive_d": -0.06076179281778683,
+          "adaptive_ff_gain": 0.7738715889204603
+        }
+      },
+      {
+        "segment": "00090",
+        "lataccel_cost": 0.09046141972251362,
+        "jerk_cost": 4.705668298445632,
+        "total_cost": 9.228739284571313,
+        "diagnostics": {
+          "adaptive_p": 0.3871494424052823,
+          "adaptive_i": 0.09148487369926192,
+          "adaptive_d": -0.06042345328736605,
+          "adaptive_ff_gain": 0.7784447903291074
+        }
+      },
+      {
+        "segment": "00091",
+        "lataccel_cost": 1.0899972531632776,
+        "jerk_cost": 61.35141114638217,
+        "total_cost": 115.85127380454604,
+        "diagnostics": {
+          "adaptive_p": 0.3876121624523436,
+          "adaptive_i": 0.0914091004360198,
+          "adaptive_d": -0.060082015957202674,
+          "adaptive_ff_gain": 0.7799464480129482
+        }
+      },
+      {
+        "segment": "00092",
+        "lataccel_cost": 0.6974578340409312,
+        "jerk_cost": 38.12330665778566,
+        "total_cost": 72.99619835983222,
+        "diagnostics": {
+          "adaptive_p": 0.38583316738237294,
+          "adaptive_i": 0.09125289944861059,
+          "adaptive_d": -0.06121259831033444,
+          "adaptive_ff_gain": 0.7747752330923835
+        }
+      },
+      {
+        "segment": "00093",
+        "lataccel_cost": 1.0214598763540133,
+        "jerk_cost": 45.04490943661826,
+        "total_cost": 96.11790325431892,
+        "diagnostics": {
+          "adaptive_p": 0.3873206460487821,
+          "adaptive_i": 0.09138511946998623,
+          "adaptive_d": -0.06030268109347717,
+          "adaptive_ff_gain": 0.7790020465615329
+        }
+      },
+      {
+        "segment": "00094",
+        "lataccel_cost": 1.3045830107751033,
+        "jerk_cost": 77.11380341684261,
+        "total_cost": 142.34295395559778,
+        "diagnostics": {
+          "adaptive_p": 0.35350366461494026,
+          "adaptive_i": 0.08539557570455507,
+          "adaptive_d": -0.0810391087635553,
+          "adaptive_ff_gain": 0.7702196179715883
+        }
+      },
+      {
+        "segment": "00095",
+        "lataccel_cost": 0.8048657431721221,
+        "jerk_cost": 53.132945467648135,
+        "total_cost": 93.37623262625426,
+        "diagnostics": {
+          "adaptive_p": 0.3873073600874486,
+          "adaptive_i": 0.09106114905575627,
+          "adaptive_d": -0.06020741820424887,
+          "adaptive_ff_gain": 0.7792701049883868
+        }
+      },
+      {
+        "segment": "00096",
+        "lataccel_cost": 0.44941174841983217,
+        "jerk_cost": 24.84392189761718,
+        "total_cost": 47.31450931860879,
+        "diagnostics": {
+          "adaptive_p": 0.38711055594246524,
+          "adaptive_i": 0.09105830391572459,
+          "adaptive_d": -0.06049437324925023,
+          "adaptive_ff_gain": 0.7758931622425895
+        }
+      },
+      {
+        "segment": "00097",
+        "lataccel_cost": 0.2231809349740775,
+        "jerk_cost": 7.3214650574504745,
+        "total_cost": 18.48051180615435,
+        "diagnostics": {
+          "adaptive_p": 0.3871629189130157,
+          "adaptive_i": 0.09143797255285392,
+          "adaptive_d": -0.0603997195253398,
+          "adaptive_ff_gain": 0.7772010319909196
+        }
+      },
+      {
+        "segment": "00098",
+        "lataccel_cost": 1.0525891939157015,
+        "jerk_cost": 31.552904485377987,
+        "total_cost": 84.18236418116308,
+        "diagnostics": {
+          "adaptive_p": 0.38704307011225436,
+          "adaptive_i": 0.09106690377452167,
+          "adaptive_d": -0.060506514686310436,
+          "adaptive_ff_gain": 0.7757158741633624
+        }
+      },
+      {
+        "segment": "00099",
+        "lataccel_cost": 0.256394639490263,
+        "jerk_cost": 9.92393323014766,
+        "total_cost": 22.74366520466081,
+        "diagnostics": {
+          "adaptive_p": 0.38640810245492463,
+          "adaptive_i": 0.09155776036441787,
+          "adaptive_d": -0.06080266198280295,
+          "adaptive_ff_gain": 0.7752652252983636
+        }
+      }
+    ]
+  },
+  "comparison": {
+    "improvement": -13.968768721231086,
+    "improvement_pct": -28.509245549955875
+  }
+}
