@@ -253,9 +253,9 @@ def summarize_clusters(results: List[Dict[str, float]], labels: np.ndarray, cent
         avg_val = cluster_df[feature].mean()
         print(f"    {feature:40s}: {avg_val:8.3f}")
 
-    top_segments = sorted(cluster_entries, key=lambda e: e['total_cost'])[:3]
-    print("  Representative segments:")
-    for entry in top_segments:
+    # top_segments = sorted(cluster_entries, key=lambda e: e['total_cost'])[:3]
+    print("  Segments:")
+    for entry in cluster_entries:
       print(f"    segment {entry['segment']}: lataccel={entry['lataccel_cost']:.3f}, jerk={entry['jerk_cost']:.3f}, total={entry['total_cost']:.3f}")
 
 
@@ -263,11 +263,11 @@ def main() -> None:
   parser = argparse.ArgumentParser(description="Run PID controller across segments and cluster by cost behavior.")
   parser.add_argument("--model_path", type=Path, default=DEFAULT_MODEL_PATH)
   parser.add_argument("--data_path", type=Path, default=DATASET_PATH)
-  parser.add_argument("--controller", default="pid", choices=get_available_controllers())
+  parser.add_argument("--controller", default="pid_opt", choices=get_available_controllers())
   parser.add_argument("--num_segments", type=int, default=100)
   parser.add_argument("--clusters", type=int, default=3)
   parser.add_argument("--seed", type=int, default=0)
-  parser.add_argument("--analyze", action='store_true', help="Perform deep feature analysis")
+  parser.add_argument("--analyze", default=True, action='store_true', help="Perform deep feature analysis")
   parser.add_argument("--compare", action='store_true', help="Compare PID vs PID_w_FF controllers")
   parser.add_argument("--controllers", nargs='+', choices=get_available_controllers(), help="Specific controllers to compare")
   args = parser.parse_args()
