@@ -56,7 +56,7 @@ def main():
     num_epochs=args.num_epochs,
     episodes_per_epoch=len(data_paths),  # Use all segments each epoch
     batch_size=32,
-    learning_rate=0.002,  # Slightly higher for faster learning
+    learning_rate=0.0005,  # Conservative learning rate to prevent instability
     buffer_capacity=5000,
     exploration_rate=0.4,  # Higher initial exploration
     exploration_decay=0.94,

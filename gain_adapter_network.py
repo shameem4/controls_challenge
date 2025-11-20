@@ -164,13 +164,28 @@ class GainAdapterNetwork:
       grad_w = np.outer(activations[i], delta)
       grad_b = delta
 
+      # Gradient clipping to prevent explosionexplosion
+      max_grad_norm = 1.0
+      grad_w = np.clip(grad_w, -max_grad_norm, max_grad_norm)
+      grad_b = np.clip(grad_b, -max_grad_norm, max_grad_norm)
+
       # Update weights
       self.weights[i] -= learning_rate * grad_w
       self.biases[i] -= learning_rate * grad_b
 
+      # Check for NaN/Inf and reset if needed
+      if np.any(np.isnan(self.weights[i])) or np.any(np.isinf(self.weights[i])):
+        print(f"Warning: NaN/Inf detected in weights[{i}], resetting layer")
+        prev_dim = self.weights[i].shape[0]
+        curr_dim = self.weights[i].shape[1]
+        self.weights[i] = np.random.randn(prev_dim, curr_dim).astype(np.float32) * np.sqrt(2.0 / prev_dim) * 0.1
+        self.biases[i] = np.zeros(curr_dim, dtype=np.float32)
+
       # Propagate delta to previous layer
       if i > 0:
         delta = np.dot(self.weights[i], delta) * self._relu_derivative(activations[i])
+        # Clip delta to prevent explosion in earlier layers
+        delta = np.clip(delta, -max_grad_norm, max_grad_norm)
 
     return loss
 
