@@ -1217,1218 +1217,1218 @@
     "summary": {
       "num_segments": 100,
       "successful_segments": 100,
-      "avg_total_cost": 51.792687158908706,
-      "std_total_cost": 31.355730545367095,
-      "min_total_cost": 4.602998797160812,
-      "max_total_cost": 182.50276866596167,
-      "avg_lataccel_cost": 0.6242392196284043,
-      "avg_jerk_cost": 20.58072617748849
+      "avg_total_cost": 51.0720173701477,
+      "std_total_cost": 25.1209044592738,
+      "min_total_cost": 3.543493776524352,
+      "max_total_cost": 114.99341968484475,
+      "avg_lataccel_cost": 0.6889074605460211,
+      "avg_jerk_cost": 16.626644342846625
     },
     "segments": [
       {
         "segment": "00000",
-        "lataccel_cost": 0.6318579872171448,
-        "jerk_cost": 26.605964086691046,
-        "total_cost": 58.198863447548284,
+        "lataccel_cost": 0.7242776008993627,
+        "jerk_cost": 23.359517977696456,
+        "total_cost": 59.573398022664584,
         "diagnostics": {
-          "adaptive_p": 0.19102492473538688,
-          "adaptive_i": 0.10821798348936235,
-          "adaptive_d": -0.11565360572032471,
-          "adaptive_ff_gain": 0.9056919757591506
+          "adaptive_p": 0.12506552621483702,
+          "adaptive_i": 0.08779002849250585,
+          "adaptive_d": -0.03797207150637674,
+          "adaptive_ff_gain": 0.5599383526885318
         }
       },
       {
         "segment": "00001",
-        "lataccel_cost": 0.3945649240464658,
-        "jerk_cost": 9.494076702503007,
-        "total_cost": 29.222322904826296,
+        "lataccel_cost": 0.4397120215475496,
+        "jerk_cost": 8.630968593461507,
+        "total_cost": 30.61656967083898,
         "diagnostics": {
-          "adaptive_p": 0.19089555532870375,
-          "adaptive_i": 0.10811606530005535,
-          "adaptive_d": -0.11558779658063449,
-          "adaptive_ff_gain": 0.9062783465175679
+          "adaptive_p": 0.1268904917003077,
+          "adaptive_i": 0.08761246826307091,
+          "adaptive_d": -0.03860917867544237,
+          "adaptive_ff_gain": 0.5637737085324758
         }
       },
       {
         "segment": "00002",
-        "lataccel_cost": 0.629271266175952,
-        "jerk_cost": 20.405736729916384,
-        "total_cost": 51.86930003871398,
+        "lataccel_cost": 0.8110386000520141,
+        "jerk_cost": 18.35610408715157,
+        "total_cost": 58.90803408975227,
         "diagnostics": {
-          "adaptive_p": 0.1907670317318361,
-          "adaptive_i": 0.10819280594391484,
-          "adaptive_d": -0.11553214562561712,
-          "adaptive_ff_gain": 0.9057642173459353
+          "adaptive_p": 0.12547341239165397,
+          "adaptive_i": 0.08812804860888704,
+          "adaptive_d": -0.03794540209580495,
+          "adaptive_ff_gain": 0.556691587594216
         }
       },
       {
         "segment": "00003",
-        "lataccel_cost": 0.5411882478768445,
-        "jerk_cost": 20.514267507307036,
-        "total_cost": 47.57367990114926,
+        "lataccel_cost": 0.543538643727388,
+        "jerk_cost": 14.097818464805583,
+        "total_cost": 41.27475065117498,
         "diagnostics": {
-          "adaptive_p": 0.21163436154867676,
-          "adaptive_i": 0.10593008817994196,
-          "adaptive_d": -0.11174969685403524,
-          "adaptive_ff_gain": 0.9001013874944809
+          "adaptive_p": 0.21975070685812126,
+          "adaptive_i": 0.09074414002872316,
+          "adaptive_d": -0.07022287856766105,
+          "adaptive_ff_gain": 0.5715267194369753
         }
       },
       {
         "segment": "00004",
-        "lataccel_cost": 0.38641378017521866,
-        "jerk_cost": 8.177210382759197,
-        "total_cost": 27.49789939152013,
+        "lataccel_cost": 0.4459888573477812,
+        "jerk_cost": 7.7233290283007925,
+        "total_cost": 30.022771895689846,
         "diagnostics": {
-          "adaptive_p": 0.20475612030172907,
-          "adaptive_i": 0.10408837444073474,
-          "adaptive_d": -0.11410582128734151,
-          "adaptive_ff_gain": 0.9049871463356548
+          "adaptive_p": 0.2177059958179615,
+          "adaptive_i": 0.0789779469380853,
+          "adaptive_d": -0.06385566535105584,
+          "adaptive_ff_gain": 0.66577135213883
         }
       },
       {
         "segment": "00005",
-        "lataccel_cost": 0.40964853979120364,
-        "jerk_cost": 13.431646766349678,
-        "total_cost": 33.91407375590986,
+        "lataccel_cost": 0.5699753916232636,
+        "jerk_cost": 10.449016320422734,
+        "total_cost": 38.947785901585924,
         "diagnostics": {
-          "adaptive_p": 0.19716080226106591,
-          "adaptive_i": 0.10758558478059475,
-          "adaptive_d": -0.11893358674564357,
-          "adaptive_ff_gain": 0.9189283753918347
+          "adaptive_p": 0.13204679787556958,
+          "adaptive_i": 0.08366442758488911,
+          "adaptive_d": -0.05883678554585095,
+          "adaptive_ff_gain": 0.6323131999970476
         }
       },
       {
         "segment": "00006",
-        "lataccel_cost": 0.9306057897242398,
-        "jerk_cost": 29.547599293622987,
-        "total_cost": 76.07788877983498,
+        "lataccel_cost": 1.0186658394353012,
+        "jerk_cost": 28.397714770594966,
+        "total_cost": 79.33100674236002,
         "diagnostics": {
-          "adaptive_p": 0.1909284500914467,
-          "adaptive_i": 0.10821906659433318,
-          "adaptive_d": -0.11570197310871314,
-          "adaptive_ff_gain": 0.9062056821428879
+          "adaptive_p": 0.12407676173668968,
+          "adaptive_i": 0.0867294685322405,
+          "adaptive_d": -0.037724031390731855,
+          "adaptive_ff_gain": 0.5716047467846965
         }
       },
       {
         "segment": "00007",
-        "lataccel_cost": 0.11240200786485305,
-        "jerk_cost": 2.528982142429561,
-        "total_cost": 8.149082535672214,
+        "lataccel_cost": 0.12526714960788987,
+        "jerk_cost": 2.201709797372713,
+        "total_cost": 8.465067277767204,
         "diagnostics": {
-          "adaptive_p": 0.19063600409419923,
-          "adaptive_i": 0.10827644800269007,
-          "adaptive_d": -0.1160082964482505,
-          "adaptive_ff_gain": 0.9084226396136567
+          "adaptive_p": 0.12413011568192335,
+          "adaptive_i": 0.08609754834634221,
+          "adaptive_d": -0.03816691611335241,
+          "adaptive_ff_gain": 0.5796955214868312
         }
       },
       {
         "segment": "00008",
-        "lataccel_cost": 0.6558846889039844,
-        "jerk_cost": 21.762505415162526,
-        "total_cost": 54.55673986036175,
+        "lataccel_cost": 0.9347337959254816,
+        "jerk_cost": 21.23218088521639,
+        "total_cost": 67.96887068149049,
         "diagnostics": {
-          "adaptive_p": 0.1910046645838317,
-          "adaptive_i": 0.10824418046631348,
-          "adaptive_d": -0.11578737931331258,
-          "adaptive_ff_gain": 0.9063098740200938
+          "adaptive_p": 0.12273785917245594,
+          "adaptive_i": 0.08619282020554692,
+          "adaptive_d": -0.03759645632718136,
+          "adaptive_ff_gain": 0.5771926793022499
         }
       },
       {
         "segment": "00009",
-        "lataccel_cost": 0.43493734616792407,
-        "jerk_cost": 15.100088334785076,
-        "total_cost": 36.84695564318128,
+        "lataccel_cost": 0.7015015805431506,
+        "jerk_cost": 17.817989606512853,
+        "total_cost": 52.89306863367038,
         "diagnostics": {
-          "adaptive_p": 0.1909601169528261,
-          "adaptive_i": 0.10824791406582368,
-          "adaptive_d": -0.11565083183275218,
-          "adaptive_ff_gain": 0.9060208477856059
+          "adaptive_p": 0.1238860957224053,
+          "adaptive_i": 0.08680142940525308,
+          "adaptive_d": -0.037739451471299645,
+          "adaptive_ff_gain": 0.5707732555482062
         }
       },
       {
         "segment": "00010",
-        "lataccel_cost": 0.7167743365885926,
-        "jerk_cost": 23.74644172721699,
-        "total_cost": 59.58515855664662,
+        "lataccel_cost": 0.6510787550798146,
+        "jerk_cost": 20.476107125882482,
+        "total_cost": 53.03004487987322,
         "diagnostics": {
-          "adaptive_p": 0.1914304185764971,
-          "adaptive_i": 0.1084060285792445,
-          "adaptive_d": -0.11576468295347078,
-          "adaptive_ff_gain": 0.9055458652029397
+          "adaptive_p": 0.1227037608742724,
+          "adaptive_i": 0.08746236107370559,
+          "adaptive_d": -0.03760687008935972,
+          "adaptive_ff_gain": 0.5614102904133741
         }
       },
       {
         "segment": "00011",
-        "lataccel_cost": 0.11327842238935736,
-        "jerk_cost": 3.4610953165026306,
-        "total_cost": 9.1250164359705,
+        "lataccel_cost": 0.2711294183893035,
+        "jerk_cost": 4.686574973540322,
+        "total_cost": 18.243045893005494,
         "diagnostics": {
-          "adaptive_p": 0.19183343291383553,
-          "adaptive_i": 0.10818075295498789,
-          "adaptive_d": -0.11573483762107346,
-          "adaptive_ff_gain": 0.9057857367174278
+          "adaptive_p": 0.133110002986179,
+          "adaptive_i": 0.0896396531025389,
+          "adaptive_d": -0.039966520380771635,
+          "adaptive_ff_gain": 0.5433646000798009
         }
       },
       {
         "segment": "00012",
-        "lataccel_cost": 1.1341617125654428,
-        "jerk_cost": 25.439417762567576,
-        "total_cost": 82.14750339083972,
+        "lataccel_cost": 1.2428807093294554,
+        "jerk_cost": 22.31002526603858,
+        "total_cost": 84.45406073251135,
         "diagnostics": {
-          "adaptive_p": 0.19111420461025758,
-          "adaptive_i": 0.10822878405986348,
-          "adaptive_d": -0.11557498013540758,
-          "adaptive_ff_gain": 0.9055324660830459
+          "adaptive_p": 0.12653236048999747,
+          "adaptive_i": 0.08823216703755592,
+          "adaptive_d": -0.03837475458793661,
+          "adaptive_ff_gain": 0.5559635439447931
         }
       },
       {
         "segment": "00013",
-        "lataccel_cost": 0.5951283847590929,
-        "jerk_cost": 19.17257161956517,
-        "total_cost": 48.92899085751982,
+        "lataccel_cost": 0.8371814643637565,
+        "jerk_cost": 16.040790273802166,
+        "total_cost": 57.89986349198999,
         "diagnostics": {
-          "adaptive_p": 0.19097206530000096,
-          "adaptive_i": 0.10817987257563608,
-          "adaptive_d": -0.11552950176718355,
-          "adaptive_ff_gain": 0.905561291820117
+          "adaptive_p": 0.126320475483401,
+          "adaptive_i": 0.08744724067184144,
+          "adaptive_d": -0.03783016490490102,
+          "adaptive_ff_gain": 0.5642252368007269
         }
       },
       {
         "segment": "00014",
-        "lataccel_cost": 1.0136463791080184,
-        "jerk_cost": 32.131666884892965,
-        "total_cost": 82.81398584029388,
+        "lataccel_cost": 1.1088471879033763,
+        "jerk_cost": 25.87514644467346,
+        "total_cost": 81.31750583984228,
         "diagnostics": {
-          "adaptive_p": 0.1908361244228042,
-          "adaptive_i": 0.10820804810705462,
-          "adaptive_d": -0.11545618467796295,
-          "adaptive_ff_gain": 0.9055253540838224
+          "adaptive_p": 0.12584904756267454,
+          "adaptive_i": 0.08780023946273723,
+          "adaptive_d": -0.03786331038261888,
+          "adaptive_ff_gain": 0.5602129625118529
         }
       },
       {
         "segment": "00015",
-        "lataccel_cost": 0.4089276060054205,
-        "jerk_cost": 7.840915449205819,
-        "total_cost": 28.287295749476833,
+        "lataccel_cost": 0.4066722011096479,
+        "jerk_cost": 6.636935435274052,
+        "total_cost": 26.97054549075645,
         "diagnostics": {
-          "adaptive_p": 0.1913701939881116,
-          "adaptive_i": 0.10790309227482965,
-          "adaptive_d": -0.11574686227125566,
-          "adaptive_ff_gain": 0.9092587357093443
+          "adaptive_p": 0.13481282910723658,
+          "adaptive_i": 0.08726376935178154,
+          "adaptive_d": -0.042652353913634554,
+          "adaptive_ff_gain": 0.5761414903582244
         }
       },
       {
         "segment": "00016",
-        "lataccel_cost": 0.6262961239202238,
-        "jerk_cost": 27.94682116182598,
-        "total_cost": 59.26162735783717,
+        "lataccel_cost": 0.6972414346071969,
+        "jerk_cost": 22.896793881167714,
+        "total_cost": 57.75886561152756,
         "diagnostics": {
-          "adaptive_p": 0.19092143019397617,
-          "adaptive_i": 0.10813345920969741,
-          "adaptive_d": -0.11556464526231809,
-          "adaptive_ff_gain": 0.9054360776756518
+          "adaptive_p": 0.12597563865886394,
+          "adaptive_i": 0.08782557307295663,
+          "adaptive_d": -0.03808393359453416,
+          "adaptive_ff_gain": 0.5601630016375725
         }
       },
       {
         "segment": "00017",
-        "lataccel_cost": 0.6740280236744894,
-        "jerk_cost": 22.394060004602306,
-        "total_cost": 56.09546118832679,
+        "lataccel_cost": 0.6945497772494419,
+        "jerk_cost": 19.8618798165712,
+        "total_cost": 54.58936867904329,
         "diagnostics": {
-          "adaptive_p": 0.19100786798416525,
-          "adaptive_i": 0.10821276502642883,
-          "adaptive_d": -0.11569013797520251,
-          "adaptive_ff_gain": 0.9060007228125477
+          "adaptive_p": 0.1255595215219692,
+          "adaptive_i": 0.08710284998303516,
+          "adaptive_d": -0.037985736773609426,
+          "adaptive_ff_gain": 0.5679827091126395
         }
       },
       {
         "segment": "00018",
-        "lataccel_cost": 0.9188863415039785,
-        "jerk_cost": 22.104888040317945,
-        "total_cost": 68.04920511551686,
+        "lataccel_cost": 0.7841957019914417,
+        "jerk_cost": 18.019955850192307,
+        "total_cost": 57.22974094976439,
         "diagnostics": {
-          "adaptive_p": 0.19088819081327918,
-          "adaptive_i": 0.10817458906180152,
-          "adaptive_d": -0.11557003425351556,
-          "adaptive_ff_gain": 0.9055933410909333
+          "adaptive_p": 0.1251163058876633,
+          "adaptive_i": 0.08773973338623739,
+          "adaptive_d": -0.037957961079052645,
+          "adaptive_ff_gain": 0.5608229539803203
         }
       },
       {
         "segment": "00019",
-        "lataccel_cost": 0.8525424240195312,
-        "jerk_cost": 41.03850574580296,
-        "total_cost": 83.66562694677953,
+        "lataccel_cost": 0.938379882620404,
+        "jerk_cost": 34.97560638993228,
+        "total_cost": 81.89460052095248,
         "diagnostics": {
-          "adaptive_p": 0.1914592899354393,
-          "adaptive_i": 0.1083522853893086,
-          "adaptive_d": -0.11571341559212922,
-          "adaptive_ff_gain": 0.9054287948610917
+          "adaptive_p": 0.12310988524267277,
+          "adaptive_i": 0.08726574620056926,
+          "adaptive_d": -0.03762379442573152,
+          "adaptive_ff_gain": 0.5637817953706368
         }
       },
       {
         "segment": "00020",
-        "lataccel_cost": 0.394888749804484,
-        "jerk_cost": 11.109635109881596,
-        "total_cost": 30.854072600105795,
+        "lataccel_cost": 0.5290766071770161,
+        "jerk_cost": 10.9376379650342,
+        "total_cost": 37.39146832388501,
         "diagnostics": {
-          "adaptive_p": 0.1908803946043397,
-          "adaptive_i": 0.10837680552030375,
-          "adaptive_d": -0.11555765744823057,
-          "adaptive_ff_gain": 0.9066856249287577
+          "adaptive_p": 0.11567665530460723,
+          "adaptive_i": 0.08629673092737299,
+          "adaptive_d": -0.03745983471552142,
+          "adaptive_ff_gain": 0.572509569378865
         }
       },
       {
         "segment": "00021",
-        "lataccel_cost": 1.450115767795444,
-        "jerk_cost": 47.95141634201154,
-        "total_cost": 120.45720473178375,
+        "lataccel_cost": 1.4303749535063475,
+        "jerk_cost": 32.091846277541286,
+        "total_cost": 103.61059395285865,
         "diagnostics": {
-          "adaptive_p": 0.19083022712043135,
-          "adaptive_i": 0.10817642036083065,
-          "adaptive_d": -0.11562731325496305,
-          "adaptive_ff_gain": 0.9061613413290758
+          "adaptive_p": 0.12656378848286287,
+          "adaptive_i": 0.08748808894175038,
+          "adaptive_d": -0.038190532356091704,
+          "adaptive_ff_gain": 0.5648218080060952
         }
       },
       {
         "segment": "00022",
-        "lataccel_cost": 0.6589114233523816,
-        "jerk_cost": 18.137915665326815,
-        "total_cost": 51.0834868329459,
+        "lataccel_cost": 0.7012469865276109,
+        "jerk_cost": 14.917623264302334,
+        "total_cost": 49.979972590682884,
         "diagnostics": {
-          "adaptive_p": 0.1912832762947395,
-          "adaptive_i": 0.1082252237805026,
-          "adaptive_d": -0.11559697692309084,
-          "adaptive_ff_gain": 0.9054227625310445
+          "adaptive_p": 0.12670952423337295,
+          "adaptive_i": 0.08702760781027226,
+          "adaptive_d": -0.03797781951652106,
+          "adaptive_ff_gain": 0.569026576605823
         }
       },
       {
         "segment": "00023",
-        "lataccel_cost": 0.8272208876943139,
-        "jerk_cost": 22.320006163939862,
-        "total_cost": 63.68105054865557,
+        "lataccel_cost": 0.8622999882560038,
+        "jerk_cost": 20.327705902790864,
+        "total_cost": 63.44270531559106,
         "diagnostics": {
-          "adaptive_p": 0.1901358015162622,
-          "adaptive_i": 0.10799613334580041,
-          "adaptive_d": -0.11531503761432824,
-          "adaptive_ff_gain": 0.9060718212938503
+          "adaptive_p": 0.1282962901284848,
+          "adaptive_i": 0.08759413668021254,
+          "adaptive_d": -0.038087392144103,
+          "adaptive_ff_gain": 0.5653046802135709
         }
       },
       {
         "segment": "00024",
-        "lataccel_cost": 0.41654571598176204,
-        "jerk_cost": 10.084255418410166,
-        "total_cost": 30.911541217498264,
+        "lataccel_cost": 0.512937635054174,
+        "jerk_cost": 11.37662285399962,
+        "total_cost": 37.023504606708315,
         "diagnostics": {
-          "adaptive_p": 0.18989071200648053,
-          "adaptive_i": 0.1079416734732357,
-          "adaptive_d": -0.11510178708236887,
-          "adaptive_ff_gain": 0.9048599231951686
+          "adaptive_p": 0.12541411777049868,
+          "adaptive_i": 0.08896810437637312,
+          "adaptive_d": -0.03744580685550643,
+          "adaptive_ff_gain": 0.5486054350298986
         }
       },
       {
         "segment": "00025",
-        "lataccel_cost": 0.07447337047076992,
-        "jerk_cost": 1.4407497889844796,
-        "total_cost": 5.164418312522976,
+        "lataccel_cost": 0.048695880621294096,
+        "jerk_cost": 1.1086997454596472,
+        "total_cost": 3.543493776524352,
         "diagnostics": {
-          "adaptive_p": 0.19864819412557855,
-          "adaptive_i": 0.10753681644013974,
-          "adaptive_d": -0.11891349512975277,
-          "adaptive_ff_gain": 0.9180277229208439
+          "adaptive_p": 0.179272849825931,
+          "adaptive_i": 0.09052588411303943,
+          "adaptive_d": -0.06127902624657229,
+          "adaptive_ff_gain": 0.5847089167429103
         }
       },
       {
         "segment": "00026",
-        "lataccel_cost": 0.7647232826730895,
-        "jerk_cost": 53.266304560399725,
-        "total_cost": 91.50246869405419,
+        "lataccel_cost": 1.7322302423109932,
+        "jerk_cost": 28.38190756929511,
+        "total_cost": 114.99341968484475,
         "diagnostics": {
-          "adaptive_p": 0.19331520802839505,
-          "adaptive_i": 0.107868561118587,
-          "adaptive_d": -0.11660977540289505,
-          "adaptive_ff_gain": 0.9101714256128159
+          "adaptive_p": 0.14659168144027124,
+          "adaptive_i": 0.08893301505590427,
+          "adaptive_d": -0.04696976467179529,
+          "adaptive_ff_gain": 0.5660160892247972
         }
       },
       {
         "segment": "00027",
-        "lataccel_cost": 0.8549396905943779,
-        "jerk_cost": 23.42397557148536,
-        "total_cost": 66.17096010120426,
+        "lataccel_cost": 1.01212944145662,
+        "jerk_cost": 22.071886905046114,
+        "total_cost": 72.67835897787711,
         "diagnostics": {
-          "adaptive_p": 0.19096824985087346,
-          "adaptive_i": 0.1082633160181683,
-          "adaptive_d": -0.11568591623401629,
-          "adaptive_ff_gain": 0.9061860097016472
+          "adaptive_p": 0.12434812888365637,
+          "adaptive_i": 0.0867786261144336,
+          "adaptive_d": -0.0376778240672558,
+          "adaptive_ff_gain": 0.5709246305430309
         }
       },
       {
         "segment": "00028",
-        "lataccel_cost": 0.6335840483780004,
-        "jerk_cost": 17.18489198817283,
-        "total_cost": 48.864094407072855,
+        "lataccel_cost": 0.7048040138652396,
+        "jerk_cost": 15.374144268807171,
+        "total_cost": 50.614344962069154,
         "diagnostics": {
-          "adaptive_p": 0.19073618165325856,
-          "adaptive_i": 0.1082469289476073,
-          "adaptive_d": -0.11570120800196175,
-          "adaptive_ff_gain": 0.9063784200810756
+          "adaptive_p": 0.12310657145736997,
+          "adaptive_i": 0.08678064948562425,
+          "adaptive_d": -0.03756349909864831,
+          "adaptive_ff_gain": 0.5707140207292005
         }
       },
       {
         "segment": "00029",
-        "lataccel_cost": 0.5226028875452041,
-        "jerk_cost": 8.756711187828756,
-        "total_cost": 34.88685556508896,
+        "lataccel_cost": 0.6254477459315774,
+        "jerk_cost": 7.122738311778509,
+        "total_cost": 38.395125608357375,
         "diagnostics": {
-          "adaptive_p": 0.21107944508962817,
-          "adaptive_i": 0.105121977430094,
-          "adaptive_d": -0.11642526347018153,
-          "adaptive_ff_gain": 0.903330216379717
+          "adaptive_p": 0.23346778815548125,
+          "adaptive_i": 0.07921725302708472,
+          "adaptive_d": -0.06689038515278226,
+          "adaptive_ff_gain": 0.6660121464016469
         }
       },
       {
         "segment": "00030",
-        "lataccel_cost": 0.8548493752937592,
-        "jerk_cost": 27.564777633865134,
-        "total_cost": 70.30724639855309,
+        "lataccel_cost": 1.1482849772296067,
+        "jerk_cost": 24.54288335286575,
+        "total_cost": 81.95713221434609,
         "diagnostics": {
-          "adaptive_p": 0.19158713890209855,
-          "adaptive_i": 0.10840437346829708,
-          "adaptive_d": -0.1159494302390612,
-          "adaptive_ff_gain": 0.9066981648306363
+          "adaptive_p": 0.12283305334189622,
+          "adaptive_i": 0.08639442400905367,
+          "adaptive_d": -0.03784327532576254,
+          "adaptive_ff_gain": 0.5739917209053279
         }
       },
       {
         "segment": "00031",
-        "lataccel_cost": 0.08314689467571508,
-        "jerk_cost": 2.3292277404495905,
-        "total_cost": 6.486572474235345,
+        "lataccel_cost": 0.19561401987711421,
+        "jerk_cost": 3.4018210465118184,
+        "total_cost": 13.182522040367529,
         "diagnostics": {
-          "adaptive_p": 0.18389727039471795,
-          "adaptive_i": 0.10652100382499449,
-          "adaptive_d": -0.11542084403122242,
-          "adaptive_ff_gain": 0.9183217805850525
+          "adaptive_p": 0.21600013151531935,
+          "adaptive_i": 0.07796101009324873,
+          "adaptive_d": -0.0657119120855639,
+          "adaptive_ff_gain": 0.6660464328977505
         }
       },
       {
         "segment": "00032",
-        "lataccel_cost": 1.2796545832798214,
-        "jerk_cost": 29.78610120751146,
-        "total_cost": 93.76883037150252,
+        "lataccel_cost": 1.0269130709626515,
+        "jerk_cost": 23.73036839934275,
+        "total_cost": 75.07602194747533,
         "diagnostics": {
-          "adaptive_p": 0.1912538069702826,
-          "adaptive_i": 0.10821109194822348,
-          "adaptive_d": -0.11573208771615505,
-          "adaptive_ff_gain": 0.9059284703795191
+          "adaptive_p": 0.12646468110873296,
+          "adaptive_i": 0.08785433837347587,
+          "adaptive_d": -0.03844140491267446,
+          "adaptive_ff_gain": 0.5599527270250962
         }
       },
       {
         "segment": "00033",
-        "lataccel_cost": 0.4147278625117835,
-        "jerk_cost": 24.057230806497717,
-        "total_cost": 44.793623932086895,
+        "lataccel_cost": 0.9075800557712532,
+        "jerk_cost": 15.961420752500171,
+        "total_cost": 61.340423541062826,
         "diagnostics": {
-          "adaptive_p": 0.19012323391256855,
-          "adaptive_i": 0.10556349754560324,
-          "adaptive_d": -0.11557903315376616,
-          "adaptive_ff_gain": 0.9085408270673291
+          "adaptive_p": 0.2276956134851347,
+          "adaptive_i": 0.08997687983796852,
+          "adaptive_d": -0.06465416446816435,
+          "adaptive_ff_gain": 0.5775685559849482
         }
       },
       {
         "segment": "00034",
-        "lataccel_cost": 0.1876390089079253,
-        "jerk_cost": 8.25590189043659,
-        "total_cost": 17.637852335832854,
+        "lataccel_cost": 0.23551621617663027,
+        "jerk_cost": 7.2693071567980585,
+        "total_cost": 19.045117965629572,
         "diagnostics": {
-          "adaptive_p": 0.19073332291440817,
-          "adaptive_i": 0.10807676414167115,
-          "adaptive_d": -0.11545194265576215,
-          "adaptive_ff_gain": 0.9054894793615088
+          "adaptive_p": 0.12592738921392807,
+          "adaptive_i": 0.08791837528328887,
+          "adaptive_d": -0.038146425346016796,
+          "adaptive_ff_gain": 0.5593734580635978
         }
       },
       {
         "segment": "00035",
-        "lataccel_cost": 0.37418401483372477,
-        "jerk_cost": 10.05038393896685,
-        "total_cost": 28.759584680653088,
+        "lataccel_cost": 0.39393030424639425,
+        "jerk_cost": 8.567122110910153,
+        "total_cost": 28.263637323229865,
         "diagnostics": {
-          "adaptive_p": 0.19096298067212242,
-          "adaptive_i": 0.10820031726403362,
-          "adaptive_d": -0.1156868143774242,
-          "adaptive_ff_gain": 0.9061400269022041
+          "adaptive_p": 0.12603847027503712,
+          "adaptive_i": 0.0875102256514611,
+          "adaptive_d": -0.03814117534077359,
+          "adaptive_ff_gain": 0.5637685615450918
         }
       },
       {
         "segment": "00036",
-        "lataccel_cost": 0.8934646696954417,
-        "jerk_cost": 35.092887942007195,
-        "total_cost": 79.76612142677928,
+        "lataccel_cost": 0.8601344419932252,
+        "jerk_cost": 29.837419627225678,
+        "total_cost": 72.84414172688693,
         "diagnostics": {
-          "adaptive_p": 0.19120483818133072,
-          "adaptive_i": 0.1082360540663536,
-          "adaptive_d": -0.11579748031956838,
-          "adaptive_ff_gain": 0.9062676510886709
+          "adaptive_p": 0.12548998607423995,
+          "adaptive_i": 0.0869057589571863,
+          "adaptive_d": -0.038274440552341846,
+          "adaptive_ff_gain": 0.5702427440320541
         }
       },
       {
         "segment": "00037",
-        "lataccel_cost": 0.08995015833937557,
-        "jerk_cost": 1.0119354370238105,
-        "total_cost": 5.509443353992589,
+        "lataccel_cost": 0.14304892064508942,
+        "jerk_cost": 1.226931868083054,
+        "total_cost": 8.379377900337523,
         "diagnostics": {
-          "adaptive_p": 0.20185108074266053,
-          "adaptive_i": 0.10741726008089443,
-          "adaptive_d": -0.11594262528200006,
-          "adaptive_ff_gain": 0.9091809227163566
+          "adaptive_p": 0.21258426559461738,
+          "adaptive_i": 0.07803177069525391,
+          "adaptive_d": -0.06302711069556054,
+          "adaptive_ff_gain": 0.6653781253587164
         }
       },
       {
         "segment": "00038",
-        "lataccel_cost": 0.347016879150438,
-        "jerk_cost": 7.7604020296603435,
-        "total_cost": 25.111245987182237,
+        "lataccel_cost": 0.3752513732448658,
+        "jerk_cost": 6.912360551593326,
+        "total_cost": 25.674929213836613,
         "diagnostics": {
-          "adaptive_p": 0.1911803524363462,
-          "adaptive_i": 0.10818224256683298,
-          "adaptive_d": -0.11562510776886674,
-          "adaptive_ff_gain": 0.9054413108428997
+          "adaptive_p": 0.1268223815843597,
+          "adaptive_i": 0.08776844393807164,
+          "adaptive_d": -0.038359970726877975,
+          "adaptive_ff_gain": 0.5609286382434134
         }
       },
       {
         "segment": "00039",
-        "lataccel_cost": 0.2816097511359392,
-        "jerk_cost": 10.478042470082867,
-        "total_cost": 24.558530026879826,
+        "lataccel_cost": 0.3783158997392998,
+        "jerk_cost": 8.903790824882401,
+        "total_cost": 27.819585811847393,
         "diagnostics": {
-          "adaptive_p": 0.19185048257550422,
-          "adaptive_i": 0.10835771243290311,
-          "adaptive_d": -0.11587063692149903,
-          "adaptive_ff_gain": 0.9057010226556885
+          "adaptive_p": 0.12393663004554877,
+          "adaptive_i": 0.08750601626551549,
+          "adaptive_d": -0.03813677525987351,
+          "adaptive_ff_gain": 0.5617960126621193
         }
       },
       {
         "segment": "00040",
-        "lataccel_cost": 0.4285562262778865,
-        "jerk_cost": 12.896519083927458,
-        "total_cost": 34.32433039782179,
+        "lataccel_cost": 0.5877186644442848,
+        "jerk_cost": 13.61317385412494,
+        "total_cost": 42.99910707633918,
         "diagnostics": {
-          "adaptive_p": 0.19081936440799468,
-          "adaptive_i": 0.1081964920108777,
-          "adaptive_d": -0.11570194683439072,
-          "adaptive_ff_gain": 0.9063119230201369
+          "adaptive_p": 0.12408733408231211,
+          "adaptive_i": 0.08656143555770575,
+          "adaptive_d": -0.03770837774086544,
+          "adaptive_ff_gain": 0.5733143488716476
         }
       },
       {
         "segment": "00041",
-        "lataccel_cost": 0.5240020592504013,
-        "jerk_cost": 15.457809944492515,
-        "total_cost": 41.65791290701258,
+        "lataccel_cost": 0.563291812069438,
+        "jerk_cost": 13.00207293194914,
+        "total_cost": 41.16666353542105,
         "diagnostics": {
-          "adaptive_p": 0.19083819433726354,
-          "adaptive_i": 0.10821098126842735,
-          "adaptive_d": -0.11560143314789112,
-          "adaptive_ff_gain": 0.9059619970281647
+          "adaptive_p": 0.12512814397244185,
+          "adaptive_i": 0.08728183878222924,
+          "adaptive_d": -0.037893215759066415,
+          "adaptive_ff_gain": 0.566125866978178
         }
       },
       {
         "segment": "00042",
-        "lataccel_cost": 0.7449216826730961,
-        "jerk_cost": 23.527574681750075,
-        "total_cost": 60.773658815404886,
+        "lataccel_cost": 0.7432461646692468,
+        "jerk_cost": 20.897451675125325,
+        "total_cost": 58.059759908587665,
         "diagnostics": {
-          "adaptive_p": 0.190710213129688,
-          "adaptive_i": 0.10812790100029901,
-          "adaptive_d": -0.115555156334313,
-          "adaptive_ff_gain": 0.9063084119572927
+          "adaptive_p": 0.1276356272071099,
+          "adaptive_i": 0.08764178867024172,
+          "adaptive_d": -0.03847418485941202,
+          "adaptive_ff_gain": 0.5638715128715756
         }
       },
       {
         "segment": "00043",
-        "lataccel_cost": 0.35341610014080493,
-        "jerk_cost": 13.91628082407579,
-        "total_cost": 31.58708583111604,
+        "lataccel_cost": 0.353905062462309,
+        "jerk_cost": 11.99803488918053,
+        "total_cost": 29.693288012295984,
         "diagnostics": {
-          "adaptive_p": 0.19100690573705853,
-          "adaptive_i": 0.10816691647915913,
-          "adaptive_d": -0.11573595473453865,
-          "adaptive_ff_gain": 0.9063614017713515
+          "adaptive_p": 0.12545651151274523,
+          "adaptive_i": 0.087419627149668,
+          "adaptive_d": -0.03847503344301921,
+          "adaptive_ff_gain": 0.5652252728065458
         }
       },
       {
         "segment": "00044",
-        "lataccel_cost": 0.7831730314029228,
-        "jerk_cost": 26.00908168646122,
-        "total_cost": 65.16773325660735,
+        "lataccel_cost": 0.6597338755911427,
+        "jerk_cost": 22.51342427714772,
+        "total_cost": 55.50011805670485,
         "diagnostics": {
-          "adaptive_p": 0.1914838869770301,
-          "adaptive_i": 0.10822728181214591,
-          "adaptive_d": -0.11543485915962465,
-          "adaptive_ff_gain": 0.9044689447681146
+          "adaptive_p": 0.1279597851463766,
+          "adaptive_i": 0.08880597580228122,
+          "adaptive_d": -0.038209067525961204,
+          "adaptive_ff_gain": 0.5490456035421483
         }
       },
       {
         "segment": "00045",
-        "lataccel_cost": 0.9150392015100174,
-        "jerk_cost": 16.08083525176747,
-        "total_cost": 61.83279532726834,
+        "lataccel_cost": 0.9963473947605707,
+        "jerk_cost": 14.745468529966168,
+        "total_cost": 64.56283826799469,
         "diagnostics": {
-          "adaptive_p": 0.1907248073934126,
-          "adaptive_i": 0.10822958280461278,
-          "adaptive_d": -0.11570267373752197,
-          "adaptive_ff_gain": 0.9067492694196699
+          "adaptive_p": 0.12424859364084763,
+          "adaptive_i": 0.0864256237962833,
+          "adaptive_d": -0.03772971713981945,
+          "adaptive_ff_gain": 0.5760329568056589
         }
       },
       {
         "segment": "00046",
-        "lataccel_cost": 0.7562327673835684,
-        "jerk_cost": 27.286842475729653,
-        "total_cost": 65.09848084490808,
+        "lataccel_cost": 0.8368498236511739,
+        "jerk_cost": 24.835883161654273,
+        "total_cost": 66.67837434421297,
         "diagnostics": {
-          "adaptive_p": 0.19105194859593716,
-          "adaptive_i": 0.10811892955309031,
-          "adaptive_d": -0.11571810899998763,
-          "adaptive_ff_gain": 0.9070088070593167
+          "adaptive_p": 0.12741246868985578,
+          "adaptive_i": 0.08697228467333812,
+          "adaptive_d": -0.03905406078119143,
+          "adaptive_ff_gain": 0.5715701936112252
         }
       },
       {
         "segment": "00047",
-        "lataccel_cost": 0.06862321102503925,
-        "jerk_cost": 2.007875934634132,
-        "total_cost": 5.439036485886095,
+        "lataccel_cost": 0.07610231589470849,
+        "jerk_cost": 1.7498802173630394,
+        "total_cost": 5.554996012098464,
         "diagnostics": {
-          "adaptive_p": 0.19124532365981514,
-          "adaptive_i": 0.10795752445955759,
-          "adaptive_d": -0.11576226678323846,
-          "adaptive_ff_gain": 0.9088743758368679
+          "adaptive_p": 0.13213655971660718,
+          "adaptive_i": 0.08743165681505763,
+          "adaptive_d": -0.0417353475441469,
+          "adaptive_ff_gain": 0.5723666416715201
         }
       },
       {
         "segment": "00048",
-        "lataccel_cost": 0.6266773195733001,
-        "jerk_cost": 18.848585181265804,
-        "total_cost": 50.182451159930814,
+        "lataccel_cost": 0.9283638489934778,
+        "jerk_cost": 16.56723416280382,
+        "total_cost": 62.98542661247771,
         "diagnostics": {
-          "adaptive_p": 0.19086648879982185,
-          "adaptive_i": 0.10810633497060827,
-          "adaptive_d": -0.11546509793466048,
-          "adaptive_ff_gain": 0.90521713298162
+          "adaptive_p": 0.1266672016899771,
+          "adaptive_i": 0.08787721943950771,
+          "adaptive_d": -0.03803448881173938,
+          "adaptive_ff_gain": 0.5597847182400615
         }
       },
       {
         "segment": "00049",
-        "lataccel_cost": 0.7230666765405139,
-        "jerk_cost": 20.499048157825627,
-        "total_cost": 56.652381984851324,
+        "lataccel_cost": 0.7813180292637031,
+        "jerk_cost": 18.848353337137436,
+        "total_cost": 57.91425480032259,
         "diagnostics": {
-          "adaptive_p": 0.19084176578805037,
-          "adaptive_i": 0.10813770822567129,
-          "adaptive_d": -0.11553833652464851,
-          "adaptive_ff_gain": 0.9055757457572086
+          "adaptive_p": 0.12604275818140614,
+          "adaptive_i": 0.08801369270990772,
+          "adaptive_d": -0.038012086565145285,
+          "adaptive_ff_gain": 0.5580553308256352
         }
       },
       {
         "segment": "00050",
-        "lataccel_cost": 0.6737302391989398,
-        "jerk_cost": 27.691029204015614,
-        "total_cost": 61.3775411639626,
+        "lataccel_cost": 0.687835666041556,
+        "jerk_cost": 22.0629004087314,
+        "total_cost": 56.454683710809206,
         "diagnostics": {
-          "adaptive_p": 0.19092608868256167,
-          "adaptive_i": 0.1082210982549198,
-          "adaptive_d": -0.11575453469891396,
-          "adaptive_ff_gain": 0.9062524028221428
+          "adaptive_p": 0.12372443875031675,
+          "adaptive_i": 0.0865765260753593,
+          "adaptive_d": -0.0376408386980225,
+          "adaptive_ff_gain": 0.572740404628644
         }
       },
       {
         "segment": "00051",
-        "lataccel_cost": 0.720682923317998,
-        "jerk_cost": 27.745898990284342,
-        "total_cost": 63.780045156184244,
+        "lataccel_cost": 0.6915662362179366,
+        "jerk_cost": 24.96766733115211,
+        "total_cost": 59.54597914204893,
         "diagnostics": {
-          "adaptive_p": 0.19100082362969864,
-          "adaptive_i": 0.10820028361737243,
-          "adaptive_d": -0.11566766176837437,
-          "adaptive_ff_gain": 0.9058404885124028
+          "adaptive_p": 0.1255014717869981,
+          "adaptive_i": 0.0872567978510342,
+          "adaptive_d": -0.03795700296479317,
+          "adaptive_ff_gain": 0.5657328410274223
         }
       },
       {
         "segment": "00052",
-        "lataccel_cost": 0.7225870047986725,
-        "jerk_cost": 30.788755500270128,
-        "total_cost": 66.91810574020376,
+        "lataccel_cost": 0.8574460171521281,
+        "jerk_cost": 24.50738083366262,
+        "total_cost": 67.37968169126903,
         "diagnostics": {
-          "adaptive_p": 0.19086632038588952,
-          "adaptive_i": 0.10799800994416936,
-          "adaptive_d": -0.11567202933640812,
-          "adaptive_ff_gain": 0.9060658301132074
+          "adaptive_p": 0.12944612896580746,
+          "adaptive_i": 0.0871030502289447,
+          "adaptive_d": -0.038479578638437824,
+          "adaptive_ff_gain": 0.570291641244915
         }
       },
       {
         "segment": "00053",
-        "lataccel_cost": 0.5826073950550065,
-        "jerk_cost": 20.389106982801014,
-        "total_cost": 49.51947673555134,
+        "lataccel_cost": 0.5987771809944693,
+        "jerk_cost": 14.013268377277432,
+        "total_cost": 43.952127427000896,
         "diagnostics": {
-          "adaptive_p": 0.19080704673868815,
-          "adaptive_i": 0.1081075333610886,
-          "adaptive_d": -0.11552586702113134,
-          "adaptive_ff_gain": 0.9056607970946315
+          "adaptive_p": 0.1268580115321401,
+          "adaptive_i": 0.08757507155896496,
+          "adaptive_d": -0.038149631369370704,
+          "adaptive_ff_gain": 0.5633666013754034
         }
       },
       {
         "segment": "00054",
-        "lataccel_cost": 1.270518186697545,
-        "jerk_cost": 38.35812577136569,
-        "total_cost": 101.88403510624292,
+        "lataccel_cost": 1.3469252966964862,
+        "jerk_cost": 34.271628884991785,
+        "total_cost": 101.6178937198161,
         "diagnostics": {
-          "adaptive_p": 0.1916333541738274,
-          "adaptive_i": 0.10817278139572589,
-          "adaptive_d": -0.11604552772909695,
-          "adaptive_ff_gain": 0.9079185488884934
+          "adaptive_p": 0.1289878658353525,
+          "adaptive_i": 0.08724055065961861,
+          "adaptive_d": -0.040385896214113134,
+          "adaptive_ff_gain": 0.5701349767282404
         }
       },
       {
         "segment": "00055",
-        "lataccel_cost": 0.6749776014164247,
-        "jerk_cost": 22.048388867694722,
-        "total_cost": 55.797268938515955,
+        "lataccel_cost": 0.7064535515466187,
+        "jerk_cost": 19.764648999998744,
+        "total_cost": 55.08732657732968,
         "diagnostics": {
-          "adaptive_p": 0.19115504725787802,
-          "adaptive_i": 0.10820645163719886,
-          "adaptive_d": -0.11578176707183607,
-          "adaptive_ff_gain": 0.9063607861864249
+          "adaptive_p": 0.1260248600830053,
+          "adaptive_i": 0.08704341178364362,
+          "adaptive_d": -0.03825670741279109,
+          "adaptive_ff_gain": 0.569006850904798
         }
       },
       {
         "segment": "00056",
-        "lataccel_cost": 1.042524683183351,
-        "jerk_cost": 25.748506560535713,
-        "total_cost": 77.87474071970325,
+        "lataccel_cost": 1.109796106744607,
+        "jerk_cost": 21.969347072360993,
+        "total_cost": 77.45915240959135,
         "diagnostics": {
-          "adaptive_p": 0.19101771790075817,
-          "adaptive_i": 0.10815335041588307,
-          "adaptive_d": -0.11571125859992958,
-          "adaptive_ff_gain": 0.9062672824925546
+          "adaptive_p": 0.1261091684762308,
+          "adaptive_i": 0.08760544056372503,
+          "adaptive_d": -0.03846212345559266,
+          "adaptive_ff_gain": 0.5632639265911514
         }
       },
       {
         "segment": "00057",
-        "lataccel_cost": 0.18088429759947441,
-        "jerk_cost": 5.513967733068484,
-        "total_cost": 14.558182613042204,
+        "lataccel_cost": 0.2787732122461057,
+        "jerk_cost": 5.76240805340361,
+        "total_cost": 19.701068665708895,
         "diagnostics": {
-          "adaptive_p": 0.17795616454078547,
-          "adaptive_i": 0.11022815980599333,
-          "adaptive_d": -0.11644914374414435,
-          "adaptive_ff_gain": 0.90016219647505
+          "adaptive_p": 0.1863359815467305,
+          "adaptive_i": 0.08071676082093256,
+          "adaptive_d": -0.061361678760255896,
+          "adaptive_ff_gain": 0.6520214090974397
         }
       },
       {
         "segment": "00058",
-        "lataccel_cost": 0.7620886402598955,
-        "jerk_cost": 26.21349250260339,
-        "total_cost": 64.31792451559816,
+        "lataccel_cost": 0.7600793307295847,
+        "jerk_cost": 23.117543895350277,
+        "total_cost": 61.1215104318295,
         "diagnostics": {
-          "adaptive_p": 0.19063471071460866,
-          "adaptive_i": 0.10807254028627841,
-          "adaptive_d": -0.11558046924499045,
-          "adaptive_ff_gain": 0.9064840003937094
+          "adaptive_p": 0.12766999045336297,
+          "adaptive_i": 0.08801901266487568,
+          "adaptive_d": -0.038542324880541066,
+          "adaptive_ff_gain": 0.5605903929097082
         }
       },
       {
         "segment": "00059",
-        "lataccel_cost": 0.5340634475610159,
-        "jerk_cost": 16.89810984127984,
-        "total_cost": 43.601282219330635,
+        "lataccel_cost": 0.5569062118561426,
+        "jerk_cost": 12.294797367378024,
+        "total_cost": 40.14010796018516,
         "diagnostics": {
-          "adaptive_p": 0.1909600795298334,
-          "adaptive_i": 0.10828408076022453,
-          "adaptive_d": -0.11581848668851054,
-          "adaptive_ff_gain": 0.9064150534788944
+          "adaptive_p": 0.11815468002459811,
+          "adaptive_i": 0.08594738362551393,
+          "adaptive_d": -0.03746820947105743,
+          "adaptive_ff_gain": 0.5772690411143716
         }
       },
       {
         "segment": "00060",
-        "lataccel_cost": 0.2007759835239497,
-        "jerk_cost": 6.346542143200854,
-        "total_cost": 16.385341319398343,
+        "lataccel_cost": 0.2418470655546485,
+        "jerk_cost": 5.467445625091946,
+        "total_cost": 17.55979890282437,
         "diagnostics": {
-          "adaptive_p": 0.1907272520177104,
-          "adaptive_i": 0.10819873649194547,
-          "adaptive_d": -0.11562990942774054,
-          "adaptive_ff_gain": 0.9060704073364801
+          "adaptive_p": 0.1247629190434231,
+          "adaptive_i": 0.08736549165353404,
+          "adaptive_d": -0.037628273724898964,
+          "adaptive_ff_gain": 0.5646123393927364
         }
       },
       {
         "segment": "00061",
-        "lataccel_cost": 0.6647922152040383,
-        "jerk_cost": 21.990468188972535,
-        "total_cost": 55.23007894917445,
+        "lataccel_cost": 0.8398519969422553,
+        "jerk_cost": 19.795115742934254,
+        "total_cost": 61.78771559004701,
         "diagnostics": {
-          "adaptive_p": 0.1903147928789562,
-          "adaptive_i": 0.10794467543665405,
-          "adaptive_d": -0.11542617004516943,
-          "adaptive_ff_gain": 0.9058798022465534
+          "adaptive_p": 0.12856221318719377,
+          "adaptive_i": 0.0879036290833555,
+          "adaptive_d": -0.038260680057196204,
+          "adaptive_ff_gain": 0.5618360357852723
         }
       },
       {
         "segment": "00062",
-        "lataccel_cost": 0.17595518195708867,
-        "jerk_cost": 6.9102188903234,
-        "total_cost": 15.707977988177834,
+        "lataccel_cost": 0.20360597923800555,
+        "jerk_cost": 5.37179998363281,
+        "total_cost": 15.552098945533084,
         "diagnostics": {
-          "adaptive_p": 0.19113391798594292,
-          "adaptive_i": 0.10789618616681389,
-          "adaptive_d": -0.11594332932244994,
-          "adaptive_ff_gain": 0.9108540731569377
+          "adaptive_p": 0.12885035488724808,
+          "adaptive_i": 0.08582843839962429,
+          "adaptive_d": -0.04289499468393496,
+          "adaptive_ff_gain": 0.5911722923034021
         }
       },
       {
         "segment": "00063",
-        "lataccel_cost": 2.0509945925292135,
-        "jerk_cost": 66.89632081664608,
-        "total_cost": 169.44605044310677,
+        "lataccel_cost": 1.008914430440883,
+        "jerk_cost": 37.67113928799278,
+        "total_cost": 88.11686081003693,
         "diagnostics": {
-          "adaptive_p": 0.1908511126487519,
-          "adaptive_i": 0.10804392162227525,
-          "adaptive_d": -0.11570025925056143,
-          "adaptive_ff_gain": 0.9059573191425068
+          "adaptive_p": 0.12564867710014782,
+          "adaptive_i": 0.08737826742000121,
+          "adaptive_d": -0.03834893580686108,
+          "adaptive_ff_gain": 0.5655165934626103
         }
       },
       {
         "segment": "00064",
-        "lataccel_cost": 0.1011778469688263,
-        "jerk_cost": 2.7766738640302107,
-        "total_cost": 7.8355662124715275,
+        "lataccel_cost": 0.15188835232411932,
+        "jerk_cost": 2.8316173964120175,
+        "total_cost": 10.426035012617984,
         "diagnostics": {
-          "adaptive_p": 0.1918090687695363,
-          "adaptive_i": 0.1081147876223781,
-          "adaptive_d": -0.11614772064501383,
-          "adaptive_ff_gain": 0.9087718528729998
+          "adaptive_p": 0.13147435827995135,
+          "adaptive_i": 0.08731651980380777,
+          "adaptive_d": -0.041091029015823934,
+          "adaptive_ff_gain": 0.5705466472606482
         }
       },
       {
         "segment": "00065",
-        "lataccel_cost": 0.5199943952092992,
-        "jerk_cost": 13.954462398006806,
-        "total_cost": 39.95418215847177,
+        "lataccel_cost": 0.5297299472283717,
+        "jerk_cost": 12.320489521956551,
+        "total_cost": 38.80698688337514,
         "diagnostics": {
-          "adaptive_p": 0.19102680002711903,
-          "adaptive_i": 0.10818543333668246,
-          "adaptive_d": -0.11556827059605215,
-          "adaptive_ff_gain": 0.90554978379108
+          "adaptive_p": 0.1257841405378666,
+          "adaptive_i": 0.08782954765209007,
+          "adaptive_d": -0.03811737524261963,
+          "adaptive_ff_gain": 0.5599147614597012
         }
       },
       {
         "segment": "00066",
-        "lataccel_cost": 0.135562839062013,
-        "jerk_cost": 6.192462697019448,
-        "total_cost": 12.970604650120102,
+        "lataccel_cost": 0.4510616086221015,
+        "jerk_cost": 4.897706412196008,
+        "total_cost": 27.450786843301085,
         "diagnostics": {
-          "adaptive_p": 0.19493287010547597,
-          "adaptive_i": 0.10839517907296257,
-          "adaptive_d": -0.11444073595018084,
-          "adaptive_ff_gain": 0.9000405765161296
+          "adaptive_p": 0.14787475194763242,
+          "adaptive_i": 0.08493412635194712,
+          "adaptive_d": -0.03842483939844395,
+          "adaptive_ff_gain": 0.598933574853182
         }
       },
       {
         "segment": "00067",
-        "lataccel_cost": 0.46952365425021936,
-        "jerk_cost": 19.533937657010586,
-        "total_cost": 43.01012036952156,
+        "lataccel_cost": 0.5910112427557346,
+        "jerk_cost": 15.797777455047717,
+        "total_cost": 45.34833959283444,
         "diagnostics": {
-          "adaptive_p": 0.19170621729662202,
-          "adaptive_i": 0.10823876584319148,
-          "adaptive_d": -0.11549883611256319,
-          "adaptive_ff_gain": 0.9048750515573327
+          "adaptive_p": 0.13015434407308069,
+          "adaptive_i": 0.08879126940494095,
+          "adaptive_d": -0.038660086112069406,
+          "adaptive_ff_gain": 0.5508683632675598
         }
       },
       {
         "segment": "00068",
-        "lataccel_cost": 0.3922601549594616,
-        "jerk_cost": 18.833307173193052,
-        "total_cost": 38.44631492116613,
+        "lataccel_cost": 0.4784588473675332,
+        "jerk_cost": 15.352753839267285,
+        "total_cost": 39.275696207643946,
         "diagnostics": {
-          "adaptive_p": 0.19084285328719913,
-          "adaptive_i": 0.10820405488195416,
-          "adaptive_d": -0.1155716863006985,
-          "adaptive_ff_gain": 0.9057466599996076
+          "adaptive_p": 0.12493156790337484,
+          "adaptive_i": 0.08743551379025462,
+          "adaptive_d": -0.037864081771128134,
+          "adaptive_ff_gain": 0.5639053025036406
         }
       },
       {
         "segment": "00069",
-        "lataccel_cost": 2.851102382303036,
-        "jerk_cost": 39.94764955080988,
-        "total_cost": 182.50276866596167,
+        "lataccel_cost": 1.6755363973988597,
+        "jerk_cost": 18.35245247552578,
+        "total_cost": 102.12927234546878,
         "diagnostics": {
-          "adaptive_p": 0.2083777829214557,
-          "adaptive_i": 0.10469663446456881,
-          "adaptive_d": -0.11551588918033566,
-          "adaptive_ff_gain": 0.9027369985042841
+          "adaptive_p": 0.22765342627746407,
+          "adaptive_i": 0.07918143973496036,
+          "adaptive_d": -0.06566449098505923,
+          "adaptive_ff_gain": 0.6659849429478539
         }
       },
       {
         "segment": "00070",
-        "lataccel_cost": 0.599462616030968,
-        "jerk_cost": 19.58555295748261,
-        "total_cost": 49.55868375903101,
+        "lataccel_cost": 0.7149010314907551,
+        "jerk_cost": 17.688806665693274,
+        "total_cost": 53.43385824023103,
         "diagnostics": {
-          "adaptive_p": 0.1908105086198852,
-          "adaptive_i": 0.10811221431889312,
-          "adaptive_d": -0.11554781116368831,
-          "adaptive_ff_gain": 0.9057009033810831
+          "adaptive_p": 0.12709743523771683,
+          "adaptive_i": 0.08794624483340913,
+          "adaptive_d": -0.03820938287127229,
+          "adaptive_ff_gain": 0.5595739848565467
         }
       },
       {
         "segment": "00071",
-        "lataccel_cost": 1.1193654116436258,
-        "jerk_cost": 51.318833079888634,
-        "total_cost": 107.28710366206992,
+        "lataccel_cost": 1.428109275438639,
+        "jerk_cost": 36.205597067903966,
+        "total_cost": 107.61106083983591,
         "diagnostics": {
-          "adaptive_p": 0.19100101577697917,
-          "adaptive_i": 0.10818347670262206,
-          "adaptive_d": -0.1155168331506734,
-          "adaptive_ff_gain": 0.9057252010782967
+          "adaptive_p": 0.1264069034848672,
+          "adaptive_i": 0.08770950956732027,
+          "adaptive_d": -0.03797715419036338,
+          "adaptive_ff_gain": 0.5619694759547181
         }
       },
       {
         "segment": "00072",
-        "lataccel_cost": 0.5491626026611668,
-        "jerk_cost": 16.52653259209019,
-        "total_cost": 43.98466272514854,
+        "lataccel_cost": 0.6562551852245201,
+        "jerk_cost": 13.002979971952579,
+        "total_cost": 45.81573923317859,
         "diagnostics": {
-          "adaptive_p": 0.19080317761070906,
-          "adaptive_i": 0.10797601664094268,
-          "adaptive_d": -0.11557969925230184,
-          "adaptive_ff_gain": 0.9065606389240614
+          "adaptive_p": 0.13136620909336835,
+          "adaptive_i": 0.08786617586103458,
+          "adaptive_d": -0.03933903846631512,
+          "adaptive_ff_gain": 0.5639420310845207
         }
       },
       {
         "segment": "00073",
-        "lataccel_cost": 0.5207654755756421,
-        "jerk_cost": 14.009512908196974,
-        "total_cost": 40.04778668697909,
+        "lataccel_cost": 0.6502801004457122,
+        "jerk_cost": 12.50931558925025,
+        "total_cost": 45.02332061153586,
         "diagnostics": {
-          "adaptive_p": 0.1909611569050055,
-          "adaptive_i": 0.10821833206772087,
-          "adaptive_d": -0.11566763783004745,
-          "adaptive_ff_gain": 0.9060824643105858
+          "adaptive_p": 0.12541338605415994,
+          "adaptive_i": 0.08718714774921392,
+          "adaptive_d": -0.037944662197141286,
+          "adaptive_ff_gain": 0.5670276801768823
         }
       },
       {
         "segment": "00074",
-        "lataccel_cost": 0.2430320029375264,
-        "jerk_cost": 8.676903881640792,
-        "total_cost": 20.82850402851711,
+        "lataccel_cost": 0.2228614860176238,
+        "jerk_cost": 6.450496395560622,
+        "total_cost": 17.593570696441812,
         "diagnostics": {
-          "adaptive_p": 0.19070808249709548,
-          "adaptive_i": 0.10819181438070057,
-          "adaptive_d": -0.11572137940974915,
-          "adaptive_ff_gain": 0.906393276683599
+          "adaptive_p": 0.12299954915694143,
+          "adaptive_i": 0.08646557643742757,
+          "adaptive_d": -0.03739281221520856,
+          "adaptive_ff_gain": 0.5737347131249819
         }
       },
       {
         "segment": "00075",
-        "lataccel_cost": 0.6827180126963758,
-        "jerk_cost": 32.26508560774288,
-        "total_cost": 66.40098624256169,
+        "lataccel_cost": 0.7371426132200974,
+        "jerk_cost": 22.987362523397888,
+        "total_cost": 59.844493184402765,
         "diagnostics": {
-          "adaptive_p": 0.19085543145548212,
-          "adaptive_i": 0.10818925949349656,
-          "adaptive_d": -0.11565130368465568,
-          "adaptive_ff_gain": 0.9059918868473604
+          "adaptive_p": 0.12474598079930482,
+          "adaptive_i": 0.08684531992690935,
+          "adaptive_d": -0.03772615580221314,
+          "adaptive_ff_gain": 0.5703699506013982
         }
       },
       {
         "segment": "00076",
-        "lataccel_cost": 0.3285651336924139,
-        "jerk_cost": 22.49899573066588,
-        "total_cost": 38.927252415286574,
+        "lataccel_cost": 0.7274671664095707,
+        "jerk_cost": 16.906699673891527,
+        "total_cost": 53.280057994370054,
         "diagnostics": {
-          "adaptive_p": 0.19074481862897041,
-          "adaptive_i": 0.10813981898163491,
-          "adaptive_d": -0.11552052908291949,
-          "adaptive_ff_gain": 0.9057686720450429
+          "adaptive_p": 0.11875016603835314,
+          "adaptive_i": 0.08504950777506978,
+          "adaptive_d": -0.0375470861121478,
+          "adaptive_ff_gain": 0.5884911721769607
         }
       },
       {
         "segment": "00077",
-        "lataccel_cost": 0.7215843292663001,
-        "jerk_cost": 19.090631226213397,
-        "total_cost": 55.1698476895284,
+        "lataccel_cost": 1.0185660771557108,
+        "jerk_cost": 18.4958077669495,
+        "total_cost": 69.42411162473505,
         "diagnostics": {
-          "adaptive_p": 0.19137295451517938,
-          "adaptive_i": 0.10830982068398703,
-          "adaptive_d": -0.11577769116295192,
-          "adaptive_ff_gain": 0.9059575661866844
+          "adaptive_p": 0.12547513035203808,
+          "adaptive_i": 0.0871848175821641,
+          "adaptive_d": -0.03802198497239388,
+          "adaptive_ff_gain": 0.5661191668624735
         }
       },
       {
         "segment": "00078",
-        "lataccel_cost": 0.44007938380298767,
-        "jerk_cost": 9.072020847964977,
-        "total_cost": 31.07599003811436,
+        "lataccel_cost": 0.3771822340595973,
+        "jerk_cost": 6.721393201717225,
+        "total_cost": 25.580504904697086,
         "diagnostics": {
-          "adaptive_p": 0.19068602970316967,
-          "adaptive_i": 0.10822313306553542,
-          "adaptive_d": -0.11570844120461667,
-          "adaptive_ff_gain": 0.9064640149122701
+          "adaptive_p": 0.12275334795515869,
+          "adaptive_i": 0.08618441141679702,
+          "adaptive_d": -0.03729256911297888,
+          "adaptive_ff_gain": 0.5769163160259088
         }
       },
       {
         "segment": "00079",
-        "lataccel_cost": 0.06884383987429187,
-        "jerk_cost": 1.160806803446219,
-        "total_cost": 4.602998797160812,
+        "lataccel_cost": 0.10070698764568281,
+        "jerk_cost": 1.2372499789339502,
+        "total_cost": 6.2725993612180915,
         "diagnostics": {
-          "adaptive_p": 0.19121443724837356,
-          "adaptive_i": 0.1081609332262746,
-          "adaptive_d": -0.11602924052564592,
-          "adaptive_ff_gain": 0.9093363772115154
+          "adaptive_p": 0.12064337193368996,
+          "adaptive_i": 0.08436031746915329,
+          "adaptive_d": -0.03963231343801595,
+          "adaptive_ff_gain": 0.5979625402391705
         }
       },
       {
         "segment": "00080",
-        "lataccel_cost": 0.4707105508965573,
-        "jerk_cost": 16.625244817436496,
-        "total_cost": 40.16077236226436,
+        "lataccel_cost": 0.4528372001027269,
+        "jerk_cost": 14.929345364660419,
+        "total_cost": 37.571205369796765,
         "diagnostics": {
-          "adaptive_p": 0.1908297885628275,
-          "adaptive_i": 0.1083147648712705,
-          "adaptive_d": -0.11577009103431762,
-          "adaptive_ff_gain": 0.9067388895288714
+          "adaptive_p": 0.12280014148253929,
+          "adaptive_i": 0.08609976343520657,
+          "adaptive_d": -0.03749324141466364,
+          "adaptive_ff_gain": 0.577955832419076
         }
       },
       {
         "segment": "00081",
-        "lataccel_cost": 0.6583573810111222,
-        "jerk_cost": 19.83701653003036,
-        "total_cost": 52.75488558058647,
+        "lataccel_cost": 0.844803156784414,
+        "jerk_cost": 16.90350967068868,
+        "total_cost": 59.143667509909385,
         "diagnostics": {
-          "adaptive_p": 0.19070404256111484,
-          "adaptive_i": 0.10820632463730358,
-          "adaptive_d": -0.11559966709185442,
-          "adaptive_ff_gain": 0.9060059476317232
+          "adaptive_p": 0.12426574175780147,
+          "adaptive_i": 0.08708726927821155,
+          "adaptive_d": -0.037663701649155286,
+          "adaptive_ff_gain": 0.5674587563209293
         }
       },
       {
         "segment": "00082",
-        "lataccel_cost": 0.8582282129016812,
-        "jerk_cost": 35.08830782884727,
-        "total_cost": 77.99971847393134,
+        "lataccel_cost": 0.7416174537651294,
+        "jerk_cost": 28.2538101703973,
+        "total_cost": 65.33468285865376,
         "diagnostics": {
-          "adaptive_p": 0.19036272070421276,
-          "adaptive_i": 0.10805118905728674,
-          "adaptive_d": -0.1156534282984064,
-          "adaptive_ff_gain": 0.9067418299667065
+          "adaptive_p": 0.12635697734988177,
+          "adaptive_i": 0.086419465249883,
+          "adaptive_d": -0.03782922804159045,
+          "adaptive_ff_gain": 0.5771986694674988
         }
       },
       {
         "segment": "00083",
-        "lataccel_cost": 0.5946332011650939,
-        "jerk_cost": 17.24869651953049,
-        "total_cost": 46.98035657778519,
+        "lataccel_cost": 0.6782961281789542,
+        "jerk_cost": 16.231046745850065,
+        "total_cost": 50.145853154797784,
         "diagnostics": {
-          "adaptive_p": 0.19102456442155408,
-          "adaptive_i": 0.10809814784297514,
-          "adaptive_d": -0.11562895681390395,
-          "adaptive_ff_gain": 0.9060655426264093
+          "adaptive_p": 0.12857204122450025,
+          "adaptive_i": 0.08717100077477999,
+          "adaptive_d": -0.03829629457996873,
+          "adaptive_ff_gain": 0.5695029955827745
         }
       },
       {
         "segment": "00084",
-        "lataccel_cost": 0.5138456277922836,
-        "jerk_cost": 44.294161659543015,
-        "total_cost": 69.9864430491572,
+        "lataccel_cost": 0.6141963404492058,
+        "jerk_cost": 22.40513612847795,
+        "total_cost": 53.114953150938234,
         "diagnostics": {
-          "adaptive_p": 0.21332609509907458,
-          "adaptive_i": 0.10780520563932183,
-          "adaptive_d": -0.11230203596134596,
-          "adaptive_ff_gain": 0.9018140314925149
+          "adaptive_p": 0.24144941072251733,
+          "adaptive_i": 0.09348580920230044,
+          "adaptive_d": -0.0710568967782548,
+          "adaptive_ff_gain": 0.5424491732704808
         }
       },
       {
         "segment": "00085",
-        "lataccel_cost": 0.7938991749859968,
-        "jerk_cost": 18.54265039502683,
-        "total_cost": 58.23760914432667,
+        "lataccel_cost": 1.0061153368998865,
+        "jerk_cost": 18.382597496349394,
+        "total_cost": 68.68836434134373,
         "diagnostics": {
-          "adaptive_p": 0.19094374262058977,
-          "adaptive_i": 0.10829901190859949,
-          "adaptive_d": -0.1157190534137738,
-          "adaptive_ff_gain": 0.9064657958341164
+          "adaptive_p": 0.12394420050461923,
+          "adaptive_i": 0.08628268428963003,
+          "adaptive_d": -0.037610093213883894,
+          "adaptive_ff_gain": 0.5760753533383565
         }
       },
       {
         "segment": "00086",
-        "lataccel_cost": 0.6239338585244024,
-        "jerk_cost": 27.9563215870716,
-        "total_cost": 59.15301451329171,
+        "lataccel_cost": 0.6636412189753067,
+        "jerk_cost": 23.498728916443255,
+        "total_cost": 56.68078986520859,
         "diagnostics": {
-          "adaptive_p": 0.19112226223558337,
-          "adaptive_i": 0.10817624630100652,
-          "adaptive_d": -0.11562060777279067,
-          "adaptive_ff_gain": 0.9057474302961523
+          "adaptive_p": 0.12658820628572315,
+          "adaptive_i": 0.0879848440315515,
+          "adaptive_d": -0.038348264731193245,
+          "adaptive_ff_gain": 0.5588380479764337
         }
       },
       {
         "segment": "00087",
-        "lataccel_cost": 0.29004978432261525,
-        "jerk_cost": 6.328535404165546,
-        "total_cost": 20.83102462029631,
+        "lataccel_cost": 0.3311633670083784,
+        "jerk_cost": 5.764766984943528,
+        "total_cost": 22.32293533536245,
         "diagnostics": {
-          "adaptive_p": 0.20161820366694663,
-          "adaptive_i": 0.10931637471571037,
-          "adaptive_d": -0.11498168769419437,
-          "adaptive_ff_gain": 0.9005662616488537
+          "adaptive_p": 0.19459267032989033,
+          "adaptive_i": 0.08447962835862384,
+          "adaptive_d": -0.04108135255101242,
+          "adaptive_ff_gain": 0.6540404359090706
         }
       },
       {
         "segment": "00088",
-        "lataccel_cost": 0.5839760983650208,
-        "jerk_cost": 18.90130966271464,
-        "total_cost": 48.100114580965695,
+        "lataccel_cost": 0.6369962474512131,
+        "jerk_cost": 14.763822789441168,
+        "total_cost": 46.61363516200183,
         "diagnostics": {
-          "adaptive_p": 0.19145555256324825,
-          "adaptive_i": 0.10825856319167901,
-          "adaptive_d": -0.11579632408794913,
-          "adaptive_ff_gain": 0.9057575915504417
+          "adaptive_p": 0.1258806002863239,
+          "adaptive_i": 0.08785005383027548,
+          "adaptive_d": -0.038494646358213785,
+          "adaptive_ff_gain": 0.5595107115908032
         }
       },
       {
         "segment": "00089",
-        "lataccel_cost": 1.1685099115900708,
-        "jerk_cost": 32.91241371499069,
-        "total_cost": 91.33790929449424,
+        "lataccel_cost": 1.3293328695049609,
+        "jerk_cost": 29.006645217414416,
+        "total_cost": 95.47328869266246,
         "diagnostics": {
-          "adaptive_p": 0.19101386287671782,
-          "adaptive_i": 0.10810873937825331,
-          "adaptive_d": -0.11553054876618137,
-          "adaptive_ff_gain": 0.9052310945968894
+          "adaptive_p": 0.12703413832914165,
+          "adaptive_i": 0.08842830395361313,
+          "adaptive_d": -0.038334457497208985,
+          "adaptive_ff_gain": 0.5537750585784663
         }
       },
       {
         "segment": "00090",
-        "lataccel_cost": 0.09945983104021366,
-        "jerk_cost": 3.7140187400353604,
-        "total_cost": 8.687010292046045,
+        "lataccel_cost": 0.1550190613336524,
+        "jerk_cost": 2.7250351571628375,
+        "total_cost": 10.475988223845457,
         "diagnostics": {
-          "adaptive_p": 0.19036797678888584,
-          "adaptive_i": 0.10824806300547121,
-          "adaptive_d": -0.11530163667067714,
-          "adaptive_ff_gain": 0.9058443641406025
+          "adaptive_p": 0.11850336388317749,
+          "adaptive_i": 0.0854193996737185,
+          "adaptive_d": -0.036547512086574994,
+          "adaptive_ff_gain": 0.5822816400521469
         }
       },
       {
         "segment": "00091",
-        "lataccel_cost": 0.74450871407042,
-        "jerk_cost": 31.57201659544283,
-        "total_cost": 68.79745229896383,
+        "lataccel_cost": 0.8466234084365023,
+        "jerk_cost": 26.76087423818373,
+        "total_cost": 69.09204466000885,
         "diagnostics": {
-          "adaptive_p": 0.19108865807805203,
-          "adaptive_i": 0.10818246898291975,
-          "adaptive_d": -0.11572117666052659,
-          "adaptive_ff_gain": 0.9060484611893557
+          "adaptive_p": 0.12587728436322532,
+          "adaptive_i": 0.08728079912947932,
+          "adaptive_d": -0.03807614312322289,
+          "adaptive_ff_gain": 0.5660725706552062
         }
       },
       {
         "segment": "00092",
-        "lataccel_cost": 0.7759560792536743,
-        "jerk_cost": 23.329163351675675,
-        "total_cost": 62.12696731435939,
+        "lataccel_cost": 0.6808381700315982,
+        "jerk_cost": 12.76806088819881,
+        "total_cost": 46.809969389778715,
         "diagnostics": {
-          "adaptive_p": 0.1913974236252019,
-          "adaptive_i": 0.10815583114240078,
-          "adaptive_d": -0.11541561131283878,
-          "adaptive_ff_gain": 0.9047870255507522
+          "adaptive_p": 0.12913919211750388,
+          "adaptive_i": 0.0881179336203128,
+          "adaptive_d": -0.03813225705105535,
+          "adaptive_ff_gain": 0.558733629252432
         }
       },
       {
         "segment": "00093",
-        "lataccel_cost": 0.9391310036030539,
-        "jerk_cost": 28.1963557892755,
-        "total_cost": 75.15290596942819,
+        "lataccel_cost": 1.0519525579183477,
+        "jerk_cost": 26.257697197736256,
+        "total_cost": 78.85532509365365,
         "diagnostics": {
-          "adaptive_p": 0.19115289916285993,
-          "adaptive_i": 0.10819355086206678,
-          "adaptive_d": -0.11563353957697356,
-          "adaptive_ff_gain": 0.905619955545582
+          "adaptive_p": 0.12683435362719717,
+          "adaptive_i": 0.08753898212243254,
+          "adaptive_d": -0.038154510558855236,
+          "adaptive_ff_gain": 0.5633171949946557
         }
       },
       {
         "segment": "00094",
-        "lataccel_cost": 1.2477882705753662,
-        "jerk_cost": 65.02861514207909,
-        "total_cost": 127.41802867084742,
+        "lataccel_cost": 1.29106704327631,
+        "jerk_cost": 39.47987258453891,
+        "total_cost": 104.03322474835443,
         "diagnostics": {
-          "adaptive_p": 0.19923455198591503,
-          "adaptive_i": 0.10746364943606317,
-          "adaptive_d": -0.11092228207188669,
-          "adaptive_ff_gain": 0.8817310067322687
+          "adaptive_p": 0.1836093722564947,
+          "adaptive_i": 0.09269631113056291,
+          "adaptive_d": -0.04834624626115722,
+          "adaptive_ff_gain": 0.5148493200020778
         }
       },
       {
         "segment": "00095",
-        "lataccel_cost": 0.7334474648540794,
-        "jerk_cost": 35.24524240351904,
-        "total_cost": 71.917615646223,
+        "lataccel_cost": 0.7482005174277766,
+        "jerk_cost": 25.65879042751073,
+        "total_cost": 63.06881629889956,
         "diagnostics": {
-          "adaptive_p": 0.19150957709105795,
-          "adaptive_i": 0.10831932823969359,
-          "adaptive_d": -0.11582801392949521,
-          "adaptive_ff_gain": 0.9058430675459874
+          "adaptive_p": 0.1254788090049547,
+          "adaptive_i": 0.08746080746212134,
+          "adaptive_d": -0.038275896016504586,
+          "adaptive_ff_gain": 0.5633443414606477
         }
       },
       {
         "segment": "00096",
-        "lataccel_cost": 0.5262579636633198,
-        "jerk_cost": 21.678696662578297,
-        "total_cost": 47.99159484574429,
+        "lataccel_cost": 0.5670574279215123,
+        "jerk_cost": 15.183415595355138,
+        "total_cost": 43.53628699143075,
         "diagnostics": {
-          "adaptive_p": 0.19156646305267702,
-          "adaptive_i": 0.10838016451832364,
-          "adaptive_d": -0.11568216008512458,
-          "adaptive_ff_gain": 0.9050584503226229
+          "adaptive_p": 0.12308381816715122,
+          "adaptive_i": 0.08768438599404996,
+          "adaptive_d": -0.037683972257939735,
+          "adaptive_ff_gain": 0.5589003140291138
         }
       },
       {
         "segment": "00097",
-        "lataccel_cost": 0.20919415737274505,
-        "jerk_cost": 5.656437141358328,
-        "total_cost": 16.11614500999558,
+        "lataccel_cost": 0.251220518189999,
+        "jerk_cost": 5.460551504171018,
+        "total_cost": 18.021577413670972,
         "diagnostics": {
-          "adaptive_p": 0.19122257312015098,
-          "adaptive_i": 0.10818165550620944,
-          "adaptive_d": -0.11568289813367996,
-          "adaptive_ff_gain": 0.9058035317394977
+          "adaptive_p": 0.1277099194832041,
+          "adaptive_i": 0.08787855746639198,
+          "adaptive_d": -0.03849855164269478,
+          "adaptive_ff_gain": 0.5602544353461529
         }
       },
       {
         "segment": "00098",
-        "lataccel_cost": 0.736556087262323,
-        "jerk_cost": 19.43681481853045,
-        "total_cost": 56.264619181646616,
+        "lataccel_cost": 0.8561432107888065,
+        "jerk_cost": 20.765446612734248,
+        "total_cost": 63.57260715217458,
         "diagnostics": {
-          "adaptive_p": 0.1919776782961029,
-          "adaptive_i": 0.1083891415851474,
-          "adaptive_d": -0.11583561863605177,
-          "adaptive_ff_gain": 0.9054345900555243
+          "adaptive_p": 0.1272079172294883,
+          "adaptive_i": 0.08829257642038592,
+          "adaptive_d": -0.038654461506349935,
+          "adaptive_ff_gain": 0.5539711794869372
         }
       },
       {
         "segment": "00099",
-        "lataccel_cost": 0.3466944859843508,
-        "jerk_cost": 8.060630827634217,
-        "total_cost": 25.395355126851765,
+        "lataccel_cost": 0.4461222052053101,
+        "jerk_cost": 7.788302014959171,
+        "total_cost": 30.094412275224677,
         "diagnostics": {
-          "adaptive_p": 0.19112433007097834,
-          "adaptive_i": 0.10809492902596342,
-          "adaptive_d": -0.11558641488632437,
-          "adaptive_ff_gain": 0.9060750273951267
+          "adaptive_p": 0.13000956685189824,
+          "adaptive_i": 0.08869628001649683,
+          "adaptive_d": -0.03934706960380327,
+          "adaptive_ff_gain": 0.5531231169496125
         }
       }
     ]
   },
   "comparison": {
-    "improvement": -2.79535856684182,
-    "improvement_pct": -5.705124436711462
+    "improvement": -2.0746887780808123,
+    "improvement_pct": -4.234289578017369
   }
 }
