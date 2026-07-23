@@ -116,3 +116,97 @@ class TorchPolicy:
         out = self.net(ff_win, ctx['v'], fb)
         self.prev = e
         return out
+
+
+# ----- Ablation: 3 borrowable ideas from jonoomph's ML_PID -----
+# P = feed previous actions ; M = multi-horizon preview-error features ; H = past-history temporal branch
+MH_HORIZONS = [(0, 3), (3, 8), (8, 15)]   # near / mid / far
+HIST_W = 20
+N_PREV = 3
+
+
+def build_multihorizon(cur, roll, fut_lat, fut_roll, xp):
+    """6 features: (cur - mean(future_lataccel)) and (roll - mean(future_roll)) at 3 horizons."""
+    def hmean(fut, lo, hi, fallback):
+        seg = fut[..., lo:hi]
+        if seg.shape[-1] == 0:
+            return fallback
+        return seg.mean(-1)
+    feats = ([cur - hmean(fut_lat, lo, hi, cur) for lo, hi in MH_HORIZONS] +
+             [roll - hmean(fut_roll, lo, hi, roll) for lo, hi in MH_HORIZONS])
+    return torch.stack(feats, -1) if xp is torch else np.array(feats, dtype=np.float32)
+
+
+class AblNet(nn.Module):
+    def __init__(self, cfg='', h=H, ch=32, fb_hidden=32, res_hidden=32, hist_ch=16):
+        super().__init__()
+        self.cfg = cfg; self.n_prev = N_PREV; self.hist_w = HIST_W
+        self.ff_conv = nn.Sequential(
+            nn.Conv1d(1, ch, 5, padding=2), nn.Tanh(),
+            nn.Conv1d(ch, ch, 5, padding=2), nn.Tanh(),
+            nn.Conv1d(ch, ch, 3, padding=1), nn.Tanh())
+        self.ff_head = nn.Linear(ch * (h + 1), 1)
+        self.film = nn.Linear(1, 2)
+        fb_dim = 3 + (N_PREV if 'P' in cfg else 0) + (6 if 'M' in cfg else 0)
+        self.hist_ch = hist_ch
+        if 'H' in cfg:
+            self.hist_conv = nn.Sequential(nn.Conv1d(4, hist_ch, 5, padding=2), nn.Tanh())
+            fb_dim += hist_ch
+        self.fb = nn.Sequential(nn.Linear(fb_dim, fb_hidden), nn.Tanh(), nn.Linear(fb_hidden, 1))
+        self.res = nn.Sequential(nn.Linear(fb_dim, res_hidden), nn.Tanh(),
+                                 nn.Linear(res_hidden, res_hidden), nn.Tanh(), nn.Linear(res_hidden, 1))
+        self.gate = nn.Linear(3, 1)
+        for m in (self.fb[-1], self.res[-1]):
+            nn.init.zeros_(m.weight); nn.init.zeros_(m.bias)
+        nn.init.zeros_(self.film.weight); nn.init.zeros_(self.film.bias)
+
+    def forward(self, ff_win, v, fb_feats, hist=None):
+        x = self.ff_conv(ff_win.unsqueeze(1)).flatten(1)
+        ff = self.ff_head(x).squeeze(-1)
+        s, sh = self.film((v / V_SCALE).unsqueeze(-1)).unbind(-1)
+        ff = ff * (1 + s) + sh
+        fbin = fb_feats
+        if 'H' in self.cfg:
+            fbin = torch.cat([fbin, self.hist_conv(hist).mean(-1)], -1)
+        fb = self.fb(fbin).squeeze(-1)
+        span = ff_win.max(1).values - ff_win.min(1).values
+        slope = (ff_win[:, 1:] - ff_win[:, :-1]).abs().max(1).values
+        crit = torch.stack([span, slope, fb_feats[:, 0].abs()], -1)
+        gate = torch.sigmoid(self.gate(crit)).squeeze(-1)
+        return ff + fb + gate * self.res(fbin).squeeze(-1)
+
+
+class AblPolicy:
+    """Stateful torch-rollout controller for AblNet; maintains PI + prev-actions + history state."""
+    def __init__(self, net, B, dev, i_clip=5.0):
+        self.net = net; self.cfg = net.cfg; self.B = B; self.dev = dev; self.i_clip = i_clip
+        self.integ = torch.zeros(B, device=dev); self.prev = torch.zeros(B, device=dev)
+        self.pact = [torch.zeros(B, device=dev) for _ in range(net.n_prev)]
+        self.hist = []
+
+    def detach_state(self):
+        self.integ = self.integ.detach(); self.prev = self.prev.detach()
+        self.pact = [a.detach() for a in self.pact]
+        self.hist = [h.detach() for h in self.hist]
+
+    def __call__(self, ctx):
+        e = ctx['target'] - ctx['cur']
+        self.integ = (self.integ + e).clamp(-self.i_clip, self.i_clip)
+        ff_win = build_ff_window(ctx['target'], ctx['roll'], ctx['fut_lat'], ctx['fut_roll'], torch)
+        feats = [e, self.integ, self.prev]
+        if 'P' in self.cfg:
+            feats = feats + self.pact[-self.net.n_prev:]
+        fb = torch.stack(feats, -1)
+        if 'M' in self.cfg:
+            fb = torch.cat([fb, build_multihorizon(ctx['cur'], ctx['roll'], ctx['fut_lat'], ctx['fut_roll'], torch)], -1)
+        hist = None
+        if 'H' in self.cfg:
+            self.hist.append(torch.stack([e, ctx['roll'], ctx['v'] / V_SCALE, ctx['a']], -1))
+            buf = self.hist[-self.net.hist_w:]
+            if len(buf) < self.net.hist_w:
+                buf = [torch.zeros(self.B, 4, device=self.dev)] * (self.net.hist_w - len(buf)) + buf
+            hist = torch.stack(buf, 1).transpose(1, 2)                 # [B,4,W]
+        out = self.net(ff_win, ctx['v'], fb, hist)
+        self.pact.append(out.detach())
+        self.prev = e
+        return out

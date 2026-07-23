@@ -7,18 +7,22 @@ fingerprinting or action replay.
 
 ## Results
 
-Full **5000-segment** metric (v2 cost landscape; lower is better):
+Full **5000-segment** metric (v2 cost landscape; lower is better). This landscape matches the
+official leaderboard — its PID baseline is 110.25, and ours is 110.76.
 
 | Controller | file | lataccel | jerk | **total_cost** | vs PID |
 |---|---|---|---|---|---|
 | PID (baseline) | `controllers/pid.py` | 1.71 | 25.5 | **110.76** | — |
-| `ff_pi` — 2-DOF | `controllers/ff_pi.py` | 0.74 | 22.3 | **59.06** | −47% |
-| `cnn_B` — learned (base) | `controllers/cnn.py` | 0.63 | 22.7 | **54.32** | −51% |
-| **`cnn_D` — learned (big, default)** | `controllers/cnn.py` | 0.58 | 22.2 | **51.34** | **−54%** |
+| `ff_pi` — 2-DOF feedforward+PI | `controllers/ff_pi.py` | 0.74 | 22.3 | **59.06** | −47% |
+| learned (big residual/gating) | — | 0.58 | 22.2 | 51.34 | −54% |
+| *ref: best honest leaderboard entry (jonoomph "ML_PID")* | — | — | — | *50.72* | |
+| **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.572** | **21.38** | **49.96** | **−55%** |
 
-`report.html` is the generated head-to-head of the default controller (`cnn_D`) vs PID over all
-5000 segments. The result is verified: **zero train/serve skew**, and the win holds on a
-pristine held-out split (51.37 on segments used for neither training nor selection).
+The default `cnn` controller (**49.96**) is an honest, generalizing controller that **beats the
+best non-exploit entry on the comma leaderboard** (everything scoring below ~30 there is a
+per-segment fingerprint/replay exploit, not a controller). `report.html` is the generated
+head-to-head vs PID over all 5000 segments. Verified: **zero train/serve skew**, and the win
+holds on pristine held-out splits used for neither training nor selection.
 
 ## Approach
 
@@ -37,13 +41,16 @@ pristine held-out split (51.37 on segments used for neither training nor selecti
    **straight-through Gumbel-softmax** rollouts so gradients flow through the true stochastic
    recursion.
 
-4. **`cnn` (Stage 3).** A preview CNN: 1-D conv feedforward over the smoothed-reference window,
-   gain-scheduled by `v_ego`, plus a feedback head. `cnn_D` adds a residual head **gated by a
-   criticality signal** (error magnitude, preview slope/span). Trained by imitation warm-start
-   then end-to-end cost fine-tuning, with **checkpoints selected on the real numpy sim**.
+4. **`cnn` (learned preview net).** A 1-D conv feedforward over the (target−roll) preview window,
+   gain-scheduled by `v_ego`, a feedback head, and a residual head **gated by a criticality
+   signal** (error magnitude, preview slope/span). Two extra inputs — **its own previous actions**
+   and **multi-horizon preview errors** (current lataccel vs future-mean at near/mid/far) — were
+   isolated by ablation as the ideas worth borrowing from the leaderboard's best honest entry (a
+   history branch was tested and dropped as harmful). Trained end-to-end on the exact cost via
+   Gumbel rollouts, with **checkpoints selected on the real numpy sim**.
 
-Everything is a pure function of the observable state + 5-second preview — no lookup keyed on
-segment identity.
+Everything is a pure function of the observable state + 5-second preview + the controller's own
+recent actions — no lookup keyed on segment identity, so it generalizes.
 
 ## Why not the leaderboard's sub-50 scores?
 
@@ -61,31 +68,30 @@ our controllers generalize.
 pip install -r requirements.txt
 # first run auto-downloads the dataset (~0.6 GB) into ./data
 
-# evaluate the default learned controller (cnn_D) vs PID on 5000 segments -> report.html
+# evaluate the default learned controller (cnn = the PM preview net) vs PID -> report.html
 python eval.py --model_path ./models/tinyphysics.onnx --data_path ./data \
   --num_segs 5000 --test_controller cnn --baseline_controller pid
 
-# other controllers
+# the 2-DOF baseline, or the ported reference controller
 python tinyphysics.py --model_path ./models/tinyphysics.onnx --data_path ./data \
   --num_segs 100 --controller ff_pi
-# to run the base learned net instead of the big default:
-CNN_CKPT=cnn_B.pt CNN_ARCH=base python tinyphysics.py \
-  --model_path ./models/tinyphysics.onnx --data_path ./data --num_segs 100 --controller cnn
 ```
 
 ## Repo layout
 
 | Path | Purpose |
 |---|---|
-| `controllers/ff_pi.py` | Stage-1 feedforward + PI (2-DOF) |
-| `controllers/cnn.py`, `nets.py` | Learned preview CNN + eval wrapper (default `cnn_D`, big net) |
-| `cnn_D.pt`, `cnn_B.pt` | Trained weights (deliverable + base reference) |
+| `controllers/cnn.py`, `nets.py` | **Deliverable** learned preview net (`AblNet`, cfg `PM`) + eval wrapper |
+| `cnn_PM.pt` | Trained weights for the default `cnn` controller |
+| `controllers/ff_pi.py` | 2-DOF feedforward + PI baseline |
+| `controllers/pid_w_ff.py` | Ported reference controller (jonoomph, attributed) — 59.49 on our 5000 |
 | `gain_fit.npy`, `data_gain.py` | Plant gain `G(v)` fit from data |
 | `torch_sim.py` | Differentiable batched GPU TinyPhysics (training engine) |
-| `train.py`, `select_real.py`, `sweep.py` | Training, real-sim checkpoint selection, `ff_pi` tuning |
-| `eval_cnn.py` | Multi-controller batch eval on the real sim |
+| `train.py`, `ablate.py`, `select_abl.py` | Training, ablation-config training, real-sim checkpoint selection |
+| `eval_cnn.py`, `sweep.py` | Batch eval on the real sim; `ff_pi` tuning |
 
-The dataset (`data/`) and generated artifacts are gitignored; `data/` auto-downloads on first run.
+The dataset (`data/`), checkpoints (`ckpts/`) and generated artifacts are gitignored;
+`data/` auto-downloads on first run.
 
 ---
 
