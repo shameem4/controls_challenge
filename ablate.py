@@ -1,5 +1,7 @@
-"""Train one ablation config of AblNet (scratch + curriculum + K=1), save periodic
-checkpoints for real-sim selection.  Usage: python ablate.py <base|P|M|H|PMH> <iters>"""
+"""Train an AblNet config (curriculum + K=1), save periodic checkpoints for real-sim
+selection.  Usage: python ablate.py <cfg> <iters> [gumbel|expected] [warmstart.pt]
+  - train_mode 'gumbel' (stochastic, default) or 'expected' (deterministic plant)
+  - warmstart.pt: load weights and fine-tune (full horizon from the start)"""
 import sys, os, numpy as np, torch
 from torch_sim import Plant, load_segment, rollout, cost
 from nets import AblNet, AblPolicy
@@ -9,9 +11,13 @@ from tinyphysics import COST_END_IDX
 DEV = 'cuda'
 cfg_arg = sys.argv[1]; cfg = '' if cfg_arg == 'base' else cfg_arg
 iters = int(sys.argv[2]) if len(sys.argv) > 2 else 300
+train_mode = sys.argv[3] if len(sys.argv) > 3 else 'gumbel'   # 'gumbel' (stochastic) or 'expected' (deterministic)
+init_ckpt = sys.argv[4] if len(sys.argv) > 4 else None        # warm-start weights (fine-tune)
 os.makedirs('ckpts', exist_ok=True)
 plant = Plant(device=DEV)
 net = AblNet(cfg).to(DEV)
+if init_ckpt:
+    net.load_state_dict(torch.load(init_ckpt))
 opt = torch.optim.Adam(net.parameters(), 2e-4)
 bs, ACC = 8, 4
 
@@ -29,14 +35,14 @@ def seeded_val(seeds=(0, 1)):
     return float(np.mean(tots))
 
 best = 1e9
-print(f"[{cfg_arg}] params={sum(p.numel() for p in net.parameters())} iters={iters}", flush=True)
+print(f"[{cfg_arg}] params={sum(p.numel() for p in net.parameters())} iters={iters} train_mode={train_mode}", flush=True)
 for it in range(iters):
-    stop = min(150 + it, COST_END_IDX)
+    stop = COST_END_IDX if init_ckpt else min(150 + it, COST_END_IDX)   # fine-tune: full horizon from the start
     opt.zero_grad(); tl = 0.0
     for _ in range(ACC):
         idx = torch.randint(len(TRAIN), (bs,))
         segs = [load_segment(TRAIN[k]) for k in idx]
-        traj, target = rollout(plant, segs, AblPolicy(net, bs, DEV), mode='gumbel', tbptt=30, stop=stop)
+        traj, target = rollout(plant, segs, AblPolicy(net, bs, DEV), mode=train_mode, tbptt=30, stop=stop)
         loss = cost(traj, target)[2].mean() / ACC
         loss.backward(); tl += loss.item()
     torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0); opt.step()

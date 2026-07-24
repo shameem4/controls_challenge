@@ -14,15 +14,17 @@ official leaderboard — its PID baseline is 110.25, and ours is 110.76.
 |---|---|---|---|---|---|
 | PID (baseline) | `controllers/pid.py` | 1.71 | 25.5 | **110.76** | — |
 | `ff_pi` — 2-DOF feedforward+PI | `controllers/ff_pi.py` | 0.74 | 22.3 | **59.06** | −47% |
-| learned (big residual/gating) | — | 0.58 | 22.2 | 51.34 | −54% |
-| *ref: best honest leaderboard entry (jonoomph "ML_PID")* | — | — | — | *50.72* | |
-| **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.572** | **21.38** | **49.96** | **−55%** |
+| **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.569** | **21.24** | **49.70** | **−55%** |
 
-The default `cnn` controller (**49.96**) is an honest, generalizing controller that **beats the
-best non-exploit entry on the comma leaderboard** (everything scoring below ~30 there is a
-per-segment fingerprint/replay exploit, not a controller). `report.html` is the generated
-head-to-head vs PID over all 5000 segments. Verified: **zero train/serve skew**, and the win
-holds on pristine held-out splits used for neither training nor selection.
+The default `cnn` controller (**49.70**) is an **honest, generalizing** controller — a pure
+function of the observed state and preview, with no per-segment memorization. It beats the
+classical 2-DOF plateau (~59, where several leaderboard entries and every PID/PID+FF cluster) and
+edges the well-known ML controller jonoomph "ML_PID" (50.72). It is **competitive mid-pack among
+honest leaderboard entries** — a handful of MPC/PPO-based controllers score lower (the honest
+frontier is ~36, an MPC on a linear LPV-ARX model), and everything below ~30 is a per-segment
+**fingerprint/replay exploit**, not a controller. `report.html` is the generated head-to-head vs
+PID over all 5000 segments. Verified: **zero train/serve skew**, and the win holds on pristine
+held-out splits used for neither training nor selection (48.91 on `[500:1000]`).
 
 ## Approach
 
@@ -45,9 +47,13 @@ holds on pristine held-out splits used for neither training nor selection.
    gain-scheduled by `v_ego`, a feedback head, and a residual head **gated by a criticality
    signal** (error magnitude, preview slope/span). Two extra inputs — **its own previous actions**
    and **multi-horizon preview errors** (current lataccel vs future-mean at near/mid/far) — were
-   isolated by ablation as the ideas worth borrowing from the leaderboard's best honest entry (a
-   history branch was tested and dropped as harmful). Trained end-to-end on the exact cost via
-   Gumbel rollouts, with **checkpoints selected on the real numpy sim**.
+   isolated by ablation as the ideas worth borrowing from other honest entries (a history branch
+   and curvature/rate features were tested and dropped as unhelpful). Trained end-to-end on the
+   exact cost, **two-stage**: a base is first trained on the *deterministic* (expected-value) plant
+   for a smooth low-jerk controller, then fine-tuned on the *stochastic* (Gumbel) plant to add
+   drift rejection — with **checkpoints selected on the real numpy sim**. (Training on the noisy
+   plant from scratch reaches essentially the same ~50 causal-feedback floor; the two-stage edges
+   it slightly. `ablate.py <cfg> <iters> [gumbel|expected] [warmstart.pt]`.)
 
 Everything is a pure function of the observable state + 5-second preview + the controller's own
 recent actions — no lookup keyed on segment identity, so it generalizes.
