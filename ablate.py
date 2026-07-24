@@ -11,8 +11,9 @@ from tinyphysics import COST_END_IDX
 DEV = 'cuda'
 cfg_arg = sys.argv[1]; cfg = '' if cfg_arg == 'base' else cfg_arg
 iters = int(sys.argv[2]) if len(sys.argv) > 2 else 300
-train_mode = sys.argv[3] if len(sys.argv) > 3 else 'gumbel'   # 'gumbel' (stochastic) or 'expected' (deterministic)
+train_mode = sys.argv[3] if len(sys.argv) > 3 else 'gumbel'   # 'gumbel'/'expected' [+ '_soft' for soft-token BPTT]
 init_ckpt = sys.argv[4] if len(sys.argv) > 4 else None        # warm-start weights (fine-tune)
+SOFT = train_mode.endswith('_soft'); train_mode = train_mode[:-5] if SOFT else train_mode
 os.makedirs('ckpts', exist_ok=True)
 plant = Plant(device=DEV)
 net = AblNet(cfg).to(DEV)
@@ -35,14 +36,14 @@ def seeded_val(seeds=(0, 1)):
     return float(np.mean(tots))
 
 best = 1e9
-print(f"[{cfg_arg}] params={sum(p.numel() for p in net.parameters())} iters={iters} train_mode={train_mode}", flush=True)
+print(f"[{cfg_arg}] params={sum(p.numel() for p in net.parameters())} iters={iters} train_mode={train_mode} soft={SOFT}", flush=True)
 for it in range(iters):
     stop = COST_END_IDX if init_ckpt else min(150 + it, COST_END_IDX)   # fine-tune: full horizon from the start
     opt.zero_grad(); tl = 0.0
     for _ in range(ACC):
         idx = torch.randint(len(TRAIN), (bs,))
         segs = [load_segment(TRAIN[k]) for k in idx]
-        traj, target = rollout(plant, segs, AblPolicy(net, bs, DEV), mode=train_mode, tbptt=30, stop=stop)
+        traj, target = rollout(plant, segs, AblPolicy(net, bs, DEV), mode=train_mode, tbptt=30, stop=stop, soft_tokens=SOFT)
         loss = cost(traj, target)[2].mean() / ACC
         loss.backward(); tl += loss.item()
     torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0); opt.step()

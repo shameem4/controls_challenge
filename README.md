@@ -14,10 +14,11 @@ official leaderboard — its PID baseline is 110.25, and ours is 110.76.
 |---|---|---|---|---|---|
 | PID (baseline) | `controllers/pid.py` | 1.71 | 25.5 | **110.76** | — |
 | `ff_pi` — 2-DOF feedforward+PI | `controllers/ff_pi.py` | 0.74 | 22.3 | **59.06** | −47% |
-| **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.569** | **21.24** | **49.70** | **−55%** |
+| **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.550** | **20.65** | **48.16** | **−57%** |
 
-The default `cnn` controller (**49.70**) is an **honest, generalizing** controller — a pure
-function of the observed state and preview, with no per-segment memorization. It beats the
+The default `cnn` controller (**48.16** on the full 5000; **48.60** on a pristine held-out split)
+is an **honest, generalizing** controller — a pure function of the observed state and preview,
+with no per-segment memorization. It beats the
 classical 2-DOF plateau (~59, where several leaderboard entries and every PID/PID+FF cluster) and
 edges the well-known ML controller jonoomph "ML_PID" (50.72). It is **competitive mid-pack among
 honest leaderboard entries** — a handful of MPC/PPO-based controllers score lower (the honest
@@ -49,11 +50,12 @@ held-out splits used for neither training nor selection (48.91 on `[500:1000]`).
    and **multi-horizon preview errors** (current lataccel vs future-mean at near/mid/far) — were
    isolated by ablation as the ideas worth borrowing from other honest entries (a history branch
    and curvature/rate features were tested and dropped as unhelpful). Trained end-to-end on the
-   exact cost, **two-stage**: a base is first trained on the *deterministic* (expected-value) plant
-   for a smooth low-jerk controller, then fine-tuned on the *stochastic* (Gumbel) plant to add
-   drift rejection — with **checkpoints selected on the real numpy sim**. (Training on the noisy
-   plant from scratch reaches essentially the same ~50 causal-feedback floor; the two-stage edges
-   it slightly. `ablate.py <cfg> <iters> [gumbel|expected] [warmstart.pt]`.)
+   exact cost via Gumbel rollouts with **soft-token full BPTT** — the plant's discrete lataccel
+   feedback is replaced by a straight-through *soft* one-hot (exact forward, differentiable
+   backward), so gradients flow through the full autoregressive recursion rather than a myopic
+   1-step window. This richer gradient buys smoother control (lower jerk) and edged the deliverable
+   from ~49.7 to 48.2. Checkpoints are **selected on the real numpy sim**. `ablate.py` also supports
+   `expected` (deterministic-plant) training and warm-start fine-tuning.
 
 Everything is a pure function of the observable state + 5-second preview + the controller's own
 recent actions — no lookup keyed on segment identity, so it generalizes.

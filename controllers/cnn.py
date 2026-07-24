@@ -10,8 +10,8 @@ from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
 # Deliverable: the "PM" preview net — feedforward conv over the (target-roll) preview,
 # gain-scheduled by v_ego, feedback head + criticality-gated residual, and (the two
 # ideas distilled from jonoomph's ML_PID that helped us) previous-action inputs [P]
-# and multi-horizon preview-error features [M]. Weights trained two-stage (deterministic
-# base -> noisy fine-tune). 49.70 on the full 5000 (PID 110.76).
+# and multi-horizon preview-error features [M]. Weights trained end-to-end via Gumbel rollouts
+# with soft-token full BPTT (see torch_sim.py). 48.16 on the full 5000 (PID 110.76).
 _ROOT = Path(__file__).resolve().parent.parent
 CKPT = os.environ.get('CNN_CKPT', 'cnn_PM.pt')
 CFG = os.environ.get('CNN_CFG', 'PM')
