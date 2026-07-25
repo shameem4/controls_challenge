@@ -106,7 +106,11 @@ def rollout(plant, segs, controller, mode='expected', detach_tokens=True,
         fp_end = min(t + FUTURE_PLAN_STEPS, T)
         ctx = dict(target=target[:, t], cur=cur, roll=roll[:, t], v=v[:, t], a=a[:, t],
                    fut_lat=target[:, t + 1:fp_end], fut_roll=roll[:, t + 1:fp_end],
-                   fut_v=v[:, t + 1:fp_end], step=t)
+                   fut_v=v[:, t + 1:fp_end], step=t,
+                   # extra context for model-based controllers (MPC): the *applied* action and
+                   # lataccel history windows, plus the full exogenous arrays to slice from.
+                   act_win=act_hist[-CONTEXT_LENGTH:], lat_win=lat_hist[-CONTEXT_LENGTH:],
+                   roll_all=roll, v_all=v, a_all=a, T=T)
         act = controller(ctx)
         if t < CONTROL_START_IDX:
             act = steer0[:, t]

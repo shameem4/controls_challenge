@@ -3,5 +3,6 @@ data/
 lpv_traj_cache.npz
 models/tinyphysics_*.onnx
 __pycache__/
+surrogate_data.npz
 *.swp
 /.venv

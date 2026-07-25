@@ -20,9 +20,9 @@ from tinyphysics import CONTEXT_LENGTH as CL, CONTROL_START_IDX, COST_END_IDX, S
 
 DEV = 'cuda'
 ALL = sorted(Path('data/SYNTHETIC').iterdir())
-# identification segments: disjoint from TRAIN[2000:4000], VAL, SELECT and the clean split
-ID_SEGS = ALL[6000:6000 + int(sys.argv[1] if len(sys.argv) > 1 else 240)]
 V_EDGES = np.array([0, 8, 14, 18, 22, 26, 30, 34, 100], dtype=np.float32)
+# identification segments are chosen in __main__ (argv is not parsed at import time, so that
+# this module can be imported by other scripts)
 
 
 class RandomWalk:
@@ -95,6 +95,8 @@ def fit(D, order):
 
 
 if __name__ == '__main__':
+    # identification segments: disjoint from TRAIN[2000:4000], VAL, SELECT and the clean split
+    ID_SEGS = ALL[6000:6000 + int(sys.argv[1] if len(sys.argv) > 1 else 240)]
     plant = Plant(device=DEV)
     net = AblNet('PM').to(DEV); net.load_state_dict(torch.load('cnn_PM.pt')); net.eval()
     half = len(ID_SEGS) // 2
