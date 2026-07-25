@@ -1,76 +1,115 @@
 # comma Controls Challenge — an honest learned lateral controller
 
 Private working copy of [commaai/controls_challenge](https://github.com/commaai/controls_challenge).
-It adds a full **differentiable-simulation training pipeline** and controllers that beat the
-PID baseline **honestly** — generalizing closed-loop policies, with no segment
-fingerprinting or action replay.
+It adds a **differentiable-simulation training pipeline** and controllers that beat the PID
+baseline **honestly** — generalizing closed-loop policies, with no segment fingerprinting or
+action replay.
 
 ## Results
 
 Full **5000-segment** metric (v2 cost landscape; lower is better). This landscape matches the
-official leaderboard — its PID baseline is 110.25, and ours is 110.76.
+official leaderboard — its PID baseline is 110.25, ours measures 110.76.
 
 | Controller | file | lataccel | jerk | **total_cost** | vs PID |
 |---|---|---|---|---|---|
-| PID (baseline) | `controllers/pid.py` | 1.71 | 25.5 | **110.76** | — |
-| `ff_pi` — 2-DOF feedforward+PI | `controllers/ff_pi.py` | 0.74 | 22.3 | **59.06** | −47% |
+| PID (baseline) | `controllers/pid.py` | 1.71 | 25.51 | **110.76** | — |
+| `pid_w_ff` — ported reference (jonoomph) | `controllers/pid_w_ff.py` | 0.71 | 23.93 | **59.49** | −46% |
+| `ff_pi` — 2-DOF feedforward + PI | `controllers/ff_pi.py` | 0.74 | 22.33 | **59.06** | −47% |
 | **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.545** | **20.61** | **47.87** | **−57%** |
 
-The default `cnn` controller (**47.87** on the full 5000; **48.14** on a pristine held-out split)
-is an **honest, generalizing** controller — a pure function of the observed state and preview,
-with no per-segment memorization. It beats the
-classical 2-DOF plateau (~59, where several leaderboard entries and every PID/PID+FF cluster) and
-edges the well-known ML controller jonoomph "ML_PID" (50.72). It is **competitive mid-pack among
-honest leaderboard entries** — a handful of MPC/PPO-based controllers score lower (the honest
-frontier is ~36, an MPC on a linear LPV-ARX model), and everything below ~30 is a per-segment
-**fingerprint/replay exploit**, not a controller. `report.html` is the generated head-to-head vs
-PID over all 5000 segments. Verified: **zero train/serve skew**, and the win holds on pristine
-held-out splits used for neither training nor selection (48.91 on `[500:1000]`).
+The default `cnn` controller scores **47.87** on the full 5000 and **48.14** on a pristine
+held-out split it never saw for training *or* checkpoint selection. It is a pure function of the
+observed state, the 5-second preview, and its own recent actions — **no per-segment memorization**.
+
+Two independently-designed 2-DOF controllers (ours and a ported reference) land within 0.5 of each
+other at ~59, which pins the **classical feedforward+feedback plateau** on this cost landscape. The
+learned net clears it by ~11 points.
+
+Verified: **zero train/serve skew** (the numpy eval path reproduces the torch training path to
+1e-7), and every improvement was confirmed on held-out segments disjoint from training and
+selection. `report.html` is the generated head-to-head vs PID over all 5000 segments.
+
+One caveat stated plainly: the 5000-segment leaderboard metric *includes* the segments the model
+trained on (2000 of 5000 here), so **48.14 on the clean split is the honest measure of quality**;
+47.87 is the comparable-to-others number. The two agreeing to within 0.3 is itself the evidence
+that the controller generalizes rather than memorizes.
+
+## Where this sits on the leaderboard
+
+| Score band | What lives there |
+|---|---|
+| **~7–30** | **Exploits.** Per-segment action/parameter optimization replayed via a segment fingerprint, and "online sim probing with RNG reset" — the leaderboard's own entry descriptions say so. These memorize the public set's fixed per-segment seeds. |
+| **~36–49** | **A mix.** Genuine honest controllers — MPC on a linear LPV-ARX model (~36), PPO policies (~42–46), tube-MPC and custom feedback controllers (~48–49) — *plus* several more per-segment exploits. |
+| **~50–60** | Honest classical controllers: PID+FF, 2-DOF, evolution-tuned feedback. |
+
+Our 47.87 is an honest, generalizing controller that sits **mid-pack among the honest entries**: it
+clears the classical plateau and the well-known ML_PID entry (50.63), while a handful of MPC- and
+PPO-based controllers score lower. **The honest frontier is ~36**, not ~50 — reaching it is a
+method change (see below), not a tuning gap.
+
+Why the exploits need the fixed seed: we tested the honest version of their idea — optimize an
+open-loop action sequence offline, then run it. Replaying even a *good* controller's own actions
+open-loop scores **~970** versus **~54** closed-loop, because only feedback can counteract the
+plant's stochastic drift. Per-segment optimized actions only work when replayed against the exact
+noise realization they were tuned for.
 
 ## Approach
 
-1. **Diagnose the plant.** TinyPhysics is a stochastic autoregressive model. Measurements that
-   drove every design choice: the "noise" is a slow **random-walk drift** (lag-1 autocorr 0.98),
-   *not* high-frequency jitter → integral feedback is the key lever; the **expected-value plant is
-   biased** (a PID scores 29 on it vs 68 sampled) → you must train through the *real* stochastic
-   recursion; road roll adds to lataccel with coefficient ≈1.0; steer→lataccel gain `G(v) ≈ 0.0093·v + 1.34`.
+1. **Diagnose the plant.** TinyPhysics is a stochastic autoregressive model, and the measurements
+   drove every later decision:
+   - the "noise" is a slow **random-walk drift** (lag-1 autocorrelation 0.98, only ~4% of energy
+     above 0.7 Hz) — *not* high-frequency jitter, so **integral feedback** is the key lever and
+     low-pass filtering is useless;
+   - the **expected-value plant is biased** (a PID scores 29 on it but 68 sampled), so training and
+     model selection must run through the *real stochastic* recursion;
+   - road roll adds to lataccel with coefficient ≈1.0; the steer→lataccel gain fits
+     `G(v) ≈ 0.0093·v + 1.34`.
 
-2. **`ff_pi` (Stage 1).** Inverse-plant feedforward `(desired − roll)/G(v)` tracking a
-   **cost-optimal Tikhonov-smoothed reference** (the analytic minimum of the scored quadratic,
-   solved online with the Thomas algorithm) + PI drift rejection.
+2. **`ff_pi` — the classical baseline.** Inverse-plant feedforward `(desired − roll)/G(v)` tracking
+   a **cost-optimal Tikhonov-smoothed reference** — the analytic minimum of the scored quadratic,
+   solved online with the Thomas algorithm — plus PI drift rejection. The smoothing insight is
+   lifted from what the top exploits compute offline, but applied causally over the preview window.
 
 3. **Differentiable sim (`torch_sim.py`).** `tinyphysics.onnx` converted to a batched GPU PyTorch
-   plant (faithful to 1e-5). Closed-loop cost matches the numpy sim **exactly**. Training uses
-   **straight-through Gumbel-softmax** rollouts so gradients flow through the true stochastic
-   recursion.
+   plant (logits faithful to 1e-5; closed-loop cost matches the numpy sim **exactly**). Plant modes:
+   `expected`, `sample`, and **straight-through Gumbel-softmax** so gradients flow through the true
+   stochastic recursion.
 
-4. **`cnn` (learned preview net).** A 1-D conv feedforward over the (target−roll) preview window,
-   gain-scheduled by `v_ego`, a feedback head, and a residual head **gated by a criticality
-   signal** (error magnitude, preview slope/span). Two extra inputs — **its own previous actions**
-   and **multi-horizon preview errors** (current lataccel vs future-mean at near/mid/far) — were
-   isolated by ablation as the ideas worth borrowing from other honest entries (a history branch
-   and curvature/rate features were tested and dropped as unhelpful). Trained end-to-end on the
-   exact cost via Gumbel rollouts with **soft-token full BPTT** — the plant's discrete lataccel
-   feedback is replaced by a straight-through *soft* one-hot (exact forward, differentiable
-   backward), so gradients flow through the full autoregressive recursion rather than a myopic
-   1-step window. This richer gradient buys smoother control (lower jerk). Trained on 2000 segments
-   with a 60-step truncated-BPTT window; checkpoints are **selected on the real numpy sim**. `ablate.py`
-   also supports `expected` (deterministic-plant) training and warm-start fine-tuning (`TBPTT`/`TRAIN_N`
-   env knobs). Levers explored and dropped: online MPC on the neural plant (the chaotic loss landscape
-   defeats gradient/sampling planning even with the correct soft-token gradient), delta-output actions
-   (integrator windup), and curvature/rate features (redundant).
+4. **`cnn` — the learned preview net** (`nets.py: AblNet`, cfg `PM`). Structure mirrors the
+   classical design rather than replacing it with a black box:
+   - 1-D **conv feedforward** over the (target − roll) preview window — a learned preview/FIR;
+   - **FiLM gain-schedule** on `v_ego`;
+   - a **feedback head**, plus a residual head **gated by a criticality signal** (error magnitude,
+     preview slope/span);
+   - two extra inputs isolated by ablation: **its own previous actions** and **multi-horizon preview
+     errors** (current lataccel vs future-mean at near/mid/far).
 
-Everything is a pure function of the observable state + 5-second preview + the controller's own
-recent actions — no lookup keyed on segment identity, so it generalizes.
+5. **Training.** End-to-end on the exact challenge cost via Gumbel rollouts, with **soft-token full
+   BPTT**: the plant feeds its lataccel back as a *discrete token*, which blocks gradients, so the
+   embedding lookup is replaced by a straight-through **soft one-hot** (exact forward, differentiable
+   backward). Gradients then flow through the full autoregressive recursion instead of a myopic
+   1-step window — a real gain, mostly via lower jerk (+1.5 on the 5000 metric, +0.3 on a fully
+   clean split). Trained on 2000 segments with a 60-step truncated-BPTT window; **checkpoints
+   selected on the real numpy sim**, never the surrogate.
 
-## Why not the leaderboard's sub-50 scores?
+## What didn't work (and why)
 
-Those require **fingerprinting the segment and replaying** precomputed actions/params on the fixed
-per-segment seed (memorization of the public set). We tested the honest alternative — open-loop
-trajectory optimization — and it is **catastrophic** on this plant (replaying a good controller's
-own actions open-loop scores ~970 vs ~54 closed-loop), because only feedback can reject the
-stochastic drift. So sub-plateau scores are unreachable by any causal, generalizing controller;
-our controllers generalize.
+Documented because the negative results were more informative than most of the wins.
+
+| Tried | Outcome | Why |
+|---|---|---|
+| **Online MPC on the neural plant** (gradient and MPPI sampling) | Gradient diverged (9353); every sampling config landed 944–16237 — worse than steering zero (682) | The plant is **chaotic**: tiny action perturbations produce divergent predicted trajectories, so the expected-cost *ranking* of candidate action sequences is noise. Re-tested with the correct soft-token gradient — it converges better but still nowhere near usable. It's a **bad-landscape** problem, not a bad-gradient one. This is why the frontier's MPC runs on a smooth *linear* model. |
+| **Shooting-teacher → distillation** | Open-loop replay of optimized actions: ~970 sampled | Open-loop cannot reject drift; only useful if you replay the exact seed (i.e. the exploit). |
+| **Deterministic-only training** | 56.38 | Great *nominal* controller (jerk 19.1, the lowest we measured) but never learns drift rejection, and it overfits the noise-free plant if trained long. Its deterministic-plant optimum (~36) equals the honest MPC frontier — the noise-free ceiling. |
+| **Deterministic base → noisy fine-tune** (two-stage) | 49.70 | Valid and marginally better than noisy-from-scratch (49.96) at the time; superseded by soft-token BPTT. |
+| **Rate-limited delta actions** (`action = prev + tanh(·)·scale`) | Diverged | The pure integrator winds up under our diffsim training; needs PPO-style stabilisation. |
+| **Curvature + rate features** (`lataccel/v²`, derivatives) | Hurt (~1.3) | Redundant with the multi-horizon error features, and dilutes a small net. |
+| **Past-history temporal branch** | Hurt | The closed-loop diffsim training already captures the dynamics. |
+| **K-sample gradient averaging** | Hurt substantially | Shrinks effective exploration per step at matched budget. |
+| **Denoising the feedback** | Not applicable | This is **process** noise on a **fully-observed** state — the sampled lataccel *is* the car's real position and is what gets scored. There is no clean signal hiding underneath to recover. |
+
+The remaining gap to the ~36 frontier is a **method** difference — MPC on a smooth linear plant
+model, or value-based RL (PPO) — not another lever on this approach.
 
 ## Run
 
@@ -79,14 +118,22 @@ our controllers generalize.
 pip install -r requirements.txt
 # first run auto-downloads the dataset (~0.6 GB) into ./data
 
-# evaluate the default learned controller (cnn = the PM preview net) vs PID -> report.html
+# evaluate the default learned controller vs PID over all 5000 segments -> report.html
 python eval.py --model_path ./models/tinyphysics.onnx --data_path ./data \
   --num_segs 5000 --test_controller cnn --baseline_controller pid
 
-# the 2-DOF baseline, or the ported reference controller
+# any other controller (pid, zero, ff_pi, pid_w_ff, cnn)
 python tinyphysics.py --model_path ./models/tinyphysics.onnx --data_path ./data \
   --num_segs 100 --controller ff_pi
+
+# retrain the deliverable: soft-token BPTT, 60-step window, 2000 segments
+TBPTT=60 TRAIN_N=2000 python ablate.py PM 1000 gumbel_soft
+python select_abl.py PM 240            # pick the best checkpoint on the real sim
 ```
+
+`ablate.py <cfg> <iters> [gumbel|expected][_soft] [warmstart.pt]` — `cfg` toggles the input
+features (`P` previous actions, `M` multi-horizon errors, `H` history branch), `_soft` enables
+soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size.
 
 ## Repo layout
 
@@ -96,13 +143,13 @@ python tinyphysics.py --model_path ./models/tinyphysics.onnx --data_path ./data 
 | `cnn_PM.pt` | Trained weights for the default `cnn` controller |
 | `controllers/ff_pi.py` | 2-DOF feedforward + PI baseline |
 | `controllers/pid_w_ff.py` | Ported reference controller (jonoomph, attributed) — 59.49 on our 5000 |
-| `gain_fit.npy`, `data_gain.py` | Plant gain `G(v)` fit from data |
-| `torch_sim.py` | Differentiable batched GPU TinyPhysics (training engine) |
-| `train.py`, `ablate.py`, `select_abl.py` | Training, ablation-config training, real-sim checkpoint selection |
-| `eval_cnn.py`, `sweep.py` | Batch eval on the real sim; `ff_pi` tuning |
+| `torch_sim.py` | Differentiable batched GPU TinyPhysics (the training engine) |
+| `ablate.py`, `select_abl.py` | Config/ablation training; real-sim checkpoint selection |
+| `train.py`, `sweep.py`, `data_gain.py`, `gain_fit.npy` | Earlier training pipeline; `ff_pi` tuning; plant-gain fit |
+| `eval_cnn.py` | Multi-controller batch eval on the real sim |
 
-The dataset (`data/`), checkpoints (`ckpts/`) and generated artifacts are gitignored;
-`data/` auto-downloads on first run.
+The dataset (`data/`), checkpoints (`ckpts/`) and `__pycache__` are gitignored; `data/`
+auto-downloads on first run.
 
 ---
 
