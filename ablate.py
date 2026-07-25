@@ -20,6 +20,11 @@ if TRAIN_N: TRAIN = ALL[2000:2000 + TRAIN_N]
 os.makedirs('ckpts', exist_ok=True)
 plant = Plant(device=DEV)
 net = AblNet(cfg).to(DEV)
+SUR = None
+if 'J' in cfg:
+    from surrogate import Surrogate
+    SUR = Surrogate().to(DEV); SUR.load_state_dict(torch.load('surrogate.pt')); SUR.eval()
+    for _p in SUR.parameters(): _p.requires_grad_(False)
 if init_ckpt:
     net.load_state_dict(torch.load(init_ckpt))
 opt = torch.optim.Adam(net.parameters(), 2e-4)
@@ -33,7 +38,7 @@ def seeded_val(seeds=(0, 1)):
             t = []
             for i in range(0, 60, bs):
                 segs = [load_segment(f) for f in VAL[:60][i:i + bs]]
-                traj, target = rollout(plant, segs, AblPolicy(net, len(segs), DEV), mode='sample', stop=COST_END_IDX)
+                traj, target = rollout(plant, segs, AblPolicy(net, len(segs), DEV, sur=SUR), mode='sample', stop=COST_END_IDX)
                 t.append(cost(traj, target)[2])
             tots.append(torch.cat(t).mean().item())
     return float(np.mean(tots))
@@ -46,7 +51,7 @@ for it in range(iters):
     for _ in range(ACC):
         idx = torch.randint(len(TRAIN), (bs,))
         segs = [load_segment(TRAIN[k]) for k in idx]
-        traj, target = rollout(plant, segs, AblPolicy(net, bs, DEV), mode=train_mode, tbptt=TBPTT, stop=stop, soft_tokens=SOFT)
+        traj, target = rollout(plant, segs, AblPolicy(net, bs, DEV, sur=SUR), mode=train_mode, tbptt=TBPTT, stop=stop, soft_tokens=SOFT)
         loss = cost(traj, target)[2].mean() / ACC
         loss.backward(); tl += loss.item()
     torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0); opt.step()

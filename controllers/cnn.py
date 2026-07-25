@@ -5,7 +5,7 @@ from pathlib import Path
 from . import BaseController
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
+from nets import AblNet, build_ff_window, build_multihorizon, build_jerk_feats, V_SCALE, H_CL
 
 # Deliverable: the "PM" preview net — feedforward conv over the (target-roll) preview,
 # gain-scheduled by v_ego, feedback head + criticality-gated residual, and (the two
@@ -30,6 +30,19 @@ class Controller(BaseController):
         self.pact = [0.0] * self.net.n_prev
         self.hist = []
         self.i_clip = i_clip
+        self.sur = None
+        if 'J' in self.cfg:
+            from surrogate import Surrogate
+            self.sur = Surrogate()
+            self.sur.load_state_dict(torch.load(_ROOT / 'surrogate.pt', map_location='cpu'))
+            self.sur.eval()
+        # windows the surrogate needs, built from this controller's OWN outputs and the observed
+        # state, so the numpy and torch paths stay bit-identical
+        self.w_steer = np.zeros(H_CL, dtype=np.float32)
+        self.w_roll = np.zeros(H_CL, dtype=np.float32)
+        self.w_v = np.zeros(H_CL, dtype=np.float32)
+        self.w_a = np.zeros(H_CL, dtype=np.float32)
+        self.w_lat = np.zeros(H_CL, dtype=np.float32)
 
     @torch.no_grad()
     def update(self, target_lataccel, current_lataccel, state, future_plan):
@@ -45,6 +58,12 @@ class Controller(BaseController):
         if 'M' in self.cfg:
             mh = build_multihorizon(np.float32(current_lataccel), np.float32(state.roll_lataccel), fl, fr, np)
             fb = np.concatenate([fb, mh])
+        if 'J' in self.cfg:
+            fb = np.concatenate([fb, build_jerk_feats(
+                self.sur, self.w_steer, self.w_roll, self.w_v, self.w_a, self.w_lat,
+                self.pact[-1], np.float32(state.roll_lataccel), np.float32(state.v_ego),
+                np.float32(state.a_ego), np.float32(current_lataccel),
+                np.float32(target_lataccel), np)])
         hist_t = None
         if 'H' in self.cfg:
             self.hist.append(np.array([e, state.roll_lataccel, state.v_ego / V_SCALE, state.a_ego], dtype=np.float32))
@@ -55,6 +74,10 @@ class Controller(BaseController):
         out = float(self.net(torch.from_numpy(ff_win)[None],
                              torch.tensor([state.v_ego], dtype=torch.float32),
                              torch.from_numpy(fb)[None], hist_t).item())
+        for w, val in ((self.w_steer, out), (self.w_roll, state.roll_lataccel),
+                       (self.w_v, state.v_ego), (self.w_a, state.a_ego),
+                       (self.w_lat, current_lataccel)):
+            w[:-1] = w[1:]; w[-1] = val
         self.pact.append(out)
         self.prev = e
         return out

@@ -121,6 +121,7 @@ class TorchPolicy:
 # ----- Ablation: 3 borrowable ideas from jonoomph's ML_PID -----
 # P = feed previous actions ; M = multi-horizon preview-error features ; H = past-history temporal branch
 MH_HORIZONS = [(0, 3), (3, 8), (8, 15)]   # near / mid / far
+H_CL = 20                                 # surrogate context length
 HIST_W = 20
 N_PREV = 3
 
@@ -137,6 +138,37 @@ def build_multihorizon(cur, roll, fut_lat, fut_roll, xp):
     return torch.stack(feats, -1) if xp is torch else np.array(feats, dtype=np.float32)
 
 
+N_JERK = 2      # [predicted dlataccel if holding, predicted error if holding]
+
+
+def build_jerk_feats(sur, steer_h, roll_h, v_h, a_h, lat_h, prev_act, roll_n, v_n, a_n,
+                     cur, target, xp):
+    """Ask the surrogate where the plant goes if the previous action is HELD (the null action).
+
+    This is the one quantity the policy cannot compute from its raw inputs: it needs a plant
+    model. Supplying it as a FEATURE (rather than as an act/hold gate) lets the policy keep
+    modulating continuously, which is what the quadratic jerk cost rewards.
+    Windows are the last CL values ending at t-1; the current step is appended.
+    """
+    if xp is torch:
+        st = torch.cat([steer_h[:, 1:], prev_act[:, None]], 1)
+        rl = torch.cat([roll_h[:, 1:], roll_n[:, None]], 1)
+        vv = torch.cat([v_h[:, 1:], v_n[:, None]], 1)
+        aa = torch.cat([a_h[:, 1:], a_n[:, None]], 1)
+        with torch.no_grad():
+            pred = sur(st, rl, vv, aa, lat_h)
+        return torch.stack([pred - cur, pred - target], -1)
+    st = np.concatenate([steer_h[1:], [prev_act]]).astype(np.float32)
+    rl = np.concatenate([roll_h[1:], [roll_n]]).astype(np.float32)
+    vv = np.concatenate([v_h[1:], [v_n]]).astype(np.float32)
+    aa = np.concatenate([a_h[1:], [a_n]]).astype(np.float32)
+    with torch.no_grad():
+        pred = float(sur(torch.from_numpy(st)[None], torch.from_numpy(rl)[None],
+                         torch.from_numpy(vv)[None], torch.from_numpy(aa)[None],
+                         torch.from_numpy(lat_h.astype(np.float32))[None]).item())
+    return np.array([pred - cur, pred - target], dtype=np.float32)
+
+
 class AblNet(nn.Module):
     def __init__(self, cfg='', h=H, ch=32, fb_hidden=32, res_hidden=32, hist_ch=16):
         super().__init__()
@@ -147,7 +179,7 @@ class AblNet(nn.Module):
             nn.Conv1d(ch, ch, 3, padding=1), nn.Tanh())
         self.ff_head = nn.Linear(ch * (h + 1), 1)
         self.film = nn.Linear(1, 2)
-        fb_dim = 3 + (N_PREV if 'P' in cfg else 0) + (6 if 'M' in cfg else 0)
+        fb_dim = 3 + (N_PREV if 'P' in cfg else 0) + (6 if 'M' in cfg else 0) + (N_JERK if 'J' in cfg else 0)
         self.hist_ch = hist_ch
         if 'H' in cfg:
             self.hist_conv = nn.Sequential(nn.Conv1d(4, hist_ch, 5, padding=2), nn.Tanh())
@@ -178,11 +210,20 @@ class AblNet(nn.Module):
 
 class AblPolicy:
     """Stateful torch-rollout controller for AblNet; maintains PI + prev-actions + history state."""
-    def __init__(self, net, B, dev, i_clip=5.0):
+    def __init__(self, net, B, dev, i_clip=5.0, sur=None):
         self.net = net; self.cfg = net.cfg; self.B = B; self.dev = dev; self.i_clip = i_clip
         self.integ = torch.zeros(B, device=dev); self.prev = torch.zeros(B, device=dev)
         self.pact = [torch.zeros(B, device=dev) for _ in range(net.n_prev)]
         self.hist = []
+        self.sur = sur
+        # windows the surrogate needs; maintained from the policy's OWN outputs and the observed
+        # state so that the torch and numpy paths stay bit-identical
+        z = torch.zeros(B, device=dev)
+        self.w_steer = [z.clone() for _ in range(H_CL)]
+        self.w_roll = [z.clone() for _ in range(H_CL)]
+        self.w_v = [z.clone() for _ in range(H_CL)]
+        self.w_a = [z.clone() for _ in range(H_CL)]
+        self.w_lat = [z.clone() for _ in range(H_CL)]
 
     def detach_state(self):
         self.integ = self.integ.detach(); self.prev = self.prev.detach()
@@ -199,6 +240,11 @@ class AblPolicy:
         fb = torch.stack(feats, -1)
         if 'M' in self.cfg:
             fb = torch.cat([fb, build_multihorizon(ctx['cur'], ctx['roll'], ctx['fut_lat'], ctx['fut_roll'], torch)], -1)
+        if 'J' in self.cfg:
+            fb = torch.cat([fb, build_jerk_feats(
+                self.sur, torch.stack(self.w_steer, 1), torch.stack(self.w_roll, 1),
+                torch.stack(self.w_v, 1), torch.stack(self.w_a, 1), torch.stack(self.w_lat, 1),
+                self.pact[-1], ctx['roll'], ctx['v'], ctx['a'], ctx['cur'], ctx['target'], torch)], -1)
         hist = None
         if 'H' in self.cfg:
             self.hist.append(torch.stack([e, ctx['roll'], ctx['v'] / V_SCALE, ctx['a']], -1))
@@ -207,6 +253,9 @@ class AblPolicy:
                 buf = [torch.zeros(self.B, 4, device=self.dev)] * (self.net.hist_w - len(buf)) + buf
             hist = torch.stack(buf, 1).transpose(1, 2)                 # [B,4,W]
         out = self.net(ff_win, ctx['v'], fb, hist)
+        for w, val in ((self.w_steer, out.detach()), (self.w_roll, ctx['roll']),
+                       (self.w_v, ctx['v']), (self.w_a, ctx['a']), (self.w_lat, ctx['cur'].detach())):
+            w.append(val); w.pop(0)
         self.pact.append(out.detach())
         self.prev = e
         return out
