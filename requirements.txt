@@ -1,4 +1,5 @@
-numpy
+numpy<2  # matplotlib 3.8.1 / pandas 2.1.2 are built against numpy 1.x;
+         # an unpinned numpy installs 2.x and breaks the sim with an ABI error
 onnxruntime
 pandas==2.1.2
 matplotlib==3.8.1

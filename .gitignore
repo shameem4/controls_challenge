@@ -1,6 +1,7 @@
-__pycache__/
+/ckpts
 data/
+lpv_traj_cache.npz
 models/tinyphysics_*.onnx
+__pycache__/
 *.swp
 /.venv
-/ckpts
