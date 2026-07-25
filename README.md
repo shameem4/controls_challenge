@@ -14,9 +14,9 @@ official leaderboard — its PID baseline is 110.25, and ours is 110.76.
 |---|---|---|---|---|---|
 | PID (baseline) | `controllers/pid.py` | 1.71 | 25.5 | **110.76** | — |
 | `ff_pi` — 2-DOF feedforward+PI | `controllers/ff_pi.py` | 0.74 | 22.3 | **59.06** | −47% |
-| **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.550** | **20.65** | **48.16** | **−57%** |
+| **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.545** | **20.61** | **47.87** | **−57%** |
 
-The default `cnn` controller (**48.16** on the full 5000; **48.60** on a pristine held-out split)
+The default `cnn` controller (**47.87** on the full 5000; **48.14** on a pristine held-out split)
 is an **honest, generalizing** controller — a pure function of the observed state and preview,
 with no per-segment memorization. It beats the
 classical 2-DOF plateau (~59, where several leaderboard entries and every PID/PID+FF cluster) and
@@ -53,9 +53,12 @@ held-out splits used for neither training nor selection (48.91 on `[500:1000]`).
    exact cost via Gumbel rollouts with **soft-token full BPTT** — the plant's discrete lataccel
    feedback is replaced by a straight-through *soft* one-hot (exact forward, differentiable
    backward), so gradients flow through the full autoregressive recursion rather than a myopic
-   1-step window. This richer gradient buys smoother control (lower jerk) and edged the deliverable
-   from ~49.7 to 48.2. Checkpoints are **selected on the real numpy sim**. `ablate.py` also supports
-   `expected` (deterministic-plant) training and warm-start fine-tuning.
+   1-step window. This richer gradient buys smoother control (lower jerk). Trained on 2000 segments
+   with a 60-step truncated-BPTT window; checkpoints are **selected on the real numpy sim**. `ablate.py`
+   also supports `expected` (deterministic-plant) training and warm-start fine-tuning (`TBPTT`/`TRAIN_N`
+   env knobs). Levers explored and dropped: online MPC on the neural plant (the chaotic loss landscape
+   defeats gradient/sampling planning even with the correct soft-token gradient), delta-output actions
+   (integrator windup), and curvature/rate features (redundant).
 
 Everything is a pure function of the observable state + 5-second preview + the controller's own
 recent actions — no lookup keyed on segment identity, so it generalizes.

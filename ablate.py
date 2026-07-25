@@ -5,7 +5,7 @@ selection.  Usage: python ablate.py <cfg> <iters> [gumbel|expected] [warmstart.p
 import sys, os, numpy as np, torch
 from torch_sim import Plant, load_segment, rollout, cost
 from nets import AblNet, AblPolicy
-from train import TRAIN, VAL
+from train import TRAIN, VAL, ALL
 from tinyphysics import COST_END_IDX
 
 DEV = 'cuda'
@@ -14,6 +14,9 @@ iters = int(sys.argv[2]) if len(sys.argv) > 2 else 300
 train_mode = sys.argv[3] if len(sys.argv) > 3 else 'gumbel'   # 'gumbel'/'expected' [+ '_soft' for soft-token BPTT]
 init_ckpt = sys.argv[4] if len(sys.argv) > 4 else None        # warm-start weights (fine-tune)
 SOFT = train_mode.endswith('_soft'); train_mode = train_mode[:-5] if SOFT else train_mode
+TBPTT = int(os.environ.get('TBPTT', 30))
+TRAIN_N = int(os.environ.get('TRAIN_N', 0))                   # >0 => use ALL[2000:2000+N] (bigger set, still disjoint)
+if TRAIN_N: TRAIN = ALL[2000:2000 + TRAIN_N]
 os.makedirs('ckpts', exist_ok=True)
 plant = Plant(device=DEV)
 net = AblNet(cfg).to(DEV)
@@ -43,7 +46,7 @@ for it in range(iters):
     for _ in range(ACC):
         idx = torch.randint(len(TRAIN), (bs,))
         segs = [load_segment(TRAIN[k]) for k in idx]
-        traj, target = rollout(plant, segs, AblPolicy(net, bs, DEV), mode=train_mode, tbptt=30, stop=stop, soft_tokens=SOFT)
+        traj, target = rollout(plant, segs, AblPolicy(net, bs, DEV), mode=train_mode, tbptt=TBPTT, stop=stop, soft_tokens=SOFT)
         loss = cost(traj, target)[2].mean() / ACC
         loss.backward(); tl += loss.item()
     torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0); opt.step()
