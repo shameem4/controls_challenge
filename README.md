@@ -7,8 +7,9 @@ action replay.
 
 ## Results
 
-Full **5000-segment** metric (v2 cost landscape; lower is better). This landscape matches the
-official leaderboard — its PID baseline is 110.25, ours measures 110.76.
+Full **5000-segment** metric (v2 cost landscape; lower is better). This is the same cost landscape
+the official leaderboard uses — its PID baseline is 110.25 and ours measures 110.76 (see caveat 2
+below on how precisely those are comparable).
 
 | Controller | file | lataccel | jerk | **total_cost** | vs PID |
 |---|---|---|---|---|---|
@@ -21,18 +22,43 @@ The default `cnn` controller scores **47.87** on the full 5000 and **48.14** on 
 held-out split it never saw for training *or* checkpoint selection. It is a pure function of the
 observed state, the 5-second preview, and its own recent actions — **no per-segment memorization**.
 
-Two independently-designed 2-DOF controllers (ours and a ported reference) land within 0.5 of each
-other at ~59, which pins the **classical feedforward+feedback plateau** on this cost landscape. The
-learned net clears it by ~11 points.
+Two independently-designed 2-DOF controllers (ours and a ported reference) land 0.5 apart at ~59 —
+indistinguishable at this metric's noise level — which is what pins the **classical
+feedforward+feedback plateau** on this cost landscape. The learned net clears it by ~11 points,
+a margin well outside the noise.
 
-Verified: **zero train/serve skew** (the numpy eval path reproduces the torch training path to
-1e-7), and every improvement was confirmed on held-out segments disjoint from training and
-selection. `report.html` is the generated head-to-head vs PID over all 5000 segments.
+Verified by an adversarial review of the result:
 
-One caveat stated plainly: the 5000-segment leaderboard metric *includes* the segments the model
-trained on (2000 of 5000 here), so **48.14 on the clean split is the honest measure of quality**;
-47.87 is the comparable-to-others number. The two agreeing to within 0.3 is itself the evidence
-that the controller generalizes rather than memorizes.
+- **zero train/serve skew** — the numpy eval path reproduces the torch training path to 1e-7;
+- **no memorization** — the controller is a pure function of its arguments (identical outputs from
+  fresh and sequential instances) and scores are invariant to segment evaluation order, so nothing
+  leaks across segments; it reads no file at eval beyond its own weights;
+- **the score comes from learning** — the same architecture with random weights scores 1329 where
+  the trained net scores 61 (a zero-steer controller scores 1327);
+- **numerically clean** — no NaN/inf, 0% action saturation, and finite output for every
+  `future_plan` length from 50 down to empty;
+- every improvement was confirmed on segments disjoint from training *and* checkpoint selection.
+
+`report.html` is the generated head-to-head vs PID over all 5000 segments.
+
+Two caveats stated plainly:
+
+**1. The headline metric includes trained-on segments** (2000 of the 5000 here), so **48.14 on the
+clean split is the honest measure of quality**; 47.87 is the comparable-to-others number.
+
+**2. This metric is strongly subset-dependent, so treat small cross-entry gaps as noise.** Measured
+on two disjoint 1000-segment subsets:
+
+| Subset | PID | `cnn` | ratio |
+|---|---|---|---|
+| `[0:1000]` (inside the headline range) | 107.01 | 47.20 | 0.441 |
+| `[5000:6000]` (never trained *or* selected on) | 114.64 | 49.79 | **0.434** |
+
+PID alone swings 7.6 points between subsets, so absolute scores carry several points of
+uncertainty and our 110.76 baseline vs the published 110.254 does not by itself prove an identical
+evaluation set. The **ratio to PID is the robust statistic** — and it is essentially unchanged
+(0.441 → 0.434) on 1000 segments the controller never saw, which is the real evidence that it
+generalizes rather than memorizes.
 
 ## Where this sits on the leaderboard
 
@@ -43,9 +69,11 @@ that the controller generalizes rather than memorizes.
 | **~50–60** | Honest classical controllers: PID+FF, 2-DOF, evolution-tuned feedback. |
 
 Our 47.87 is an honest, generalizing controller that sits **mid-pack among the honest entries**: it
-clears the classical plateau and the well-known ML_PID entry (50.63), while a handful of MPC- and
-PPO-based controllers score lower. **The honest frontier is ~36**, not ~50 — reaching it is a
-method change (see below), not a tuning gap.
+clears the classical plateau by ~11 points and is at or slightly ahead of the well-known ML_PID
+entry (50.63) — though per caveat 2 above, a few points is within subset uncertainty, so treat that
+particular comparison as a tie rather than a win. A handful of MPC- and PPO-based controllers score
+clearly lower. **The honest frontier is ~36**, not ~50 — reaching it is a method change (see below),
+not a tuning gap.
 
 Why the exploits need the fixed seed: we tested the honest version of their idea — optimize an
 open-loop action sequence offline, then run it. Replaying even a *good* controller's own actions
