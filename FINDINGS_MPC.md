@@ -68,25 +68,50 @@ DAgger **did** help: retraining on the states the MPC actually visits took surro
 
 ## Why the policy wins — the actual conclusion
 
-MPC here is **certainty-equivalent**: it plans as though its forecast were exact. But on this plant
-*even a perfect model* has **0.21** lataccel error at H=30, because the drift is genuinely
-unpredictable (a random walk, lag-1 autocorrelation 0.98). Planning aggressively against an
-uncertain forecast is miscalibrated — which is why the MPC needs enormous move suppression
-(`rdu` ~3e4, versus a tracking weight of 5000) and still loses.
+**This is a model-fidelity story, not a noise-structure story.** An earlier draft of this document
+blamed certainty equivalence — MPC plans against the mean, so (the argument went) it must be
+miscalibrated on a noisy plant. **That explanation was tested and refuted.**
 
-The `cnn` policy was trained end-to-end on the **actual stochastic cost**, so it learned the right
-amount of caution directly, without ever needing to represent the uncertainty explicitly.
+It only holds for noise that multiplies the *control* signal, the case where the LQG separation
+principle provably fails and the optimal gain is strictly attenuated (Kleinman 1969, *IEEE TAC*
+14(6); Todorov 2005, *Neural Computation* 17(5); independently Brainard 1967 in economics).
+Measuring TinyPhysics directly:
 
-**On a plant this noisy, a policy trained through the noise beats certainty-equivalent planning.**
-That is the transferable lesson, and it is consistent with everything else measured in this project:
-the deterministic-plant optimum (~36) matches the honest leaderboard frontier, but realising it
-requires a noise-rejection mechanism that MPC-with-a-mean-model does not have.
+- holding the entire history fixed and forcing the current action from 0 → 2.0, the plant's
+  output-distribution std stays flat at **~0.030** (non-monotonic, ±10%);
+- on-policy, `corr(|steer|, output std) = -0.20` — slightly *negative*; std falls from 0.030 to
+  0.025 as |steer| grows.
+
+The noise is **control-independent (additive)**, so certainty equivalence should hold and MPC-on-
+the-mean is not structurally handicapped here. (This is also a way the simulator differs from real
+driving: Nash & Cole 2019 identified genuinely signal-dependent noise in *human* steering,
+RMS(δ)/W ≈ 0.57.)
+
+The correct explanation is simpler and better supported: **MPC is only as good as its model, and the
+policy has no model to be wrong.** MPC plans over a horizon *through* the model, so model error
+compounds. Three measurements pick this over any noise-structure account:
+
+1. MPC on a plant it models *exactly* (the surrogate) scores **6.17**, about the analytic optimum —
+   the planner is sound and certainty equivalence is not the problem;
+2. swapping in the real plant and changing nothing else collapses it to ~78 — the only difference is
+   model fidelity;
+3. improving the model moves the score monotonically: one DAgger round took the surrogate val
+   0.181 → 0.153 and the MPC 50.36 → 45.56.
+
+The `cnn` policy maps state → action directly and uses **no model at run time**, so model error
+cannot touch it at all.
+
+**Transferable lesson: here a model-free policy trained on the true plant beats model-based
+planning, because planning inherits the model's error and the policy does not.** For MPC to win it
+would need fidelity close to the information floor — and part of our 1.33x is irreducible, since
+even a perfect model has 0.21 lataccel error at H=30.
 
 ## If someone wants to continue
 
 - more DAgger rounds and much more surrogate data (it still overfits: train 0.015 vs val 0.153)
-- a risk-aware / tube MPC that plans against forecast *uncertainty* rather than the mean — this is
-  the principled fix for the certainty-equivalence problem identified above
+- more model fidelity is the whole game: the measured chain is 6.17 (exact model) -> ~78 (real
+  model), and DAgger moved it monotonically. Note the noise is additive, so risk-aware / tube MPC
+  is NOT indicated here — that fix targets control-multiplicative noise, which this plant lacks
 - the MPC is slow (~90 Jacobian backprops per control step); a full 5000-segment eval is hours, so
   any real submission would need it distilled into a policy
 
