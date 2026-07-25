@@ -28,9 +28,16 @@ W_TRACK, W_JERK = 5000.0, 10000.0
 
 
 class GaussNewtonMPC:
-    def __init__(self, sur, B, dev, H=20, iters=3, r_du=0.0, damp=1.0, ridge=1e-3):
+    def __init__(self, sur, B, dev, H=20, iters=3, r_du=0.0, damp=1.0, ridge=1e-3,
+                 clamp='soft'):
         self.sur, self.B, self.dev, self.H = sur, B, dev, H
         self.iters, self.r_du, self.damp, self.ridge = iters, r_du, damp, ridge
+        # How the plant's MAX_ACC_DELTA slew clamp is represented while PLANNING.
+        # 'hard' reproduces the plant exactly but has ZERO gradient once saturated, which blinds
+        # the optimiser: it then drives the plant into a permanent +-MAX_ACC_DELTA square wave and
+        # cannot escape (this was the real bug). 'soft' saturates smoothly so gradients survive;
+        # 'none' omits it and relies on the jerk penalty to keep the plan feasible.
+        self.clamp = clamp
         self.plan = torch.zeros(B, H, device=dev)
         n = H
         self.D = (torch.eye(n, device=dev) - torch.eye(n, device=dev).roll(1, 0)).contiguous()
@@ -51,7 +58,12 @@ class GaussNewtonMPC:
         for h in range(self.H):
             s = slice(h + 1, h + 1 + CL)
             pred = self.sur(full_act[:, s], fr[:, s], fv[:, s], fa[:, s], lat_win)
-            pred = prev + (pred - prev).clamp(-MAX_ACC_DELTA, MAX_ACC_DELTA)
+            d = pred - prev
+            if self.clamp == 'hard':
+                d = d.clamp(-MAX_ACC_DELTA, MAX_ACC_DELTA)
+            elif self.clamp == 'soft':
+                d = MAX_ACC_DELTA * torch.tanh(d / MAX_ACC_DELTA)   # smooth, gradient survives
+            pred = prev + d
             out.append(pred)
             lat_win = torch.cat([lat_win[:, 1:], pred[:, None]], 1)
             prev = pred
@@ -109,7 +121,7 @@ class GaussNewtonMPC:
 
 
 def evaluate(nseg=20, off=7000, H=20, iters=3, r_du=0.0, damp=1.0, bs=20,
-             plant_is_surrogate=False, verbose=True):
+             plant_is_surrogate=False, verbose=True, clamp='soft'):
     sur = Surrogate().to(DEV); sur.load_state_dict(torch.load('surrogate.pt')); sur.eval()
     for p in sur.parameters():
         p.requires_grad_(False)
@@ -119,7 +131,7 @@ def evaluate(nseg=20, off=7000, H=20, iters=3, r_du=0.0, damp=1.0, bs=20,
     for i in range(0, len(files), bs):
         segs = [load_segment(f) for f in files[i:i + bs]]
         B = len(segs)
-        ctrl = GaussNewtonMPC(sur, B, DEV, H=H, iters=iters, r_du=r_du, damp=damp)
+        ctrl = GaussNewtonMPC(sur, B, DEV, H=H, iters=iters, r_du=r_du, damp=damp, clamp=clamp)
         if plant_is_surrogate:
             traj, target = _rollout_surrogate(sur, segs, ctrl, B)
         else:
@@ -172,9 +184,10 @@ if __name__ == '__main__':
     ap.add_argument('--damp', type=float, default=1.0)
     ap.add_argument('--off', type=int, default=7000)
     ap.add_argument('--onsur', action='store_true', help='control the surrogate (perfect model)')
+    ap.add_argument('--clamp', default='soft', choices=['hard','soft','none'])
     a = ap.parse_args()
     m = evaluate(a.nseg, a.off, a.H, a.iters, a.rdu, a.damp,
-                 plant_is_surrogate=a.onsur, verbose=False)
+                 plant_is_surrogate=a.onsur, verbose=False, clamp=a.clamp)
     tag = 'SURROGATE(perfect model)' if a.onsur else 'REAL plant'
-    print(f"GN-MPC on {tag}: H={a.H} iters={a.iters} rdu={a.rdu} damp={a.damp} "
+    print(f"GN-MPC on {tag}: H={a.H} iters={a.iters} rdu={a.rdu} clamp={a.clamp} "
           f"nseg={a.nseg} -> total={m:.2f}")
