@@ -17,6 +17,7 @@ below on how precisely those are comparable).
 | `pid_w_ff` — ported reference (jonoomph) | `controllers/pid_w_ff.py` | 0.71 | 23.93 | **59.49** | −46% |
 | `ff_pi` — 2-DOF feedforward + PI | `controllers/ff_pi.py` | 0.74 | 22.33 | **59.06** | −47% |
 | `ff_pi_tuned` — same, CMA-ES tuned | `controllers/ff_pi_tuned.py` | — | — | **54.56** | −51% |
+| `ff_pi_rl2` — + rate-limit anti-windup | `controllers/ff_pi_rl2.py` | — | — | **52.30** | −53% |
 | **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.545** | **20.61** | **47.87** | **−57%** |
 
 `ff_pi_tuned` re-tunes the six `ff_pi` parameters with CMA-ES on a 400-segment set disjoint from
@@ -38,12 +39,32 @@ here implied otherwise. On the clean 500-segment split `ff_pi_tuned` scores 55.6
 tracing every segment individually shows that **six segments out of 500 account for 72% of that
 7.54-point gap** — `cnn` averages 142 on those six against the classical controller's 596. They are
 low-speed, large-lateral-acceleration corners, and the classical controller's loss there arrives in
-short bursts (71% of its squared error in 10% of the timesteps) in which the achieved lataccel lags
-its own reference by a measured ~213 ms at essentially unit amplitude. That signature is consistent
-with an uncancelled first-order plant lag, which a static-gain feedforward `(desired − roll)/G(v)`
-cannot correct at any gain — but the causal attribution is inference, whereas the lag and the
-concentration are direct measurements. The learned net's demonstrated advantage is that **it does
-not blow up on these segments**, not that it tracks better everywhere.
+short bursts (71% of its squared error in 10% of the timesteps). The learned net's demonstrated
+advantage is that **it does not blow up on these segments**, not that it tracks better everywhere.
+
+**The mechanism, measured.** The plant clamps its own lataccel change at `MAX_ACC_DELTA = 0.5` per
+step. That clamp sits ~11× above normal operation (a typical jerk cost of ~20 implies RMS lataccel
+change ~0.045/step), and since jerk is charged quadratically at 10000×, **one saturated step costs
+25–64× a normal step**. On the worst segments a handful of timesteps — sometimes three — produce
+27–62% of the entire jerk cost. Comparing controllers over the eight worst segments makes the causal
+role plain: `ff_pi_tuned` accumulates **97** saturated steps against `cnn`'s **2**, and the
+per-segment correspondence is near-exact — where `ff_pi` saturates, `cnn` removes it and cost falls
+4–8×; where saturation is already zero, `cnn` gains 0–1.2×, and on the one segment with no saturated
+steps at all it does not help (282.3 vs 284.1). Trajectory optimisation through the differentiable
+plant confirms this is self-inflicted rather than intrinsic: the optimal trajectory is rate-saturated
+**0.00%** of the time on five of those six segments.
+
+That is what `ff_pi_rl2` fixes, with **conditional** anti-windup — freeze the PI integrator while the
+clamp binds, held for the plant's measured 3-step dead time. `i_clip` does not address it, being a
+*fixed* magnitude clamp already at its optimum. Across all 20,000 segments only 626 (3.1%) ever
+saturate, but they cost 6.4× a clean segment and hold **17.2% of all cost**. Segments where the
+mechanism never fires are bit-identical to `ff_pi_tuned`, so this costs nothing on the other 96.9%.
+The −2.26 gain replicates on 15,000 segments never evaluated elsewhere here (−1.89, bootstrap 95% CI
+[−2.35, −1.48]); the claim rests on that CI and a distribution-free sign test (389 improved / 231
+worsened of 620 activated, p=2.3e-10) rather than a t-test, since the paired deltas are heavy-tailed.
+
+Note `data/SYNTHETIC` contains **20,000** segments; the "full 5000" metric quoted here is `ALL[:5000]`.
+On all 20,000, `ff_pi_tuned` scores 54.88 and `ff_pi_rl2` 52.90.
 
 Verified by an adversarial review of the result:
 
@@ -189,6 +210,7 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 | `cnn_PM.pt` | Trained weights for the default `cnn` controller |
 | `controllers/ff_pi.py` | 2-DOF feedforward + PI baseline |
 | `controllers/ff_pi_tuned.py`, `controllers/pid_tuned.py` | CMA-ES-tuned variants; parameterised copies so the quoted baselines stay untouched |
+| `controllers/ff_pi_rl2.py` | Best classical controller (52.30) — adds conditional anti-windup against the plant's lataccel rate clamp |
 | `tune_cma.py` | CMA-ES tuner (400-segment tune set, disjoint held-out guard) |
 | `controllers/pid_w_ff.py` | Ported reference controller (jonoomph, attributed) — 59.49 on our 5000 |
 | `torch_sim.py` | Differentiable batched GPU TinyPhysics (the training engine) |
