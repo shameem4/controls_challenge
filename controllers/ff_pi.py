@@ -27,9 +27,11 @@ class Controller(BaseController):
     """Stage 1: inverse-plant feedforward on a cost-optimal smoothed reference,
     plus PI feedback for low-frequency drift."""
 
-    def __init__(self, kp=0.20, ki=0.10, lead=3, past=20, i_clip=5.0, gain_scale=1.3, smooth=True):
+    def __init__(self, kp=0.20, ki=0.10, lead=3, past=20, i_clip=5.0, gain_scale=1.3, smooth=True,
+                 lam=LAM):
         self.kp, self.ki, self.lead, self.past, self.i_clip = kp, ki, lead, past, i_clip
         self.gain_scale, self.smooth_on = gain_scale, smooth
+        self.lam = lam          # smoothing strength; defaults to the cost-derived LAM
         self.integ = 0.0
         self.hist = []  # past targets for a centered smoothing window
 
@@ -41,8 +43,9 @@ class Controller(BaseController):
         tau = np.array(self.hist[-self.past:] + [target] + list(future))
         k0 = len(self.hist[-self.past:])  # index of "now"
         n = len(tau)
-        diag = np.full(n, 1 + 2 * LAM); diag[0] = 1 + LAM; diag[-1] = 1 + LAM
-        low = np.full(n, -LAM); up = np.full(n, -LAM)
+        lam = self.lam
+        diag = np.full(n, 1 + 2 * lam); diag[0] = 1 + lam; diag[-1] = 1 + lam
+        low = np.full(n, -lam); up = np.full(n, -lam)
         c = _thomas(low, diag, up, tau.copy()) if self.smooth_on else tau
         self.hist.append(target)
         return c, k0

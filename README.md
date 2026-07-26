@@ -16,7 +16,13 @@ below on how precisely those are comparable).
 | PID (baseline) | `controllers/pid.py` | 1.71 | 25.51 | **110.76** | — |
 | `pid_w_ff` — ported reference (jonoomph) | `controllers/pid_w_ff.py` | 0.71 | 23.93 | **59.49** | −46% |
 | `ff_pi` — 2-DOF feedforward + PI | `controllers/ff_pi.py` | 0.74 | 22.33 | **59.06** | −47% |
+| `ff_pi_tuned` — same, CMA-ES tuned | `controllers/ff_pi_tuned.py` | — | — | **54.56** | −51% |
 | **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.545** | **20.61** | **47.87** | **−57%** |
+
+`ff_pi_tuned` re-tunes the six `ff_pi` parameters with CMA-ES on a 400-segment set disjoint from
+every eval split (component costs not recorded for the 5000 run, hence the dashes). Tuning on only
+60 segments produced a 16% *apparent* gain that was almost entirely overfitting — this metric's
+subset noise is large enough that small tuning sets fit the sample, not the controller.
 
 The default `cnn` controller scores **47.87** on the full 5000 and **48.14** on a pristine
 held-out split it never saw for training *or* checkpoint selection. It is a pure function of the
@@ -26,6 +32,18 @@ Two independently-designed 2-DOF controllers (ours and a ported reference) land 
 indistinguishable at this metric's noise level — which is what pins the **classical
 feedforward+feedback plateau** on this cost landscape. The learned net clears it by ~11 points,
 a margin well outside the noise.
+
+**Where that margin actually comes from.** It is not broad superiority, and the earlier wording
+here implied otherwise. On the clean 500-segment split `ff_pi_tuned` scores 55.68 and `cnn` 48.14;
+tracing every segment individually shows that **six segments out of 500 account for 72% of that
+7.54-point gap** — `cnn` averages 142 on those six against the classical controller's 596. They are
+low-speed, large-lateral-acceleration corners, and the classical controller's loss there arrives in
+short bursts (71% of its squared error in 10% of the timesteps) in which the achieved lataccel lags
+its own reference by a measured ~213 ms at essentially unit amplitude. That signature is consistent
+with an uncancelled first-order plant lag, which a static-gain feedforward `(desired − roll)/G(v)`
+cannot correct at any gain — but the causal attribution is inference, whereas the lag and the
+concentration are direct measurements. The learned net's demonstrated advantage is that **it does
+not blow up on these segments**, not that it tracks better everywhere.
 
 Verified by an adversarial review of the result:
 
@@ -170,6 +188,8 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 | `controllers/cnn.py`, `nets.py` | **Deliverable** learned preview net (`AblNet`, cfg `PM`) + eval wrapper |
 | `cnn_PM.pt` | Trained weights for the default `cnn` controller |
 | `controllers/ff_pi.py` | 2-DOF feedforward + PI baseline |
+| `controllers/ff_pi_tuned.py`, `controllers/pid_tuned.py` | CMA-ES-tuned variants; parameterised copies so the quoted baselines stay untouched |
+| `tune_cma.py` | CMA-ES tuner (400-segment tune set, disjoint held-out guard) |
 | `controllers/pid_w_ff.py` | Ported reference controller (jonoomph, attributed) — 59.49 on our 5000 |
 | `torch_sim.py` | Differentiable batched GPU TinyPhysics (the training engine) |
 | `ablate.py`, `select_abl.py` | Config/ablation training; real-sim checkpoint selection |
