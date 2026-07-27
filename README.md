@@ -34,13 +34,33 @@ indistinguishable at this metric's noise level — which is what pins the **clas
 feedforward+feedback plateau** on this cost landscape. The learned net clears it by ~11 points,
 a margin well outside the noise.
 
-**Where that margin actually comes from.** It is not broad superiority, and the earlier wording
-here implied otherwise. On the clean 500-segment split `ff_pi_tuned` scores 55.68 and `cnn` 48.14;
-tracing every segment individually shows that **six segments out of 500 account for 72% of that
-7.54-point gap** — `cnn` averages 142 on those six against the classical controller's 596. They are
-low-speed, large-lateral-acceleration corners, and the classical controller's loss there arrives in
-short bursts (71% of its squared error in 10% of the timesteps). The learned net's demonstrated
-advantage is that **it does not blow up on these segments**, not that it tracks better everywhere.
+**Where that margin comes from — two different answers, before and after the tail is fixed.**
+
+Against `ff_pi_tuned`, the margin is almost entirely a tail. On the clean 500-segment split
+`ff_pi_tuned` scores 55.68 and `cnn` 48.14, and tracing every segment individually shows that
+**six segments out of 500 account for 72% of that 7.54-point gap** — `cnn` averages 142 on those six
+against the classical controller's 596. They are low-speed, large-lateral-acceleration corners where
+the classical controller's loss arrives in short bursts (71% of its squared error in 10% of the
+timesteps).
+
+Against `ff_pi_rl2`, which removes that tail, **the remaining gap is broad**. Over 3000 segments:
+
+| | `ff_pi_tuned` | `ff_pi_rl2` | `cnn` |
+|---|---|---|---|
+| median | 46.45 | 46.45 | **44.33** |
+| p90 | 79.72 | 79.67 | **75.91** |
+| p99 | 297.91 | 237.69 | **150.13** |
+| max | 1994.78 | 906.16 | **761.98** |
+| worst 10% share of cost | 29.3% | 26.8% | **23.6%** |
+
+`cnn` wins at **every** quantile, median included, and six segments now hold only 19.5% of the gap
+while the median difference alone accounts for 29%. So "not broad superiority" was true of the
+comparison against `ff_pi_tuned` and is **not** true in general — an earlier revision of this section
+overstated the concentration, and the anti-windup fix is what made the difference visible by removing
+the tail that had been masking it.
+
+Note also that `ff_pi_rl2`'s median and p90 are *identical* to `ff_pi_tuned`'s: the fix is purely
+tail-targeted, with the entire gain in p99 and max, exactly as intended.
 
 **The mechanism, measured.** The plant clamps its own lataccel change at `MAX_ACC_DELTA = 0.5` per
 step. That clamp sits ~11× above normal operation (a typical jerk cost of ~20 implies RMS lataccel
