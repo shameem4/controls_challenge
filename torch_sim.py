@@ -79,10 +79,16 @@ def load_segment(path):
 
 
 def rollout(plant, segs, controller, mode='expected', detach_tokens=True,
-            tbptt=None, stop=None, return_actions=False, soft_tokens=False):
+            tbptt=None, stop=None, return_actions=False, soft_tokens=False, st_clamp=False):
     """Batched rollout mirroring TinyPhysicsSimulator. `controller(ctx)->steer[B]`.
     tbptt: if set, detach recurrent state every `tbptt` steps (bounds autograd memory).
-    stop: if set, end the rollout at this step (e.g. COST_END_IDX for training)."""
+    stop: if set, end the rollout at this step (e.g. COST_END_IDX for training).
+    st_clamp: straight-through estimator for the plant's MAX_ACC_DELTA rate clamp. A hard
+      torch.clamp has ZERO gradient wherever it binds, so at every rate-saturated step the policy
+      receives no signal that its own action caused the saturation -- the same zero-gradient defect
+      that once produced a permanent square wave in the MPC planner. With st_clamp the forward pass
+      is bit-identical (still hard-clamped) but the backward pass passes gradient through.
+      Default False preserves the exact behaviour the released checkpoint was trained with."""
     dev = plant.device
     T = min(len(s['target']) for s in segs)
     if stop is not None:
@@ -126,7 +132,9 @@ def rollout(plant, segs, controller, mode='expected', detach_tokens=True,
         else:
             tok = plant.tokenize(past.detach() if detach_tokens else past)
         pred = plant.step(st, tok, mode=mode)
-        pred = torch.clamp(pred, cur - MAX_ACC_DELTA, cur + MAX_ACC_DELTA)
+        pred_c = torch.clamp(pred, cur - MAX_ACC_DELTA, cur + MAX_ACC_DELTA)
+        # exact forward either way; st_clamp only changes what the backward pass sees
+        pred = pred + (pred_c - pred).detach() if st_clamp else pred_c
         cur = torch.where(torch.tensor(t >= CONTROL_START_IDX, device=dev), pred, target[:, t])
         if tbptt is not None and (t - CONTEXT_LENGTH) % tbptt == 0:
             cur = cur.detach()
