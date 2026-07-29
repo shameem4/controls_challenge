@@ -32,6 +32,10 @@ def m():
 # name, lower, upper, is_int
 SPACE = {
     'pid_tuned': [('p', 0.0, 1.0, False), ('i', 0.0, 0.6, False), ('d', -0.5, 0.5, False)],
+    # PID with Smith-predictor dead-time compensation. smith is FIXED per run (via SMITH env),
+    # not tuned, so the two arms are a clean A/B: same search space, same budget, prediction on/off.
+    'pid_lag': [('p', 0.0, 1.5, False), ('i', 0.0, 0.6, False), ('d', -0.5, 0.5, False),
+                ('i_clip', 0.5, 60.0, False), ('gain_scale', 0.4, 3.0, False)],
     'ff_pi': [('kp', 0.0, 1.0, False), ('ki', 0.0, 0.5, False), ('lead', 0.0, 12.0, True),
               ('gain_scale', 0.4, 3.0, False), ('i_clip', 0.5, 20.0, False),
               ('lam', 0.1, 12.0, False)],
@@ -61,6 +65,8 @@ def encode(kind, params):
 
 def run(f, kind, params):
     C = importlib.import_module(f'controllers.{kind}').Controller
+    if kind == 'pid_lag':
+        params = dict(params); params['smith'] = float(os.environ.get('SMITH', 1.0))
     c = C(**params)
     return TinyPhysicsSimulator(m(), str(f), controller=c, debug=False).rollout()['total_cost']
 
