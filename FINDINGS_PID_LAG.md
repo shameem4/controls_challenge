@@ -58,3 +58,80 @@ The plain-PID arm tuned to 87.01 on 400 segments and came out **worse than untun
 held-out (121.62 vs 112.19). `ff_pi` tuned cleanly on the identical budget and produced a real
 held-out gain. A feedback-only controller's mean cost is dominated by the segments it handles badly,
 which makes its tuning landscape far more subset-sensitive.
+
+---
+
+# Lookahead error: the same problem, solved the other way round
+
+Instead of predicting the plant's output (Smith), shift the *reference*: measure the error against
+the target a few steps AHEAD, leaving the feedback signal as measured lataccel.
+
+```python
+e = target_future[k] - current_lataccel          # k ~ 2, fractionally interpolated
+```
+
+## Result: 24% off comma's baseline PID, from one line
+
+```
+ALL[:5000]                 mean     median    p90
+  stock PID              110.756    73.67   173.52
+  PID + 2-step lookahead  84.117    61.76   118.03
+
+  delta -26.639   95% CI [-29.190, -24.050]   improved 4537/5000  (90.7%, ~57 SD)
+```
+
+Held-out sweep at *unchanged* gains, showing a clean unimodal optimum:
+
+```
+  k0     0.0    1.0    2.0    3.0    4.0    5.0    7.0
+  cost 112.19  91.87  82.99  85.24 101.80 109.05 181.17
+```
+
+## Why this works where the Smith predictor failed
+
+Both compensate dead time; they differ in *what they modify*.
+
+* **Smith predictor** substitutes a model prediction into the FEEDBACK signal. It is well known to
+  degrade disturbance rejection, and this plant is disturbance-dominated (random walk, lag-1
+  autocorrelation 0.98; ~11.3 of the ~29 floor is irreducible noise). Cost: **-16 points**.
+* **Lookahead** changes only the REFERENCE. Feedback remains measured lataccel, so integral action
+  rejects drift exactly as before, and the loop merely aims where the target will be when the action
+  lands. Gain: **+26.6 points**.
+
+On a disturbance-dominated plant that distinction decides the outcome. The textbook remedy lost to
+the naive one because the textbook remedy targets setpoint tracking.
+
+## Lookahead SUBSTITUTES for feedforward — it does not complement it
+
+Applying the identical change to the feedback path of `ff_pi_rl2` (best classical, 52.30) is
+monotonically harmful:
+
+```
+  fb_look   0.0    1.0    2.0    3.0    4.0    6.0
+  held-out 53.41  56.08  61.29  68.58  79.75 107.52
+```
+
+`ff_pi` already anticipates: its feedforward inverts the plant against `c[k0+lead]`. Adding
+lookahead to the feedback double-counts the anticipation, the controller turns too early, and the
+two channels fight. PID has no feedforward, so the error term is its only route to anticipation --
+which is exactly why it gains so much.
+
+**Three independent results agree the right anticipation is ~2 steps**: `ff_pi`'s `lead` tunes to
+2-3, the PID lookahead optimum is 2, and joint tuning drove `k0`->0 with `kv`~2.25 (~2 at typical
+speed). All well short of the plant's 5-step bulk delay -- anticipating further means committing to
+a target that has not arrived.
+
+## The speed/acceleration schedule does not earn its parameters
+
+`k = k0 + kv*(v/30) + ka*a`, jointly tuned with the gains, scored **83.65** on held-out against
+**82.99** for a plain constant -- and set `k0` to ~0 with `kv` ~ 2.25, rediscovering "about 2" the
+long way round. Consistent with the impulse-response measurement: bulk response timing is
+speed-INVARIANT at ~5 steps and only the onset moves (4 steps at low speed -> 2 at high, r = -0.98).
+The constant is the whole effect.
+
+## Scope
+
+This improves the *baseline*, not the deliverable. Every controller here that already has
+feedforward gets nothing, or is harmed. It is worth recording because the reference PID everyone
+benchmarks against leaves ~26 points on the table for a one-line change, and because the
+Smith-vs-lookahead contrast cleanly identifies what kind of compensation this plant admits.

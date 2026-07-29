@@ -36,6 +36,12 @@ SPACE = {
     # not tuned, so the two arms are a clean A/B: same search space, same budget, prediction on/off.
     'pid_lag': [('p', 0.0, 1.5, False), ('i', 0.0, 0.6, False), ('d', -0.5, 0.5, False),
                 ('i_clip', 0.5, 60.0, False), ('gain_scale', 0.4, 3.0, False)],
+    # PID whose error is measured against a future target, lookahead scheduled on speed/accel.
+    # A constant 2-step lookahead alone takes stock PID from 112.19 to 82.99 on held-out; this asks
+    # what joint tuning adds, and whether the kv/ka schedule earns its parameters.
+    'pid_look': [('p', 0.0, 1.5, False), ('i', 0.0, 0.6, False), ('d', -0.5, 0.5, False),
+                 ('i_clip', 0.5, 60.0, False), ('k0', 0.0, 6.0, False),
+                 ('kv', -3.0, 3.0, False), ('ka', -3.0, 3.0, False)],
     'ff_pi': [('kp', 0.0, 1.0, False), ('ki', 0.0, 0.5, False), ('lead', 0.0, 12.0, True),
               ('gain_scale', 0.4, 3.0, False), ('i_clip', 0.5, 20.0, False),
               ('lam', 0.1, 12.0, False)],
