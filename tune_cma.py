@@ -42,6 +42,14 @@ SPACE = {
     'pid_look': [('p', 0.0, 1.5, False), ('i', 0.0, 0.6, False), ('d', -0.5, 0.5, False),
                  ('i_clip', 0.5, 60.0, False), ('k0', 0.0, 6.0, False),
                  ('kv', -3.0, 3.0, False), ('ka', -3.0, 3.0, False)],
+    # ff_pi_rl2 + feedback lookahead, with lead and the gains free to re-balance. The fixed-gain
+    # sweep said fb_look is harmful, but that sweep made exactly the error flagged for the Smith
+    # predictor: adding anticipation to the feedback changes how much the feedforward should carry,
+    # so lead=2 and the existing gains are no longer the right operating point. If "lookahead
+    # substitutes for feedforward" is right, the tuner should trade lead DOWN as fb_look goes up.
+    'ff_pi_look': [('kp', 0.0, 1.0, False), ('ki', 0.0, 0.5, False), ('lead', 0.0, 12.0, True),
+                   ('gain_scale', 0.4, 3.0, False), ('i_clip', 0.5, 30.0, False),
+                   ('lam', 0.1, 12.0, False), ('fb_look', 0.0, 8.0, False)],
     'ff_pi': [('kp', 0.0, 1.0, False), ('ki', 0.0, 0.5, False), ('lead', 0.0, 12.0, True),
               ('gain_scale', 0.4, 3.0, False), ('i_clip', 0.5, 20.0, False),
               ('lam', 0.1, 12.0, False)],
@@ -107,7 +115,13 @@ def main(kind, iters, nseg):
     print(f"  baseline (shipped defaults): tune={b_tune:.2f}  val={ev(kind, {}, VAL):.2f}", flush=True)
 
     print(f"  starting from defaults: {defaults}", flush=True)
-    es = cma.CMAEvolutionStrategy(encode(kind, defaults), 0.6,
+    # SIGMA is the initial search radius in the sigmoid-encoded space. 0.6 is a large step -- for a
+    # parameter spanning 0-12 it covers most of the range -- so a sharp optimum can be missed
+    # entirely, which shows up as "no candidate ever beat the start". Exposed so a null result can
+    # be checked against a finer search before being believed.
+    sigma = float(os.environ.get('SIGMA', 0.6))
+    print(f"  CMA sigma={sigma}", flush=True)
+    es = cma.CMAEvolutionStrategy(encode(kind, defaults), sigma,
                                   {'popsize': 10, 'maxiter': iters, 'verbose': -9, 'seed': 1})
     best = (b_tune, {})
     it = 0
