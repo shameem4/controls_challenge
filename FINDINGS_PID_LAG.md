@@ -351,3 +351,107 @@ ALL[5000:6000] (clean)                        total
 **78.148 is the result: a 32% improvement on the shipped PID baseline** from two physically-derived
 mechanisms with gains untouched -- and gain tuning on top makes it worse. None of it transfers to
 `ff_pi_rl2` or `cnn`, both of which already carry feedforward.
+
+---
+
+# Bootstrapped integrator: -38% on the stock PID, and the biggest win of this branch
+
+## The problem
+
+A feedback-only PID cannot know how much steering a new target needs, so the required steady-state
+offset has to be DISCOVERED by accumulating error. A trace through a real corner shows the cost --
+error sits at +0.13 to +0.41 for seven consecutive steps while steering creeps 1.129 -> 1.146.
+
+## The fix
+
+The plant model already says what steering a reference needs: `u_model = (ref - roll)/G(v)`. Nudge
+the integrator toward the value that would produce it:
+
+```python
+integ += boot * (u_model / ki - integ)
+```
+
+## Result: verified on both splits
+
+```
+ALL[:5000]                total   lataccel   jerk   median     p90
+  stock PID              110.756    85.25   25.51   73.67   173.52
+  + lookahead + smooth    77.892    54.72   23.17   60.71   110.19
+  + integ bootstrap       68.412    46.91   21.50   55.49    88.89
+
+  bootstrap vs smooth  -9.480  95%CI [-11.676, -7.475]  improved 3405/5000
+  full stack vs stock -42.344  95%CI [-45.748,-39.153]  improved 4598/5000  (92%)
+
+CLEAN ALL[5000:6000] (never used for selection)
+  + lookahead + smooth    78.15
+  + integ bootstrap       69.46   -8.692  95%CI [-11.570,-5.766]  improved 680/1000
+```
+
+Every quantile improves together, both cost terms improve, and gains are exactly stock.
+
+**Answering the jerk question directly: bootstrapping costs no jerk.** Jerk *improves*, 23.29 ->
+21.61. The plant spreads a steering change over ~5 steps behind its rate clamp, so a gentle
+model-based nudge is free on that axis.
+
+## It beats conventional feedforward, and the reason is structural
+
+```
+  ffw=0.25 (true gain)  82.13     ffw=0.25 (detuned 1.79)  75.27     boot=0.02  65.68
+  ffw=1.00 (true gain) 169.88     ffw=1.00 (detuned 1.79) 103.33
+```
+
+Parallel feedforward adds to the output unconditionally, so when the gain model is wrong the error
+persists and the integrator must fight it. The bootstrap nudges the integrator TOWARD the model, so
+it is a **soft, self-correcting prior**: the model supplies most of the offset immediately and
+feedback remains free to overrule it. On a plant whose gain model carries +-9% error that is the
+better structure.
+
+Confirmed by the calibration each one wants: **open-loop feedforward needs DETUNING (1.79) while the
+bootstrap wants the TRUE gain (1.0-1.4, with 1.79 worse).** Opposite requirements, exactly as the
+self-correcting reading predicts.
+
+## What it actually is -- a correction to the original framing
+
+`boot=0.02` is a blend rate, so its time constant is 50 steps = 5 s. That is not a jump-start on
+target changes. Gating discriminates:
+
+```
+  gate=always     65.68
+  gate=steady     68.30    retains most of the value
+  gate=transient  73.65    loses most of it
+```
+
+The value lives mostly in the **steady-state** contribution. So this is primarily a standing model
+prior anchoring the integrator, with a smaller transient benefit on top -- not the "bootstrap after a
+target change" it was conceived as. Both contribute; steady dominates.
+
+## Nothing is meaningfully tunable
+
+* `boot` sits in a flat basin -- 0.01/0.015/0.02/0.025/0.03 give 67.6/66.3/65.7/67.4/68.9. The
+  apparent knife edge in the coarse sweep (0.05 -> 85.21) was simply past the basin.
+* `gate` should be off; `always` wins.
+* `gain_scale` should be the measured physical gain; 1.4 beats 1.0 by 0.24, inside noise.
+
+Every value is principled rather than fitted, and gain tuning on top of the stack **overfits**
+(86.96 held-out vs 81.40). That is a robustness property, not a missed opportunity.
+
+## Why this one worked when the pending-response correction failed
+
+Both use the same plant model and both touch the integral path, with opposite signs. The
+pending-response experiment *reduced* effective integral action and cost 16 points; this *accelerates*
+it toward a model estimate and gains 9. Consistent with the principle established three times over on
+this plant: the disturbance is a random walk (lag-1 autocorrelation 0.98), integral action is the
+load-bearing element -- **help it, do not discount it.**
+
+## Final state of this branch
+
+```
+ALL[:5000]                                     total
+  stock PID                                   110.756
+  + velocity-scheduled lookahead               84.117
+  + Tikhonov smoothing lam=2                   77.892
+  + bootstrapped integrator                    68.412    -38%, gains untouched
+
+  ff_pi_rl2 (still the best classical)         52.301
+  cnn (deliverable, untouched)                 47.872
+```
