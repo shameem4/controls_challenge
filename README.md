@@ -14,20 +14,50 @@ below on how precisely those are comparable).
 | Controller | file | lataccel | jerk | **total_cost** | vs PID |
 |---|---|---|---|---|---|
 | PID (baseline) | `controllers/pid.py` | 1.71 | 25.51 | **110.76** | — |
+| `pid_boot` — PID + physics lookahead + smoothing + bootstrap | `controllers/pid_boot.py` | 0.94 | 21.50 | **68.41** | −38% |
 | `pid_w_ff` — ported reference (jonoomph) | `controllers/pid_w_ff.py` | 0.71 | 23.93 | **59.49** | −46% |
 | `ff_pi` — 2-DOF feedforward + PI | `controllers/ff_pi.py` | 0.74 | 22.33 | **59.06** | −47% |
 | `ff_pi_tuned` — same, CMA-ES tuned | `controllers/ff_pi_tuned.py` | — | — | **54.56** | −51% |
 | `ff_pi_rl2` — + rate-limit anti-windup | `controllers/ff_pi_rl2.py` | — | — | **52.30** | −53% |
-| **`cnn` — learned preview net (default)** | `controllers/cnn.py` | **0.545** | **20.61** | **47.87** | **−57%** |
+| `ff_pi_boot` — + bootstrapped integrator (best classical) | `controllers/ff_pi_boot.py` | 0.63 | 19.92 | **51.22** | −54% |
+| **`cnn` — learned preview net (default, `cnn_dual.pt`)** | `controllers/cnn.py` | **0.531** | **20.33** | **46.89** | **−58%** |
+| `cnn` with `cnn_PM.pt` — previous deliverable | `controllers/cnn.py` | 0.545 | 20.61 | **47.87** | −57% |
 
 `ff_pi_tuned` re-tunes the six `ff_pi` parameters with CMA-ES on a 400-segment set disjoint from
 every eval split (component costs not recorded for the 5000 run, hence the dashes). Tuning on only
 60 segments produced a 16% *apparent* gain that was almost entirely overfitting — this metric's
 subset noise is large enough that small tuning sets fit the sample, not the controller.
 
-The default `cnn` controller scores **47.87** on the full 5000 and **48.14** on a pristine
-held-out split it never saw for training *or* checkpoint selection. It is a pure function of the
-observed state, the 5-second preview, and its own recent actions — **no per-segment memorization**.
+The default `cnn` controller scores **46.89** on the full 5000 and **49.31** on `ALL[4200:5000]`,
+a pristine split it never saw for training *or* checkpoint selection (`cnn_PM.pt` scores 47.87 and
+52.31 on the same two). It is a pure function of the observed state, the 5-second preview, and its
+own recent actions — **no per-segment memorization**.
+
+### Why the two newest promotions were accepted
+
+**`ff_pi_boot` (52.30 → 51.22) — bootstrapped integrator, mechanism understood.** A feedback
+integrator has to *discover* the steady-state steering offset a new target needs by accumulating
+error; a trace through a real corner shows error stuck at +0.13…+0.41 for seven steps while steering
+creeps 1.129 → 1.146. The plant model already knows the answer, so the integrator is nudged toward
+it instead: `integ += boot * (integ_target − integ)`. On `ff_pi_rl2` the feedforward is deliberately
+detuned 1.79×, so the right anchor is the *residual* that detuning leaves, `(u_true − ff)/ki`, using
+the measured gain rather than the detuned one. Verified −1.080, 95% CI [−1.506, −0.634], 3395/5000
+improved. The same mechanism is worth −38% on the stock PID, which has no feedforward at all and so
+must discover the entire offset (110.76 → 68.41, 4598/5000, gains untouched).
+
+**`cnn_dual.pt` (47.87 → 46.89) — effect verified, mechanism NOT understood.** Same architecture and
+same `PM` config as `cnn_PM.pt`; the only difference is the training schedule — behaviour cloning
+onto `ff_pi` first, then the usual policy optimisation (`dual_train.py`). It clears both gates on the
+headline (−0.978, CI [−1.51, −0.54], median −0.202, 2910/5000 = 11.6σ) and on the pristine split
+(−2.997, CI [−6.08, −0.78], median −0.214, 477/800 = 5.4σ). It is promoted on that evidence alone —
+see **Unknowns** below for what is explicitly not established.
+
+Checkpoint selection here is itself worth recording as a method note. Four `dualcnn` checkpoints were
+compared on the pristine split, and **three of them improve the mean while making the median segment
+worse** (`po_0125`: mean −1.784 but median **+1.093**, only 234/800 better). Those are tail artifacts,
+not controllers — the benchmark cost is a mean, so a few chaotic blow-ups moving the right way can
+manufacture an "improvement" that the typical segment never sees. Only `po_0325` has a negative
+median *and* a sign test clear of chance, and it is the one shipped.
 
 Two independently-designed 2-DOF controllers (ours and a ported reference) land 0.5 apart at ~59 —
 indistinguishable at this metric's noise level — which is what pins the **classical
@@ -198,6 +228,49 @@ Documented because the negative results were more informative than most of the w
 The remaining gap to the ~36 frontier is a **method** difference — MPC on a smooth linear plant
 model, or value-based RL (PPO) — not another lever on this approach.
 
+### Negatives from the lag/anticipation line
+
+All measured against `pid_smooth` (80.72) or `ff_pi_rl2` (52.30) on held-out splits.
+
+| Tried | Outcome | Why |
+|---|---|---|
+| **Smith predictor** (`pid_lag.py`) | −16 | Substitutes a model prediction into the feedback, which is known to degrade *disturbance* rejection — fatal on a plant whose disturbance is a random walk with lag-1 autocorrelation 0.98. |
+| **Latch the reference until the plant reaches it** (`pid_hold.py`, `mode='latch'`) | Catastrophic | Makes the reference a staircase; step changes inject exactly the high-frequency content the jerk term charges at 10000×. |
+| **Reference governor** (`pid_hold.py`, `mode='rate'`) | +1.658, CI [−0.740, +4.189] | Knife-edge overfit: only 39/1000 segments improved on clean data. |
+| **Pending-response correction** (`pid_pend.py`) | `pred_i` +2.2…+16.7, `pred_p` +0.14…+2.1 | Discounting error that in-flight commands will fix removes *integral* action, which is the load-bearing element here. Predicted `pred_i` would help and `pred_p` would hurt — exactly inverted. |
+| **Lookahead on `ff_pi`'s feedback** (`ff_pi_look.py`) and **velocity-scheduled ff lead** (`ff_pi_vlead.py`) | Both null | Anticipation is a single resource: `ff_pi` already anticipates, so a second mechanism has nothing left to buy. |
+| **Speed-scheduled averaging weights on `pid_w_ff`** (`pid_wff_v.py`) | Null in both directions | The upstream `[5,6,7,8]` weights have center of mass 44/26 = 1.692 steps, which *is* the optimum of the unscheduled sweep. Scheduling that center by speed loses whichever way it moves. |
+| **Bootstrapping the P and D paths** | Null (best variant −0.07, non-monotone) | The bootstrap fixes a *stateful* element — an accumulated value that must be discovered and can therefore be wrong. `kp·e` and `kd·Δe` are recomputed from scratch each step, so there is no referent to anchor. The nearest analogues are feedforward (tested, harmful) and rate feedforward (which the lookahead already is). |
+| **Conditional integration for the `cnn`** | No headroom — not built | The mechanism worth ~2 points on `ff_pi_rl2` needs the plant's rate clamp to bind. Under `cnn` it binds **1 step in 24,000** (0.004%) and the integrator sits at its ±5 clip 0.02% of the time. |
+
+Two general principles came out of this line and both held up under repeated test:
+**anticipation is a single resource** (four independent nulls once a feedforward exists), and
+**integral action is load-bearing on this plant** — help it converge, never discount it.
+
+## Unknowns
+
+Stated explicitly rather than papered over, because in each case the effect is measured but the
+explanation is not.
+
+- **Why behaviour cloning → policy optimisation beats policy optimisation from scratch.**
+  `cnn_dual.pt` is the current deliverable and its −0.978 is solid, but the mechanism is open. The
+  original hypothesis was that BC lands in a structurally different initialisation basin, so PO
+  converges somewhere PO-from-scratch cannot reach. A geometry probe **refuted** the leading version
+  of that story (the "BC flat-minimum" account), and iterating the BC→PO cycle did **not** compound,
+  which is what a genuine basin-escape mechanism would predict. So the honest position is: a
+  reproducible ~1-point effect with no established cause. Do not build on it assuming the basin story.
+- **Whether `gain_scale` and `ki` should be retuned with the bootstrap active.** `ff_pi_rl2`'s gains
+  were co-tuned on the assumption the integrator discovers the residual by accumulation; the
+  bootstrap changes that assumption. Retuning was not attempted because gain tuning on this family
+  has overfit every previous attempt (86.96 vs 81.40 on the PID stack), and it would need
+  `sigma=0.15` plus the held-out guard to be trustworthy.
+- **Why the derivative term helps at all.** CMA drives `d` from its stock −0.053 toward ~0.0005, yet
+  setting `d = 0` outright is measurably *worse* (+0.45). It also prefers the noisy measured error
+  over the clean smoothed reference, which is the opposite of what the model-preference argument
+  predicts. No explanation offered.
+- **Absolute scores carry several points of subset uncertainty** (see caveat 2 above). The ratio to
+  PID is the robust statistic; small cross-entry gaps on the leaderboard are not resolvable.
+
 ## Run
 
 ```bash
@@ -227,10 +300,16 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 | Path | Purpose |
 |---|---|
 | `controllers/cnn.py`, `nets.py` | **Deliverable** learned preview net (`AblNet`, cfg `PM`) + eval wrapper |
-| `cnn_PM.pt` | Trained weights for the default `cnn` controller |
+| `cnn_dual.pt` | Default `cnn` weights (46.89) — BC→PO schedule; see **Unknowns** |
+| `cnn_PM.pt` | Previous `cnn` weights (47.87), tag `v1-learned-47.87`; kept for reproducibility |
+| `dual_train.py` | Two-phase behaviour-cloning → policy-optimisation trainer that produced `cnn_dual.pt` |
 | `controllers/ff_pi.py` | 2-DOF feedforward + PI baseline |
 | `controllers/ff_pi_tuned.py`, `controllers/pid_tuned.py` | CMA-ES-tuned variants; parameterised copies so the quoted baselines stay untouched |
-| `controllers/ff_pi_rl2.py` | Best classical controller (52.30) — adds conditional anti-windup against the plant's lataccel rate clamp |
+| `controllers/ff_pi_rl2.py` | Conditional anti-windup against the plant's lataccel rate clamp (52.30) |
+| `controllers/ff_pi_boot.py` | **Best classical** (51.22) — `ff_pi_rl2` + integrator bootstrapped to the model residual |
+| `controllers/pid_phys.py`, `pid_smooth.py`, `pid_boot.py` | The PID stack: velocity-scheduled lookahead from the measured step response, Tikhonov smoothing, bootstrapped integrator (110.76 → 68.41) |
+| `controllers/pid_lag.py`, `pid_look.py`, `pid_hold.py`, `pid_pend.py`, `pid_wff_v.py`, `ff_pi_look.py`, `ff_pi_vlead.py` | Documented negatives from the lag/anticipation line; each reproduces its parent exactly at default parameters |
+| `FINDINGS_PID_LAG.md`, `FINDINGS_CLAMP.md`, `CYNIC_REVIEW.md` | Full measurement logs and the adversarial review |
 | `tune_cma.py` | CMA-ES tuner (400-segment tune set, disjoint held-out guard) |
 | `controllers/pid_w_ff.py` | Ported reference controller (jonoomph, attributed) — 59.49 on our 5000 |
 | `torch_sim.py` | Differentiable batched GPU TinyPhysics (the training engine) |

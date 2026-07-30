@@ -11,9 +11,17 @@ from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
 # gain-scheduled by v_ego, feedback head + criticality-gated residual, and (the two
 # ideas distilled from jonoomph's ML_PID that helped us) previous-action inputs [P]
 # and multi-horizon preview-error features [M]. Weights trained end-to-end via Gumbel rollouts
-# with soft-token full BPTT (see torch_sim.py). 47.87 on the full 5000 (PID 110.76).
+# with soft-token full BPTT (see torch_sim.py).
+#
+# Two interchangeable weight sets, identical architecture (cfg 'PM'):
+#   cnn_dual.pt  46.89 on the full 5000  <- DEFAULT. Same architecture, trained by behaviour
+#                cloning onto ff_pi followed by policy optimisation (dual_train.py). Beats
+#                cnn_PM on both the headline and a pristine split, but WHY the two-phase
+#                schedule lands better is not established -- see README "Unknowns".
+#   cnn_PM.pt    47.87 on the full 5000. Policy optimisation from scratch; the v1-learned-47.87
+#                tag. Kept tracked so the earlier result stays reproducible.
 _ROOT = Path(__file__).resolve().parent.parent
-CKPT = os.environ.get('CNN_CKPT', 'cnn_PM.pt')
+CKPT = os.environ.get('CNN_CKPT', 'cnn_dual.pt')
 CFG = os.environ.get('CNN_CFG', 'PM')
 
 
