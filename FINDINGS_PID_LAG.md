@@ -232,3 +232,122 @@ Deriving the schedule from measurement rather than searching for it is what made
 This improves the **baseline**, not the deliverable. `ff_pi_rl2` (52.30) and `cnn` (47.87) already
 anticipate via feedforward, and adding feedback lookahead to `ff_pi_rl2` is useless — a fine search
 drove `fb_look` to 1e-06. 79.95 is a much better PID, not a competitive controller.
+
+---
+
+# Target smoothing, and four things that did not stack on top
+
+## Tikhonov smoothing of the target: verified, -3.0
+
+`pid_smooth.py`. Not a Kalman filter -- the target is exact, so there is no state to estimate from
+noisy measurements. What is wanted is the tracking-vs-jerk TRADE-OFF, which has a closed form for
+this cost: `(I + lam*D'D) c = tau` with `lam = W_jerk/W_track = 2`. Solved causally over
+[past | now | preview] by the Thomas algorithm; the lookahead then indexes the smoothed reference.
+
+```
+CLEAN ALL[5000:6000]      total   lataccel   jerk    median
+  lookahead only         81.132    55.57    25.56    60.71
+  + Tikhonov lam=2       78.148    54.85    23.29    60.69
+  delta -2.984  95%CI [-5.117,-1.252]  improved 498/1000
+```
+
+The sweep optimum lands exactly at the analytic `lam=2`, not at a tuned value -- theory confirmed.
+Both cost terms improve. **Caveat: 498/1000 improved is a coin flip and the median does not move**, so
+the mean gain comes from taming extremes rather than improving typical segments. The benchmark is the
+mean, so it counts, but the two statistics disagree and the sign test is the robust one.
+
+## Reference governor: REJECTED (looked like -4, was +1.7)
+
+Rate-limit the reference so it never demands more than the plant can deliver. On the tuning split it
+looked excellent (80.72 -> 76.76, both terms better). On clean data:
+
+```
+  + ref governor  79.806  vs  78.148 without    +1.658  CI [-0.740,+4.189]  improved 39/1000
+```
+
+**39 of 1000 segments improved.** Pure overfitting, and the warning was visible in the sweep before
+verification: `max_rate` 0.15 -> 97.70, 0.18 -> 77.60, 0.20 -> 76.76, 0.22 -> 78.70. A 21-point swing
+across a 0.03 parameter change is a knife-edge optimum, and `max_rate=0.20` was selected on exactly
+the split the gain was reported on.
+
+Mechanistically it is redundant with Tikhonov: both limit reference movement (one by curvature
+penalty, one by hard slew cap), so stacking them over-constrains -- tracking rises 54.85 -> 56.76
+while jerk barely improves.
+
+## Latch (hold reference until reached): REJECTED, catastrophically
+
+```
+  tol=0.02  2324.27      tol=0.05  1686.38      tol=0.10  647.12      tol=0.20  135.52
+```
+
+Lataccel cost explodes to 2244 because holding means aiming at a stale target while the world moves
+on, and the staircase reference raises jerk too (23.63 -> 80.04). Same argument that killed
+intermittent control here: quadratic jerk plus a never-stationary target makes discrete holding
+strictly worse than continuous.
+
+## Pending-response correction: REJECTED, and my prediction was inverted
+
+Discount lataccel still owed by in-flight action increments, `pending = G(v)*sum (1-cum[m])*du[t-m]`.
+Applied to the integral path (`pred_i`) or the proportional path (`pred_p`):
+
+```
+  pred_i  0.00 -> 80.72    0.25 -> 82.95    0.50 -> 86.13    1.00 -> 97.42
+  pred_p  0.25 -> 80.86    0.50 -> 80.88    1.00 -> 82.86
+```
+
+I predicted the integral path would HELP (removing windup on already-corrected error) and the
+proportional path would hurt. The opposite: the integral path is **eight times more damaging**.
+
+The mechanism works as designed -- jerk falls monotonically 23.63 -> 20.26, so the compounding is
+real and discounting it does remove jerk. But tracking explodes 57.09 -> 77.16, because on this plant
+the integrator's job is *drift rejection*: the disturbance is a random walk with lag-1 autocorrelation
+0.98. **Integral action is the load-bearing element, not the compounding culprit.** This closes a loop
+with two earlier results -- the Smith predictor lost 16 points for the same reason, and `i_clip` was
+already optimal. Anything that reduces effective integral gain trades away more tracking than the
+jerk it buys.
+
+## Velocity-scheduled FEEDFORWARD lead on ff_pi_rl2: null
+
+The idea that gave the PID -33 points, applied to `ff_pi_rl2`'s feedforward tap (constant `lead=2`
+-> scheduled 2.92 steps at 5 m/s to 1.90 at 37 m/s). Optimum again at t90 x 0.4 -- independent
+corroboration that the plant wants ~40% of its settling time. But:
+
+```
+  CLEAN ALL[5000:6000]  54.571 -> 54.419   -0.152  CI [-1.006,+0.738]  improved  412/1000
+  HEADLINE ALL[:5000]   52.301 -> 52.181   -0.120  CI [-0.507,+0.274]  improved 2101/5000
+```
+
+Both CIs span zero and FEWER than half the segments improve. `ff_pi`'s hand-tuned constant was
+already right.
+
+## The principle these four share
+
+**Anticipation is a single resource.** Once a controller holds roughly the right amount, adding more
+through a different mechanism gains nothing:
+
+| attempt | result |
+|---|---|
+| feedback lookahead on `ff_pi` (`fb_look`) | null -- fine search drove it to 1e-06 |
+| reference governor on top of Tikhonov | harmful -- two reference limiters |
+| velocity-scheduled feedforward lead on `ff_pi` | null -- constant already correct |
+
+This also explains the *size* of the PID win: it gained 33 points because it had **no** anticipation,
+not because velocity scheduling is powerful in itself.
+
+## Final state of this branch
+
+```
+ALL[5000:6000] (clean)                        total
+  stock PID                                  114.645
+  + velocity-scheduled lookahead              81.132   -33.5   verified
+  + Tikhonov smoothing lam=2                  78.148   - 3.0   verified
+  + reference governor                        79.806   + 1.7   rejected
+  + pending-response correction               82.95+   + 2.2   rejected
+  gain tuning on top of the above             86.96    + 5.6   rejected, overfits
+
+  ff_pi_rl2 (unchanged, still the best classical)   54.571 clean / 52.301 headline
+```
+
+**78.148 is the result: a 32% improvement on the shipped PID baseline** from two physically-derived
+mechanisms with gains untouched -- and gain tuning on top makes it worse. None of it transfers to
+`ff_pi_rl2` or `cnn`, both of which already carry feedforward.

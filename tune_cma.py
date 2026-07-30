@@ -50,6 +50,11 @@ SPACE = {
     'ff_pi_look': [('kp', 0.0, 1.0, False), ('ki', 0.0, 0.5, False), ('lead', 0.0, 12.0, True),
                    ('gain_scale', 0.4, 3.0, False), ('i_clip', 0.5, 30.0, False),
                    ('lam', 0.1, 12.0, False), ('fb_look', 0.0, 8.0, False)],
+    # PID with the measurement-derived lookahead schedule. Stock gains were designed for a loop
+    # running 3.65 steps behind; with lookahead the lag is 1.47, so the optimal gains should differ.
+    # basis is fixed at t90 (the verified best); scale stays free alongside the gains.
+    'pid_phys': [('p', 0.0, 1.5, False), ('i', 0.0, 0.6, False), ('d', -0.5, 0.5, False),
+                 ('i_clip', 0.5, 60.0, False), ('scale', 0.0, 1.2, False)],
     'ff_pi': [('kp', 0.0, 1.0, False), ('ki', 0.0, 0.5, False), ('lead', 0.0, 12.0, True),
               ('gain_scale', 0.4, 3.0, False), ('i_clip', 0.5, 20.0, False),
               ('lam', 0.1, 12.0, False)],
