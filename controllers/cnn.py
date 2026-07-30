@@ -13,15 +13,21 @@ from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
 # and multi-horizon preview-error features [M]. Weights trained end-to-end via Gumbel rollouts
 # with soft-token full BPTT (see torch_sim.py).
 #
-# Two interchangeable weight sets, identical architecture (cfg 'PM'):
-#   cnn_dual.pt  46.89 on the full 5000  <- DEFAULT. Same architecture, trained by behaviour
-#                cloning onto ff_pi followed by policy optimisation (dual_train.py). Beats
-#                cnn_PM on both the headline and a pristine split, but WHY the two-phase
-#                schedule lands better is not established -- see README "Unknowns".
-#   cnn_PM.pt    47.87 on the full 5000. Policy optimisation from scratch; the v1-learned-47.87
-#                tag. Kept tracked so the earlier result stays reproducible.
+# Three interchangeable weight sets, identical architecture (cfg 'PM'):
+#   cnn_v2.pt    46.91 on the full 5000  <- DEFAULT. Plain policy optimisation, 1000 iters, exactly
+#                the documented retrain recipe. Statistically tied with cnn_dual.pt and carries no
+#                unexplained-mechanism claim, so it is the one shipped.
+#   cnn_dual.pt  46.89. Behaviour cloning onto ff_pi, then policy optimisation (dual_train.py).
+#                Kept ONLY as evidence for a negative result: against cnn_v2 as a matched control
+#                it is a coin flip (-0.016, CI [-0.61,+0.39], 2490/5000), so the BC->PO schedule
+#                buys nothing. See FINDINGS_GAIN_PRIOR.md.
+#   cnn_PM.pt    47.87. The v1-learned-47.87 tag; a below-average training run, kept so the earlier
+#                published number stays reproducible.
+# Run-to-run training variance on this architecture is ~1.0 point on the headline metric, which is
+# larger than most effects worth chasing -- compare against a fresh matched control, never against
+# whatever was shipped last.
 _ROOT = Path(__file__).resolve().parent.parent
-CKPT = os.environ.get('CNN_CKPT', 'cnn_dual.pt')
+CKPT = os.environ.get('CNN_CKPT', 'cnn_v2.pt')
 CFG = os.environ.get('CNN_CFG', 'PM')
 
 

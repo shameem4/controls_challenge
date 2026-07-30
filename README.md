@@ -20,20 +20,21 @@ below on how precisely those are comparable).
 | `ff_pi_tuned` — same, CMA-ES tuned | `controllers/ff_pi_tuned.py` | — | — | **54.56** | −51% |
 | `ff_pi_rl2` — + rate-limit anti-windup | `controllers/ff_pi_rl2.py` | — | — | **52.30** | −53% |
 | `ff_pi_boot` — + bootstrapped integrator (best classical) | `controllers/ff_pi_boot.py` | 0.63 | 19.92 | **51.22** | −54% |
-| **`cnn` — learned preview net (default, `cnn_dual.pt`)** | `controllers/cnn.py` | **0.531** | **20.33** | **46.89** | **−58%** |
-| `cnn` with `cnn_PM.pt` — previous deliverable | `controllers/cnn.py` | 0.545 | 20.61 | **47.87** | −57% |
+| **`cnn` — learned preview net (default, `cnn_v2.pt`)** | `controllers/cnn.py` | — | — | **46.91** | **−58%** |
+| `cnn` with `cnn_dual.pt` — BC→PO, tied with the above | `controllers/cnn.py` | 0.531 | 20.33 | **46.89** | −58% |
+| `cnn` with `cnn_PM.pt` — v1 tag, a below-average run | `controllers/cnn.py` | 0.545 | 20.61 | **47.87** | −57% |
 
 `ff_pi_tuned` re-tunes the six `ff_pi` parameters with CMA-ES on a 400-segment set disjoint from
 every eval split (component costs not recorded for the 5000 run, hence the dashes). Tuning on only
 60 segments produced a 16% *apparent* gain that was almost entirely overfitting — this metric's
 subset noise is large enough that small tuning sets fit the sample, not the controller.
 
-The default `cnn` controller scores **46.89** on the full 5000 and **49.31** on `ALL[4200:5000]`,
-a pristine split it never saw for training *or* checkpoint selection (`cnn_PM.pt` scores 47.87 and
-52.31 on the same two). It is a pure function of the observed state, the 5-second preview, and its
-own recent actions — **no per-segment memorization**.
+The default `cnn` controller (`cnn_v2.pt`) scores **46.91** on the full 5000 and **50.72** on
+`ALL[4200:5000]`, a pristine split it never saw for training *or* checkpoint selection (`cnn_PM.pt`
+scores 47.87 and 52.31 on the same two). It is a pure function of the observed state, the 5-second
+preview, and its own recent actions — **no per-segment memorization**.
 
-### Why the two newest promotions were accepted
+### The two newest promotions — one accepted, one retracted
 
 **`ff_pi_boot` (52.30 → 51.22) — bootstrapped integrator, mechanism understood.** A feedback
 integrator has to *discover* the steady-state steering offset a new target needs by accumulating
@@ -45,19 +46,39 @@ the measured gain rather than the detuned one. Verified −1.080, 95% CI [−1.5
 improved. The same mechanism is worth −38% on the stock PID, which has no feedforward at all and so
 must discover the entire offset (110.76 → 68.41, 4598/5000, gains untouched).
 
-**`cnn_dual.pt` (47.87 → 46.89) — effect verified, mechanism NOT understood.** Same architecture and
-same `PM` config as `cnn_PM.pt`; the only difference is the training schedule — behaviour cloning
-onto `ff_pi` first, then the usual policy optimisation (`dual_train.py`). It clears both gates on the
-headline (−0.978, CI [−1.51, −0.54], median −0.202, 2910/5000 = 11.6σ) and on the pristine split
-(−2.997, CI [−6.08, −0.78], median −0.214, 477/800 = 5.4σ). It is promoted on that evidence alone —
-see **Unknowns** below for what is explicitly not established.
+**`cnn_v2.pt` (47.87 → 46.91) — a better training run, and nothing more interesting than that.**
+This slot previously held `cnn_dual.pt` on the strength of a −0.978 improvement over `cnn_PM.pt`,
+attributed to its behaviour-cloning→policy-optimisation schedule. **That attribution was wrong**, and
+the control run for a later experiment is what caught it. Against a *fresh from-scratch run of the
+same architecture and recipe* — the comparison the promotion never made — `cnn_dual` is a coin flip:
 
-Checkpoint selection here is itself worth recording as a method note. Four `dualcnn` checkpoints were
-compared on the pristine split, and **three of them improve the mean while making the median segment
-worse** (`po_0125`: mean −1.784 but median **+1.093**, only 234/800 better). Those are tail artifacts,
-not controllers — the benchmark cost is a mean, so a few chaotic blow-ups moving the right way can
-manufacture an "improvement" that the typical segment never sees. Only `po_0325` has a negative
-median *and* a sign test clear of chance, and it is the one shipped.
+| comparison | mean Δ | 95% CI | median | better |
+|---|---|---|---|---|
+| `cnn_dual` vs `cnn_PM` (the original claim) | −0.978 | [−1.51, −0.54] | −0.202 | 2910/5000 |
+| `cnn_dual` vs **fresh matched control** | −0.016 | **[−0.61, +0.39]** | **+0.005** | **2490/5000** |
+| fresh control vs `cnn_PM` (pure run variance) | −0.961 | [−1.41, −0.54] | −0.200 | 2889/5000 |
+
+A plain rerun reproduces essentially the *entire* −0.978. So **BC→PO buys nothing over PO from
+scratch**; `cnn_PM.pt` was simply a below-average run. The shipped `cnn_v2.pt` is that plain rerun —
+statistically tied with `cnn_dual` (46.91 vs 46.89), reproducible from the documented retrain command,
+and carrying no unexplained mechanism. `cnn_dual.pt` stays tracked purely as evidence for the negative.
+
+Two things worth taking from this. **Run-to-run training variance on this architecture is ~1.0 point
+on the headline and ~1.6 on an 800-segment split** — larger than most effects chased in this repo.
+And the original promotion applied both statistical gates *correctly*, bootstrap CI and sign test,
+and still reached the wrong conclusion, because it compared a new artifact against an **old artifact**
+rather than a **matched control**. Rigour on the wrong comparison is still wrong. Full detail in
+`FINDINGS_GAIN_PRIOR.md`.
+
+Checkpoint selection is worth recording as a separate method note, since it is a *different* trap
+from the one above and both fired in the same session. Four `dualcnn` checkpoints were compared on
+the pristine split, and **three of them improve the mean while making the median segment worse**
+(`po_0125`: mean −1.784 but median **+1.093**, only 234/800 better). Those are tail artifacts, not
+controllers — the benchmark cost is a mean, so a few chaotic blow-ups moving the right way can
+manufacture an "improvement" the typical segment never sees. Only `po_0325` had a negative median
+*and* a sign test clear of chance, so it is the one carried forward — and it then turned out to be
+tied with a plain rerun anyway. Screening on the median catches the tail artifact; only a matched
+control catches run variance. **Both gates are needed, and neither substitutes for the other.**
 
 Two independently-designed 2-DOF controllers (ours and a ported reference) land 0.5 apart at ~59 —
 indistinguishable at this metric's noise level — which is what pins the **classical
@@ -223,6 +244,8 @@ Documented because the negative results were more informative than most of the w
 | **Curvature + rate features** (`lataccel/v²`, derivatives) | Hurt (~1.3) | Redundant with the multi-horizon error features, and dilutes a small net. |
 | **Past-history temporal branch** | Hurt | The closed-loop diffsim training already captures the dynamics. |
 | **K-sample gradient averaging** | Hurt substantially | Shrinks effective exploration per step at matched budget. |
+| **Measured gain prior for the `cnn`** (cfg `G`: preview window divided by `G(v)`, so the conv sees steering units) | Null (+0.25 headline, CI [−0.10, +0.60]; +0.15 pristine) | The bootstrap's payoff decays monotonically with how much physics the host already has: −38% on stock PID (no feedforward), −1.08 on `ff_pi_rl2` (explicit ff + gain schedule), **null** on the `cnn`, whose `film` layer has already learned the schedule. It led on both the torch surrogate *and* the selection split and lost both untouched splits — winner's curse. |
+| **Behaviour cloning → policy optimisation** (`dual_train.py`) | Null vs a matched control (−0.016, CI [−0.61, +0.39]) | Reproduced by a plain rerun; the apparent gain was run-to-run training variance. |
 | **Denoising the feedback** | Not applicable | This is **process** noise on a **fully-observed** state — the sampled lataccel *is* the car's real position and is what gets scored. There is no clean signal hiding underneath to recover. |
 
 The remaining gap to the ~36 frontier is a **method** difference — MPC on a smooth linear plant
@@ -252,13 +275,12 @@ Two general principles came out of this line and both held up under repeated tes
 Stated explicitly rather than papered over, because in each case the effect is measured but the
 explanation is not.
 
-- **Why behaviour cloning → policy optimisation beats policy optimisation from scratch.**
-  `cnn_dual.pt` is the current deliverable and its −0.978 is solid, but the mechanism is open. The
-  original hypothesis was that BC lands in a structurally different initialisation basin, so PO
-  converges somewhere PO-from-scratch cannot reach. A geometry probe **refuted** the leading version
-  of that story (the "BC flat-minimum" account), and iterating the BC→PO cycle did **not** compound,
-  which is what a genuine basin-escape mechanism would predict. So the honest position is: a
-  reproducible ~1-point effect with no established cause. Do not build on it assuming the basin story.
+- ~~**Why behaviour cloning → policy optimisation beats policy optimisation from scratch.**~~
+  **Resolved: it doesn't.** Against a fresh matched control the BC→PO advantage is a coin flip
+  (−0.016, CI [−0.61, +0.39], 2490/5000). The effect was training run-to-run variance throughout.
+  Two signals had already pointed this way and were noted without being acted on — a geometry probe
+  refuted the "BC flat-minimum" account, and iterating BC→PO did not compound, which a genuine
+  basin-escape mechanism would have done. See the results table above and `FINDINGS_GAIN_PRIOR.md`.
 - **Whether `gain_scale` and `ki` should be retuned with the bootstrap active.** `ff_pi_rl2`'s gains
   were co-tuned on the assumption the integrator discovers the residual by accumulation; the
   bootstrap changes that assumption. Retuning was not attempted because gain tuning on this family
@@ -300,9 +322,10 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 | Path | Purpose |
 |---|---|
 | `controllers/cnn.py`, `nets.py` | **Deliverable** learned preview net (`AblNet`, cfg `PM`) + eval wrapper |
-| `cnn_dual.pt` | Default `cnn` weights (46.89) — BC→PO schedule; see **Unknowns** |
-| `cnn_PM.pt` | Previous `cnn` weights (47.87), tag `v1-learned-47.87`; kept for reproducibility |
-| `dual_train.py` | Two-phase behaviour-cloning → policy-optimisation trainer that produced `cnn_dual.pt` |
+| `cnn_v2.pt` | **Default** `cnn` weights (46.91) — plain policy optimisation, the documented recipe |
+| `cnn_dual.pt` | BC→PO weights (46.89); kept as evidence the schedule adds nothing over a matched control |
+| `cnn_PM.pt` | v1 weights (47.87), tag `v1-learned-47.87`; a below-average run, kept for reproducibility |
+| `dual_train.py`, `FINDINGS_GAIN_PRIOR.md` | Two-phase BC→PO trainer, and the writeup showing it is a null |
 | `controllers/ff_pi.py` | 2-DOF feedforward + PI baseline |
 | `controllers/ff_pi_tuned.py`, `controllers/pid_tuned.py` | CMA-ES-tuned variants; parameterised copies so the quoted baselines stay untouched |
 | `controllers/ff_pi_rl2.py` | Conditional anti-windup against the plant's lataccel rate clamp (52.30) |

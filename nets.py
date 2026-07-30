@@ -8,6 +8,17 @@ rollout and the numpy eval controller (controllers/cnn.py) to avoid train/serve 
 """
 import numpy as np
 import torch, torch.nn as nn, torch.nn.functional as F
+from pathlib import Path
+
+GAIN_FIT = np.load(Path(__file__).resolve().parent / 'gain_fit.npy')  # measured steer->lataccel DC gain
+
+
+def plant_gain(v):
+    """Measured G(v), batched torch. Horner over the fitted quadratic; same clip as ff_pi."""
+    g = torch.zeros_like(v)
+    for c in GAIN_FIT:
+        g = g * v + float(c)
+    return g.clamp(0.3, 4.0)
 
 H = 25            # preview horizon (steps ahead)
 V_SCALE = 30.0    # v_ego normalization
@@ -161,6 +172,10 @@ class AblNet(nn.Module):
         nn.init.zeros_(self.film.weight); nn.init.zeros_(self.film.bias)
 
     def forward(self, ff_win, v, fb_feats, hist=None):
+        if 'G' in self.cfg:
+            # preview window in STEERING units: the measured gain schedule replaces what `film`
+            # would otherwise have to discover. film is retained below as a learned correction.
+            ff_win = ff_win / plant_gain(v).unsqueeze(-1)
         x = self.ff_conv(ff_win.unsqueeze(1)).flatten(1)
         ff = self.ff_head(x).squeeze(-1)
         s, sh = self.film((v / V_SCALE).unsqueeze(-1)).unbind(-1)

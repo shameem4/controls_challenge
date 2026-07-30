@@ -9,6 +9,11 @@ from train import TRAIN, VAL, ALL
 from tinyphysics import COST_END_IDX
 
 DEV = 'cuda'
+# SEED fixes both the weight init and the batch order, so an A/B between two cfgs is PAIRED --
+# the cfg flag becomes the only difference instead of one sample from a noisy training process.
+SEED = os.environ.get('SEED')
+if SEED is not None:
+    torch.manual_seed(int(SEED)); np.random.seed(int(SEED))
 cfg_arg = sys.argv[1]; cfg = '' if cfg_arg == 'base' else cfg_arg
 iters = int(sys.argv[2]) if len(sys.argv) > 2 else 300
 train_mode = sys.argv[3] if len(sys.argv) > 3 else 'gumbel'   # 'gumbel'/'expected' [+ '_soft' for soft-token BPTT]
