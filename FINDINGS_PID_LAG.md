@@ -455,3 +455,66 @@ ALL[:5000]                                     total
   ff_pi_rl2 (still the best classical)         52.301
   cnn (deliverable, untouched)                 47.872
 ```
+
+---
+
+# The bootstrap transfers to ff_pi_rl2: 52.301 -> 51.222
+
+Three anticipation mechanisms came back null on `ff_pi_rl2` (feedback lookahead, reference governor,
+velocity-scheduled feedforward lead) because it already anticipates. The bootstrap is different: it
+changes how the INTEGRATOR is anchored rather than adding anticipation.
+
+And there is a concrete reason it has room. `ff_pi_rl2`'s feedforward is deliberately detuned 1.79x,
+so per unit of `(ref - roll)` it emits `0.384` where the true gain needs `0.688` -- leaving **~44% of
+the required steering for the integrator to discover by accumulating error**. Same slow-discovery
+problem as the PID, smaller in magnitude (44% rather than 100%).
+
+So the bootstrap target is the residual, not the whole command:
+
+    integ_target = ((ref-roll)/G_true(v) - ff) / ki
+
+Consistent with the smaller residual, the optimal blend rate scales down the same way: **0.005 here
+vs 0.02 on the PID**.
+
+```
+CLEAN ALL[5000:6000]        total   lataccel   jerk   median
+  ff_pi_rl2 (boot=0)       54.571     34.01   20.56    46.38
+  + boot=0.005             52.930     32.69   20.24    45.23
+  + boot=0.010             53.092     32.79   20.31    45.06
+  boot=0.005 vs 0: -1.641  95%CI [-2.548,-0.876]  improved  681/1000
+  boot=0.010 vs 0: -1.478  95%CI [-2.459,-0.445]  improved  639/1000
+
+HEADLINE ALL[:5000]
+  ff_pi_rl2 (boot=0)       52.301     32.12   20.18    46.78
+  + boot=0.005             51.222     31.30   19.92    45.66
+  + boot=0.010             51.086     31.19   19.89    45.54
+  boot=0.005 vs 0: -1.080  95%CI [-1.506,-0.634]  improved 3395/5000
+  boot=0.010 vs 0: -1.215  95%CI [-1.716,-0.669]  improved 3135/5000
+```
+
+Both CIs exclude zero on both splits, 68% of segments improve on both, and tracking, jerk and median
+all move together. `boot=0.005` is chosen over `0.010` because it wins on the CLEAN split and has the
+better sign test (681 vs 639); the two are inside each other's CIs, so 0.005-0.010 is a basin.
+
+## Updated classical ladder
+
+```
+ALL[:5000]                                  total
+  stock PID                                110.756
+  PID + lookahead + smooth + bootstrap      68.412
+  pid_w_ff (ported reference)                59.49
+  ff_pi                                      59.06
+  ff_pi_tuned                                54.56
+  ff_pi_rl2                                  52.301
+  ff_pi_boot                                 51.222   <- best classical
+  cnn (deliverable, untouched)               47.872
+```
+
+## Open follow-up
+
+`ff_pi_rl2`'s `gain_scale` (1.79) and `ki` were tuned WITH the integrator discovering that residual by
+accumulation, so they are co-adapted to its absence. Retuning them with the bootstrap active could
+compound -- possibly toward less detuning, since the integrator now reaches its target faster.
+Caveat: gain tuning on this controller family has overfit every time it has been tried (plain PID
+121.62 vs 112.19 untuned; pid_phys 86.96 vs 81.40), so it needs the fine `sigma=0.15` search and the
+held-out guard, and the held-out number is the only one worth believing.
