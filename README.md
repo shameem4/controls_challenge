@@ -178,6 +178,28 @@ generalizes rather than memorizes.
 | **~36–49** | **A mix.** Genuine honest controllers — MPC on a linear LPV-ARX model (~36), PPO policies (~42–46), tube-MPC and custom feedback controllers (~48–49) — *plus* several more per-segment exploits. |
 | **~50–60** | Honest classical controllers: PID+FF, 2-DOF, evolution-tuned feedback. |
 
+**A causal controller cannot average below ~31 on this cost**, which is what makes the top of the
+leaderboard legible. Derived from the plant's own measured noise (`FINDINGS_FLOOR.md`): TinyPhysics
+samples each step from a predictive distribution with `E[sigma^2] = 0.001174`, and those shocks are
+white (increment autocorrelation +0.042), so they can only be reacted to, never anticipated. A shock
+is corrected over the impulse response `H`, leaving `sum (1-cumH)^2 = 3.3228` uncorrected, giving a
+lataccel floor of **19.50**; holding the wheel still costs **11.74** in jerk. Since
+`min(A+B) >= min(A) + min(B)`, the causal total is bounded below by **31.24** — and it is a strict,
+unreachable bound, since those two minima sit at opposite operating points.
+
+Three independent routes agree: this derivation (31.24), trajectory optimization through the
+differentiable plant (29–34), and the best honest leaderboard entries (~36).
+
+That places the bands precisely. **~31 is an unreachable bound, ~36 is the honest frontier, and the
+7–30 band is not controllers at all** — it is offline action sequences optimized against the public
+set's *fixed per-segment RNG seeds*, where the "noise" is a known sequence rather than noise. We
+demonstrated the mechanism from the other side: replaying even a good controller's own actions
+open-loop scores **~970** against **~54** closed-loop, because only feedback rejects drift.
+
+The floor also says where the remaining headroom is. Our best sits ~1.2x off the tradeoff-optimal
+jerk but **1.37x** off the lataccel floor — roughly twice as much proportional room in *tracking* as
+in *smoothness*, so further smoothing is the wrong direction.
+
 Our 47.87 is an honest, generalizing controller that sits **mid-pack among the honest entries**: it
 clears the classical plateau by ~11 points and is at or slightly ahead of the well-known ML_PID
 entry (50.63) — though per caveat 2 above, a few points is within subset uncertainty, so treat that
@@ -332,7 +354,8 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 | `controllers/ff_pi_boot.py` | **Best classical** (51.22) — `ff_pi_rl2` + integrator bootstrapped to the model residual |
 | `controllers/pid_phys.py`, `pid_smooth.py`, `pid_boot.py` | The PID stack: velocity-scheduled lookahead from the measured step response, Tikhonov smoothing, bootstrapped integrator (110.76 → 68.41) |
 | `controllers/pid_lag.py`, `pid_look.py`, `pid_hold.py`, `pid_pend.py`, `pid_wff_v.py`, `ff_pi_look.py`, `ff_pi_vlead.py` | Documented negatives from the lag/anticipation line; each reproduces its parent exactly at default parameters |
-| `FINDINGS_PID_LAG.md`, `FINDINGS_CLAMP.md`, `CYNIC_REVIEW.md` | Full measurement logs and the adversarial review |
+| `FINDINGS_FLOOR.md` | The causal cost floor (31.24) derived from the plant's noise, and why sub-30 entries are seed exploits |
+| `FINDINGS_PID_LAG.md`, `FINDINGS_CLAMP.md`, `FINDINGS_GAIN_PRIOR.md`, `CYNIC_REVIEW.md` | Full measurement logs and the adversarial review |
 | `tune_cma.py` | CMA-ES tuner (400-segment tune set, disjoint held-out guard) |
 | `controllers/pid_w_ff.py` | Ported reference controller (jonoomph, attributed) — 59.49 on our 5000 |
 | `torch_sim.py` | Differentiable batched GPU TinyPhysics (the training engine) |
