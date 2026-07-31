@@ -448,7 +448,7 @@ load-bearing element -- **help it, do not discount it.**
 ```
 ALL[:5000]                                     total
   stock PID                                   110.756
-  + velocity-scheduled lookahead               84.117
+  + velocity-scheduled lookahead               79.946    (84.117 is the CONSTANT k=2 arm, not this)
   + Tikhonov smoothing lam=2                   77.892
   + bootstrapped integrator                    68.412    -38%, gains untouched
 
@@ -518,3 +518,43 @@ compound -- possibly toward less detuning, since the integrator now reaches its 
 Caveat: gain tuning on this controller family has overfit every time it has been tried (plain PID
 121.62 vs 112.19 untuned; pid_phys 86.96 vs 81.40), so it needs the fine `sigma=0.15` search and the
 held-out guard, and the held-out number is the only one worth believing.
+
+---
+
+# Headline ALL[:5000] sweep of every arm, and two false alarms it raised
+
+Every experiment on this branch re-measured on the same split, so the negatives are directly
+comparable to the wins rather than living on assorted held-out subsets. Full table in the README.
+
+Two rows initially looked like they REVERSED an earlier rejection. Both were reading errors, and
+both are worth recording because the failure modes differ.
+
+## False alarm 1 -- pid_pend "improves" by 1.75 on the mean
+
+    pid_pend pred=0 (== pid_smooth)   77.892
+    pid_pend pred_p=0.25              76.143
+    pid_pend pred_i=0.25              78.195
+
+    pred_p=0.25 vs 0   mean -1.748 [-3.22,-0.38]  median +0.3763  better 1813/5000
+    pred_i=0.25 vs 0   mean +0.303 [-1.49,+1.85]  median +2.7666  better  614/5000
+
+`pred_p` shows a -1.748 mean with a CI excluding zero -- and is clearly HARMFUL: the median is
++0.3763 and only 1813/5000 (36%) of segments improve, so ~64% get worse while a few large wins drag
+the mean down. `pred_i` is unambiguous at 614/5000 (12%). The original rejection stands, and the
+mean alone would have reversed it. Third instance this session of a mean-vs-median split (see also
+the dualcnn checkpoint screen and pid_wff_v segment 00522).
+
+## False alarm 2 -- "a constant lookahead beats the velocity schedule"
+
+Not a measurement error, a transcription error: `84.117` is the **constant k=2** arm, and the
+velocity schedule is **79.946**. Re-measured to settle it:
+
+    pid_phys (t90 schedule, scale 0.4)  79.946
+    pid_look (constant k0=2.2)          81.765
+    constant vs schedule   mean +1.819 [+0.35,+3.49]  median +0.1627  better 2132/5000
+
+The schedule wins by 1.82, consistent in sign with the -4.023 recorded on the 1000-segment split.
+The "Final state of this branch" summary block above had propagated the same transcription error and
+is now corrected in place.
+
+Correct PID ladder on ALL[:5000]: 110.756 -> 79.946 -> 77.892 -> 68.412.
