@@ -1,0 +1,84 @@
+# Oracle distillation: the teacher is the hard part
+
+Goal: exploit the fixed per-segment seed OFFLINE to build near-optimal action sequences, then distil
+them into a causal net. The student would read only observations, so it is a legitimate controller --
+distillation from a privileged teacher, not fingerprinting. Three teacher constructions were tried
+and all three failed, each for a different and instructive reason.
+
+## Why the seed is exploitable at all
+
+`tinyphysics.py:116` seeds the RNG from `md5(filename)`, so each segment has ONE noise realization
+forever. Verified: open-loop replay of a recorded action sequence reproduces the closed-loop cost to
+`0.00e+00`, while the same actions against a different draw cost 6x more (43.03 -> 238.47).
+
+What is fixed is the STREAM OF DRAWS, not an additive shock sequence -- a draw maps to a token
+through the CURRENT distribution, so changing actions changes probs and the same draw yields a
+different outcome. The exploit needs only determinism, which holds.
+
+## Attempt 1: gradient through the recursion -- diverges
+
+Warm-started from cnn_v2's own actions (43.624 on 16 segments), Adam at lr 2e-4 with gradient
+clipping: not one iterate out of 50 beat the warm start; cost sat at 220-229. The recursion is
+chaotic, so a 400-step gradient is noise. Reproduces the project's earlier online-MPC failure (9353).
+
+Two bugs found en route, both worth remembering:
+  - `mode='sample'` is `bins[multinomial(...)]` -- a hard index lookup with ZERO gradient. Optimizing
+    through it silently returns the warm start unchanged. Use `mode='gumbel'` + soft_tokens.
+  - patching `pol.__call__` on an INSTANCE does nothing; Python resolves dunders on the class. The
+    observation capture collected nothing and only surfaced as an empty-list crash.
+
+## Attempt 2: sequential greedy probing -- myopic
+
+`oracle_build.py`. Snapshot history AND cuda RNG, try K candidates, roll each forward HZ steps,
+restore exactly, commit the best. Verified exact: identical actions after restore reproduce
+bit-for-bit (max|diff| 0.0), different actions diverge. Derivative-free, so chaos is irrelevant.
+
+    K=9 HZ=6 SPAN=0.30, 32 segments:  ORACLE 84.875 (lataccel 38.2, jerk 46.7)  vs cnn_v2 43.624
+
+Worse than the net it was meant to teach. A first version scored 90.567 because `seg_cost` charged
+jerk only WITHIN the probe window, leaving the transition into the window free -- so each step picked
+independently and the chatter became jerk. Fixing that recovered only 90.6 -> 84.9. The remaining
+problem is myopia: the impulse response spans ~5 steps, so each greedy step partially undoes the
+previous commitment, and the probe assumes the base controller continues smoothly when in fact the
+oracle deviates again at the next step.
+
+## Attempt 3: greedy tracking of the closed-form optimal trajectory -- worse
+
+The benchmark cost is a convex quadratic in the LATACCEL TRAJECTORY alone, independent of the plant,
+so its minimiser is the Tikhonov solve `(I + lam D'D) c* = tau`, lam = W_jerk/W_track = 2. We compute
+its cost analytically at **6.69** (lataccel 1.53 + jerk 5.16); an independent implementation
+(RyanL2/commacontrol) reports **6.880** with the rate limit and 1024-bin quantisation imposed. Two
+derivations, same number.
+
+Judging candidates purely on `(realised lataccel - c*)^2`:
+
+    K=13 HZ=6 SPAN=0.40, 32 segments:  ORACLE 182.731 (lataccel 51.7, jerk 131.1)
+
+**c\* is not an achievable target under noise.** It is optimal as a trajectory you could impose
+directly, but forcing the plant onto it means fighting every shock, and the correction costs far more
+jerk than the tracking saves. This is the same reason `ff_pi` runs detuned and why every good
+controller here deliberately lags. A useful negative: "track the analytic optimum" is the wrong
+objective for a causal controller.
+
+## What the exploit bands actually are
+
+Earlier framing conflated two different things. Corrected:
+
+| band | what it does |
+|---|---|
+| ~7 | Bypasses the plant -- injects the closed-form optimal LATACCEL trajectory directly. Not control. |
+| ~20-30 | Exploits the fixed seed -- optimises ACTIONS offline against a known realisation. |
+| ~31 | Causal bound with the plant in the loop (FINDINGS_FLOOR.md). |
+| ~36-40 | Honest frontier. RyanL2's honest entry: 39.9, against our 46.91. |
+
+## Where this stands
+
+Building a good oracle is itself an open problem on this plant. The principled route is a per-segment
+**min-plus DP over the 1024 output bins** with the true cost -- exact, non-myopic, immune to chaos
+(RyanL2 used exactly that to verify against the evaluator to delta 0). That is a real build.
+
+And the distillation obstacle is unchanged: MSE learns `E[u_oracle | obs]`, and the component that
+makes the oracle good is a function of the realised draws, which are white (|autocorr| <= 0.011), so
+it averages toward zero. The student would inherit the nominal policy -- measured at 54.43 sampled,
+worse than cnn_v2's 46.26. That measurement should gate any training run: on a WORKING oracle,
+compute how much of `u_oracle` is predictable from observations and whether cnn_v2 already emits it.

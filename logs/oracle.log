@@ -1,0 +1,3 @@
+  cnn_v2 baseline (torch, fixed seed): 43.624
+    opt   25  cost  220.167   best   43.624
+    opt   50  cost  228.764   best   43.624

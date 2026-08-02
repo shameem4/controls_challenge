@@ -1,0 +1,11 @@
+[oraclecs] segs=32 K=13 HZ=6 SPAN=0.4
+  t=100  mean|u_oracle - u_cnn| = 0.1375
+  t=150  mean|u_oracle - u_cnn| = 0.0896
+  t=200  mean|u_oracle - u_cnn| = 0.1292
+  t=250  mean|u_oracle - u_cnn| = 0.0979
+  t=300  mean|u_oracle - u_cnn| = 0.1208
+  t=350  mean|u_oracle - u_cnn| = 0.1479
+  t=400  mean|u_oracle - u_cnn| = 0.0812
+  t=450  mean|u_oracle - u_cnn| = 0.0854
+[oraclecs] ORACLE cost 182.731  (lataccel 51.682  jerk 131.050)
+[oraclecs] saved obs (32, 400, 37) act (32, 400, 2)
