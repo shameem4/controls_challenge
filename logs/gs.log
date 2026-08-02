@@ -1,0 +1,14 @@
+=== gain scheduled on |lataccel|, held-out ALL[500:1500] n=1000 ===
+  measurement implies beta ~ 0.26
+  beta=0 (ff_pi_boot)         52.200  median  45.03  p90   77.76
+  beta=0.1                    53.389  median  46.19  p90   86.23
+  beta=0.2                    61.607  median  47.32  p90   90.32
+  beta=0.26                   67.207  median  47.59  p90   96.66
+  beta=0.35                   73.908  median  48.46  p90  102.43
+  beta=0.5                    83.868  median  48.81  p90  118.04
+
+  beta=0.1   vs 0: mean  +1.189 [ -1.17, +3.17] median +0.3092 better 323/1000
+  beta=0.2   vs 0: mean  +9.407 [ +6.99,+12.03] median +0.5796 better 276/1000
+  beta=0.26  vs 0: mean +15.007 [+11.36,+19.00] median +0.7839 better 254/1000
+  beta=0.35  vs 0: mean +21.708 [+16.38,+27.49] median +0.9859 better 244/1000
+  beta=0.5   vs 0: mean +31.668 [+24.20,+40.52] median +1.3449 better 200/1000

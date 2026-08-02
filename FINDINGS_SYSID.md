@@ -131,3 +131,53 @@ exists to remove. That is testable: apply the same correction to the PID stack, 
 action is weaker, and the effect should be much larger. It distinguishes "the asymmetry does not
 matter" from "the feedback already handled it", and those imply different things for everything
 else here that inverts G.
+
+---
+
+# Scheduling gain on operating lataccel: harmful in BOTH directions
+
+The step tests measured the plant's gain rising sharply with operating lataccel at fixed speed
+(v=22, du=0.30): c0=0 -> 1.415, |c0|=1 -> 1.64/1.94, c0=-2 -> 2.418. That implied `ff_pi_boot`'s
+speed-only `G(v)` is mis-modelled precisely in corners, which is where it loses most to `cnn_v2`.
+
+`controllers/ff_pi_gsched.py` schedules it: `G_eff = G(v) * clip(1 + beta*|c|, ., cap)`, applied to
+both the feedforward and the bootstrap anchor. `beta=0` reproduces ff_pi_boot bit-for-bit.
+
+    held-out ALL[500:1500], n=1000        beta=0 is 52.200
+      beta=+0.10   53.389        beta=-0.05    56.477
+      beta=+0.20   61.607        beta=-0.10    77.876
+      beta=+0.26   67.207        beta=-0.15   194.895
+      beta=+0.35   73.908        beta=-0.25   diverged (NaN)
+
+**Strictly harmful in both directions; beta=0 is optimal.** The measured operating-point gain
+dependence does NOT transfer to closed-loop control.
+
+Why: the measurement is a step from a HELD equilibrium at constant high lataccel, sustained for 150
+steps. The closed loop never occupies that state -- real segments pass through high lataccel, they do
+not sit there. Same class of error as the earlier non-equilibrium bug: characterising a regime the
+system does not visit. The number is right for what it measured and irrelevant to control.
+
+(A genuine bug surfaced too: `min(1+beta*|c|, cap)` had no lower bound, so beta<0 drove the
+multiplier to zero and the feedforward divided by ~0. Fixed with a two-sided clip. It did not affect
+the conclusion -- beta=-0.05 was already worse.)
+
+## What this implies about the learned controller
+
+Against ff_pi_boot, cnn_v2's 3.36-point advantage on 500 pristine segments decomposes as:
+
+    regime               % steps   d(lat)   d(jerk)     net    share
+    |tau| < 0.2           72.17%   -0.86    +0.38      -0.48    14%
+    0.2 - 0.5             12.88%   -0.44    +0.31      -0.13     4%
+    0.5 - 1.0              8.57%   -0.74    +0.23      -0.51    15%
+    1.0 - 2.0              5.70%   -0.60    +0.15      -0.45    13%
+    |tau| > 2.0            0.67%   -1.20    -0.59      -1.79    53%
+
+53% of the edge comes from 0.67% of steps, and in hard corners the learned net wins on BOTH terms at
+once (everywhere else there is a tracking/jerk tradeoff). Since no gain schedule closes that gap, the
+corner deficit is NOT a plant-modelling error -- the learned controller is doing something a
+principled linear controller cannot express. Candidates: pre-positioning from the 25-step preview,
+nonlinear feedback shaping, better behaviour against the rate clamp.
+
+This is a point in the benchmark's favour, and corrects the framing in the README section on what it
+measures: the metric does reward something real about cornering, not only noise rejection -- even
+though cornering is 0.67% of steps.

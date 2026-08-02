@@ -1,0 +1,135 @@
+=== NEGATIVE beta: MORE feedforward in corners ===
+  beta=0 (ff_pi_boot)         52.200  median  45.03  p90   77.76
+  beta=-0.05                  56.477  median  44.98  p90   78.51
+  beta=-0.1                   77.876  median  44.97  p90   81.88
+  beta=-0.15                 194.895  median  45.42  p90   88.04
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:74: RuntimeWarning: divide by zero encountered in scalar divide
+  ff = want / (self.G(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:77: RuntimeWarning: divide by zero encountered in scalar divide
+  u_true = want / (self.G_true(state.v_ego) * mult)
+/mnt/14BE47C2BE479ADE/Code/comma_ai/controllers/ff_pi_gsched.py:78: RuntimeWarning: invalid value encountered in scalar subtract
+  integ_target = (u_true - ff) / self.ki
+concurrent.futures.process._RemoteTraceback: 
+"""
+Traceback (most recent call last):
+  File "/opt/miniforge3/lib/python3.12/concurrent/futures/process.py", line 264, in _process_worker
+    r = call_item.fn(*call_item.args, **call_item.kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/miniforge3/lib/python3.12/concurrent/futures/process.py", line 213, in _process_chunk
+    return [fn(*args) for args in chunk]
+            ^^^^^^^^^
+  File "<string>", line 13, in run
+  File "/mnt/14BE47C2BE479ADE/Code/comma_ai/tinyphysics.py", line 198, in rollout
+    self.step()
+  File "/mnt/14BE47C2BE479ADE/Code/comma_ai/tinyphysics.py", line 170, in step
+    self.sim_step(self.step_idx)
+  File "/mnt/14BE47C2BE479ADE/Code/comma_ai/tinyphysics.py", line 131, in sim_step
+    pred = self.sim_model.get_current_lataccel(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/14BE47C2BE479ADE/Code/comma_ai/tinyphysics.py", line 95, in get_current_lataccel
+    return self.tokenizer.decode(self.predict(input_data, temperature=0.8))
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/14BE47C2BE479ADE/Code/comma_ai/tinyphysics.py", line 84, in predict
+    sample = np.random.choice(probs.shape[2], p=probs[0, -1])
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "numpy/random/mtrand.pyx", line 971, in numpy.random.mtrand.RandomState.choice
+ValueError: probabilities contain NaN
+"""
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/tmp/claude-1000/-mnt-14BE47C2BE479ADE-Code-comma-ai/938c8e5c-84e4-4b3b-b3bb-e06e775d426d/scratchpad/gs2.py", line 6, in <module>
+    R[b]=ev(f'beta={b}',{'boot':0.005,'beta':b,'cap':9.0})
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 15, in ev
+  File "/mnt/14BE47C2BE479ADE/Code/comma_ai/.venv/lib/python3.12/site-packages/tqdm/contrib/concurrent.py", line 105, in process_map
+    return _executor_map(ProcessPoolExecutor, fn, *iterables, **tqdm_kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/14BE47C2BE479ADE/Code/comma_ai/.venv/lib/python3.12/site-packages/tqdm/contrib/concurrent.py", line 51, in _executor_map
+    return list(tqdm_class(ex.map(fn, *iterables, chunksize=chunksize), **kwargs))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/mnt/14BE47C2BE479ADE/Code/comma_ai/.venv/lib/python3.12/site-packages/tqdm/std.py", line 1175, in __iter__
+    for obj in iterable:
+               ^^^^^^^^
+  File "/opt/miniforge3/lib/python3.12/concurrent/futures/process.py", line 636, in _chain_from_iterable_of_lists
+    for element in iterable:
+                   ^^^^^^^^
+  File "/opt/miniforge3/lib/python3.12/concurrent/futures/_base.py", line 619, in result_iterator
+    yield _result_or_cancel(fs.pop())
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/miniforge3/lib/python3.12/concurrent/futures/_base.py", line 317, in _result_or_cancel
+    return fut.result(timeout)
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/miniforge3/lib/python3.12/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/opt/miniforge3/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+ValueError: probabilities contain NaN
