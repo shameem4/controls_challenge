@@ -34,6 +34,58 @@ The default `cnn` controller (`cnn_v2.pt`) scores **46.91** on the full 5000 and
 scores 47.87 and 52.31 on the same two). It is a pure function of the observed state, the 5-second
 preview, and its own recent actions — **no per-segment memorization**.
 
+## What this benchmark actually measures — read this before the numbers
+
+Measured on 500 pristine segments under `cnn_v2`, the scored window is dominated by near-straight
+highway driving:
+
+| regime | % of steps | % of lataccel cost |
+|---|---|---|
+| `\|τ\| < 0.2` — **essentially straight** | **72.2%** | **61.0%** |
+| 0.2 – 0.5 | 12.9% | 14.4% |
+| 0.5 – 1.0 | 8.6% | 12.2% |
+| 1.0 – 2.0 | 5.7% | 7.9% |
+| `\|τ\| > 2.0` — hard corner | 0.7% | 4.6% |
+
+Median `\|target lataccel\|` is **0.075 m/s²** at a median speed of **58 mph**. So 61% of the tracking
+cost comes from holding a nearly straight line, and hard cornering — what "lateral control" evokes —
+is 0.67% of steps and 4.6% of cost.
+
+**And roughly two thirds of the score is not controllable at all.** The causal floor is **31.24**
+(`FINDINGS_FLOOR.md`) against `cnn_v2`'s 46.21 on that split, so ~68% of the achievable number is
+irreducible rejection of a synthetic random walk that no causal controller can anticipate. The actual
+controller-quality signal is the remaining ~15 points, and most differences between good controllers
+here are 1–5 points inside that sliver. That is the honest explanation for why a long sequence of
+reasonable ideas in this repo returned nulls.
+
+**What is realistic.** Highway lane-keeping genuinely is mostly straight-line disturbance rejection,
+so the task shape is not wrong. Dead time of 200–500 ms is plausible for steering actuation plus
+vehicle response, gain rising with speed is real bicycle-model behaviour, and the tracking-vs-jerk
+tradeoff and the value of preview are both real.
+
+**What is not.**
+
+- **The disturbance model.** A random walk with white increments (σ ≈ 0.034) is a modelling
+  convenience; real lateral disturbances have structure (camber persists, gusts have shape, road
+  texture is high-frequency). The causal floor derivation rests on that whiteness, which is a
+  property of how the simulator was written rather than of a vehicle.
+- **A 16% left/right gain asymmetry** (`FINDINGS_SYSID.md`), measured at ~20σ. Real vehicles are
+  near-symmetric; this is almost certainly a learned-model artifact.
+- **Gain blowing up above `\|lataccel\| > 2`**, a region holding 0.8% of the data — the plant is
+  extrapolating, not reporting physics.
+- **Fixed per-segment RNG seeds** (`tinyphysics.py:116`), which make the metric exploitable in a way
+  no physical system is.
+- **The plant is a learned model of a bicycle model**, two abstraction layers from a vehicle.
+
+**The uncomfortable implication.** Hard corners are where control skill would actually show, and they
+are exactly where the simulator is least trustworthy. So the benchmark cannot reward cornering
+competence even in principle, and optimising the tail means fitting simulator artifacts.
+
+Read the results below accordingly: **`cnn_v2` at 46.91 is a good benchmark score, demonstrating
+competent straight-line noise rejection under a synthetic disturbance model.** It is not evidence
+that it would drive a car well. What transfers is the method — differentiable-sim training, matched
+controls, the floor derivation, the negative results — rather than the controller.
+
 ### The two newest promotions — one accepted, one retracted
 
 **`ff_pi_boot` (52.30 → 51.22) — bootstrapped integrator, mechanism understood.** A feedback
