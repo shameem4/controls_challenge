@@ -1,0 +1,16 @@
+=== asym sweep on held-out ALL[500:1500], n=1000 ===
+  measurement implies asym ~ +0.074
+  asym=0 (ff_pi_boot)     52.200  median  45.03
+  asym=-0.150             53.623  median  45.86
+  asym=-0.074             52.315  median  45.14
+  asym=+0.037             51.653  median  44.91
+  asym=+0.074             51.057  median  45.11
+  asym=+0.111             52.137  median  44.95
+  asym=+0.150             53.157  median  45.32
+
+  asym=-0.150 vs 0: mean  +1.423 [ -0.24, +2.92] median +0.3731 better 376/1000
+  asym=-0.074 vs 0: mean  +0.116 [ -1.23, +1.54] median +0.1410 better 437/1000
+  asym=+0.037 vs 0: mean  -0.546 [ -1.81, +0.42] median -0.0296 better 530/1000
+  asym=+0.074 vs 0: mean  -1.143 [ -3.27, +0.32] median -0.0843 better 541/1000
+  asym=+0.111 vs 0: mean  -0.062 [ -2.19, +1.47] median -0.0998 better 529/1000
+  asym=+0.150 vs 0: mean  +0.957 [ -1.42, +2.99] median -0.0310 better 511/1000
