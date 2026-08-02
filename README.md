@@ -207,11 +207,31 @@ particular comparison as a tie rather than a win. A handful of MPC- and PPO-base
 clearly lower. **The honest frontier is ~36**, not ~50 — reaching it is a method change (see below),
 not a tuning gap.
 
-Why the exploits need the fixed seed: we tested the honest version of their idea — optimize an
-open-loop action sequence offline, then run it. Replaying even a *good* controller's own actions
-open-loop scores **~970** versus **~54** closed-loop, because only feedback can counteract the
-plant's stochastic drift. Per-segment optimized actions only work when replayed against the exact
-noise realization they were tuned for.
+Why the exploits need the fixed seed, measured directly. `tinyphysics.py:116` seeds the RNG from
+`md5(filename)`, so **every segment has exactly one noise realization, on every run, forever**. The
+plant is not stochastic per segment — it is a deterministic function of the action sequence. Record
+a good controller's actions and replay them **open-loop, with no feedback at all**:
+
+| | mean cost, 8 segments |
+|---|---|
+| closed-loop (with feedback) | 43.03 |
+| open-loop replay, **same** (fixed) seed | **43.03** — max difference `0.00e+00` |
+| open-loop replay, **different** noise draw | 238.47 (6× worse) |
+
+Bit-exact on the seed it was recorded against; catastrophic on any other. That gap is the entire
+exploit. An earlier revision of this section reported the ~970-vs-~54 figure without the
+qualifier, which read as "open-loop replay fails" — it does not; it fails only against a noise
+realization it was not tuned for.
+
+So the exploit converts control into **offline trajectory optimization**: optimize an action
+sequence against a segment's known shock sequence, fingerprint the segment at eval time (the first
+100 steps are given), and replay. A *known* future disturbance can be pre-compensated — cancel the
+shock at t+5 with an action at t — which removes the dead-time penalty that produces the 31.24
+causal floor in the first place. The same principle in a different wrapper is "online sim probing
+with RNG reset": call the simulator inside `update()`, save/restore `np.random.get_state()`, and
+pick the best action after seeing the actual future.
+
+These are lookup tables keyed to a random seed, not functions of observations.
 
 ## Approach
 
