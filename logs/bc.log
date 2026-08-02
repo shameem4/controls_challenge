@@ -1,0 +1,18 @@
+[bc] files=1 segments=128 steps=400 samples=51200
+[bc] train 112 segs, val 16 segs
+[bc] ep  0 train_mse=0.018963 val_mse=0.005782 *
+[bc] ep  5 train_mse=0.002129 val_mse=0.002529
+[bc] ep 10 train_mse=0.002083 val_mse=0.002399 *
+[bc] ep 15 train_mse=0.002004 val_mse=0.002401
+[bc] ep 20 train_mse=0.002189 val_mse=0.002428
+[bc] ep 25 train_mse=0.001882 val_mse=0.002308
+[bc] ep 30 train_mse=0.001905 val_mse=0.002330
+[bc] ep 35 train_mse=0.001936 val_mse=0.002367
+[bc] ep 40 train_mse=0.001905 val_mse=0.002530
+[bc] ep 45 train_mse=0.003816 val_mse=0.002328
+[bc] ep 50 train_mse=0.001889 val_mse=0.002359
+[bc] ep 55 train_mse=0.001851 val_mse=0.002288
+[bc] ep 59 train_mse=0.001860 val_mse=0.002315
+[bc] done best_val_mse=0.002286 -> ckpts/bc_best.pt
+[bc] R^2(teacher | student prediction) = 0.9744
+[bc] R^2(teacher | cnn_v2 action)      = 0.5273   (how much cnn_v2 ALREADY matches the teacher)

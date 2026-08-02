@@ -1,0 +1,5 @@
+=== BC student vs cnn_v2, pristine ALL[4200:5000], n=800 ===
+  BC student                  58.817  median  54.59  p90   91.53
+  cnn_v2                      50.720  median  44.50  p90   74.90
+
+  mean  +8.097 [ +2.79,+11.38] median +7.2686 better 127/800

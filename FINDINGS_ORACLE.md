@@ -179,3 +179,64 @@ cnn_v2 is the original open problem.** The pipeline is sound and cannot bootstra
 class), built from the analytic reference plus a correct DMC formulation. It is the first MPC in this
 project that works at all -- earlier online-MPC attempts diverged (9353) or landed at 944-16237. It
 does not beat ff_pi_boot, but it independently confirms where the model-based ceiling is.
+
+---
+
+# steer_lookup teacher + behaviour cloning: built, and it fails on distribution shift
+
+The full pipeline the plan called for, end to end.
+
+## The teacher works
+
+`steer_lookup.py` -- per-segment coordinate descent on steering, evaluated exactly by simulation
+against each segment's fixed noise realisation, warm-started from cnn_v2's own actions.
+
+    16 segments  (ALL[6000:6016])   cnn_v2 43.624 -> teacher 37.819
+    128 segments (ALL[2000:2128])   cnn_v2 42.669 -> teacher 37.800   median 37.270
+
+First construction in this project to beat cnn_v2, and it agrees with RyanL2/commacontrol's 39.9 for
+the same method. Four things had to be right (RNG reset per evaluation; jerk charged across the probe
+window boundary; future actions taken from the PLAN rather than a base controller; sweeps accepted
+only on the true replayed cost -- unguarded sweeps went 37.819 -> 43.403 -> 674.732).
+
+## The student learns the mapping, and there was real signal to learn
+
+`bc_train.py` -- same AblNet architecture, observations only, one segment at a time with timesteps in
+order, MSE against the teacher's action.
+
+    best val MSE 0.002286
+    R^2(teacher | student prediction) = 0.9744
+    R^2(teacher | cnn_v2 action)      = 0.5273
+
+**This refutes the objection raised repeatedly earlier in this file.** The argument was that
+u_teacher = nominal(observable) + cancellation(realised draws), and MSE regression converges to
+E[u|obs], which averages the second term to zero -- so the student could only inherit the nominal
+part. Measured, the teacher is 97.4% predictable from observations, and cnn_v2 matches it only 52.7%.
+The privileged component is SMALL and there was genuine signal for the student to acquire.
+
+## But closed-loop it fails, from compounding error
+
+    pristine ALL[4200:5000], n=800
+      BC student  58.817  median 54.59  p90 91.53
+      cnn_v2      50.720  median 44.50  p90 74.90
+      mean +8.097 [+2.79,+11.38]  median +7.269  better 127/800
+
+Eight points WORSE, 16% of segments improved. Action RMS error is sqrt(0.002286) = 0.048 against a
+typical action magnitude of ~0.19 -- about 5% per step. Over 400 closed-loop steps that compounds and
+the student reaches states the teacher never visited, where it has no training signal. Textbook
+behaviour-cloning distribution shift, and the reason DAgger exists.
+
+## What this establishes
+
+The plan is sound and was executed; the failure is located precisely. It is NOT the
+privileged-information ceiling (refuted above, R^2 0.974). It is open-loop imitation of a
+closed-loop-optimal action sequence.
+
+Options that address the actual failure, in order of cost:
+  - DAgger: re-run coordinate descent on states the STUDENT visits, iterate. Directly targets
+    distribution shift. Expensive -- one coordinate-descent pass per DAgger round.
+  - BC as an auxiliary loss alongside policy optimisation through the differentiable plant, so the
+    student is trained on its OWN state distribution while being pulled toward the teacher.
+  - BC then policy-optimisation fine-tune. Cheapest, but this session already showed BC->PO gives
+    nothing over PO from scratch against a matched control -- though that used a weak teacher
+    (ff_pi), not one that beats the incumbent.

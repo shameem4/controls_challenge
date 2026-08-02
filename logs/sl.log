@@ -1,0 +1,9 @@
+[sl] segs=16 start=6000 K=9 HZ=25 SPAN=0.25 SWEEPS=4
+[sl] warm start (cnn_v2)     43.624
+[sl] sweep 1               37.819  *
+[sl] sweep 2               43.403   rejected (best 37.819)
+[sl] sweep 3               43.403   rejected (best 37.819)
+[sl] sweep 4               43.403   rejected (best 37.819)
+[sl] FINAL teacher           37.819  median 40.277
+[sl] saved obs (16, 400, 37)  u_ideal (16, 400)
+37)

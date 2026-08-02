@@ -1,0 +1,7 @@
+[slA] segs=128 start=2000 K=9 HZ=25 SPAN=0.25 SWEEPS=3
+[slA] warm start (cnn_v2)     42.669
+[slA] sweep 1               37.800  *
+[slA] sweep 2               38.430   rejected (best 37.800)
+[slA] sweep 3               38.430   rejected (best 37.800)
+[slA] FINAL teacher           37.800  median 37.270
+[slA] saved obs (128, 400, 37)  u_ideal (128, 400)
