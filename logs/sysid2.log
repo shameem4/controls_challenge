@@ -1,0 +1,45 @@
+[sysid2] NREP=96 SETTLE=150 RESP=40 nominal={'v': 22.0, 'roll': 0.0, 'a': 0.0, 'c0': 0.0, 'u0': 0.0} du=0.3
+
+=== SPEED ===
+  condition                   DC gain  dead  t10  t50  t90   over%
+  v=5.0                      1.374     4    4    4    5     0.5  u0=+0.000 drift=+0.0091
+  v=12.0                     1.364     3    3    4    6     2.5  u0=+0.000 drift=-0.0016
+  v=20.0                     1.465     2    2    4    6     9.3  u0=+0.000 drift=-0.0118
+  v=27.0                     1.592     2    3    4    6     8.1  u0=+0.000 drift=-0.0273
+  v=34.0                     1.827     2    3    4    5     4.1  u0=+0.000 drift=-0.0213
+
+=== ROAD ROLL (lataccel units) ===
+  condition                   DC gain  dead  t10  t50  t90   over%
+  roll=-1.5                     2.889     3    4    5    6     7.2  u0=+1.017 drift=+0.0126
+  roll=-0.5                     1.546     2    3    4    6     7.5  u0=+0.339 drift=-0.0203
+  roll=0.0                      1.415     3    3    4    5    11.5  u0=+0.000 drift=-0.0350
+  roll=0.5                      1.400     2    3    4    5    15.0  u0=-0.339 drift=-0.0298
+  roll=1.5                      1.683     3    4    5    6    10.4  u0=-1.017 drift=-0.0010
+
+=== LONGITUDINAL ACCEL ===
+  condition                   DC gain  dead  t10  t50  t90   over%
+  a=-2.0                     1.379     2    3    4    5    14.6  u0=+0.000 drift=-0.0170
+  a=-1.0                     1.406     3    3    4    5    11.3  u0=+0.000 drift=-0.0171
+  a=0.0                      1.415     3    3    4    5    11.5  u0=+0.000 drift=-0.0350
+  a=1.0                      1.508     2    3    4    6     5.3  u0=+0.000 drift=-0.0291
+  a=2.0                      1.541     3    3    4    6     3.8  u0=+0.000 drift=-0.0094
+
+=== OPERATING LATACCEL (curvature) ===
+  condition                   DC gain  dead  t10  t50  t90   over%
+  c0=-2.0                     2.418     5    5    6    7     1.1  u0=-1.356 drift=-0.0828
+  c0=-1.0                     1.637     3    3    5    6     5.8  u0=-0.678 drift=-0.0120
+  c0=0.0                      1.415     3    3    4    5    11.5  u0=+0.000 drift=-0.0350
+  c0=1.0                      1.936     2    3    4    6     5.1  u0=+0.678 drift=+0.0070
+  c0=2.0                      7.348     2    2    4    7     1.8  u0=+1.356 drift=+0.0056
+
+=== LINEARITY: is the response proportional to step size? ===
+  condition                   DC gain  dead  t10  t50  t90   over%
+  du=-0.60                    1.392     3    3    5    6     0.7
+  du=-0.30                    1.366     3    3    5    6     5.7
+  du=-0.10                    1.689     2    3    5    6     3.3
+  du=+0.10                    1.428     2    3    4    6    10.3
+  du=+0.30                    1.415     3    3    4    5    11.5
+  du=+0.60                    1.602     2    3    5    6     0.7
+
+  A constant DC gain column => superposition holds and every linear design in this
+  project (inverse-plant feedforward, DMC, Tikhonov reference) is well founded.
