@@ -1,0 +1,5 @@
+=== BC student vs cnn_v2, pristine ALL[4200:5000], n=800 ===
+  DAgger student              63.960  median  59.44  p90  103.04
+  cnn_v2                      50.720  median  44.50  p90   74.90
+
+  mean +13.240 [ +7.62,+16.77] median +11.8755 better 69/800

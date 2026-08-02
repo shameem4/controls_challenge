@@ -1,0 +1,6 @@
+[dag1] segs=128 start=2000 K=9 HZ=25 SPAN=0.25 SWEEPS=2 warm=ckpts/bc_best.pt
+[dag1] warm start              52.725
+[dag1] sweep 1               40.335  *
+[dag1] sweep 2               40.674   rejected (best 40.335)
+[dag1] FINAL teacher           40.335  median 41.578
+[dag1] saved obs (128, 400, 37)  u_ideal (128, 400)

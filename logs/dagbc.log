@@ -1,0 +1,18 @@
+[dagbc] files=2 segments=256 steps=400 samples=102400
+[dagbc] train 224 segs, val 32 segs
+[dagbc] ep  0 train_mse=0.012272 val_mse=0.002806 *
+[dagbc] ep  5 train_mse=0.002216 val_mse=0.002537
+[dagbc] ep 10 train_mse=0.002231 val_mse=0.002168 *
+[dagbc] ep 15 train_mse=0.002093 val_mse=0.004962
+[dagbc] ep 20 train_mse=0.002046 val_mse=0.002134
+[dagbc] ep 25 train_mse=0.002031 val_mse=0.002151
+[dagbc] ep 30 train_mse=0.002050 val_mse=0.002271
+[dagbc] ep 35 train_mse=0.002117 val_mse=0.002168
+[dagbc] ep 40 train_mse=0.002018 val_mse=0.002188
+[dagbc] ep 45 train_mse=0.002343 val_mse=0.002165
+[dagbc] ep 50 train_mse=0.002000 val_mse=0.002231
+[dagbc] ep 55 train_mse=0.002015 val_mse=0.002371
+[dagbc] ep 59 train_mse=0.001992 val_mse=0.002229
+[dagbc] done best_val_mse=0.002131 -> ckpts/dagbc_best.pt
+[dagbc] R^2(teacher | student prediction) = 0.9708
+[dagbc] R^2(teacher | cnn_v2 action)      = 0.4961   (how much cnn_v2 ALREADY matches the teacher)

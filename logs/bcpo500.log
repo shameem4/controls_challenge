@@ -1,0 +1,15 @@
+[bcpo500] init=cnn_v2.pt alpha=500.0 lr=0.0001 seed=0 iters=300 teacher_segs=128
+[bcpo500] init val = 44.871
+[bcpo500] it  25 po= 46.93 bc=0.03010 val=45.550 *
+[bcpo500] it  50 po= 47.90 bc=0.02410 val=49.445
+[bcpo500] it  75 po= 51.46 bc=0.02075 val=49.999
+[bcpo500] it 100 po= 52.01 bc=0.02015 val=52.243
+[bcpo500] it 125 po= 52.10 bc=0.01886 val=51.669
+[bcpo500] it 150 po= 52.54 bc=0.01795 val=51.479
+[bcpo500] it 175 po= 52.06 bc=0.01681 val=50.919
+[bcpo500] it 200 po= 51.22 bc=0.01579 val=50.769
+[bcpo500] it 225 po= 50.77 bc=0.01518 val=50.808
+[bcpo500] it 250 po= 54.69 bc=0.01464 val=49.995
+[bcpo500] it 275 po= 51.05 bc=0.01311 val=51.053
+[bcpo500] it 300 po= 49.67 bc=0.01265 val=49.567
+[bcpo500] done best_val=45.550 -> ckpts/bcpo500_best.pt

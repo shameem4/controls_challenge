@@ -240,3 +240,73 @@ Options that address the actual failure, in order of cost:
   - BC then policy-optimisation fine-tune. Cheapest, but this session already showed BC->PO gives
     nothing over PO from scratch against a matched control -- though that used a weak teacher
     (ff_pi), not one that beats the incumbent.
+
+---
+
+# DAgger and BC+PO: both fail, and a matched control identifies why
+
+Two remedies for the behaviour-cloning distribution shift, as the failure analysis suggested.
+
+## DAgger (round 1) -- worse
+
+`steer_lookup.py` gained a WARM env var so coordinate descent can warm-start from the CURRENT
+STUDENT, putting the optimisation on the student's own state distribution. The correction labels are
+good:
+
+    warm start = BC student   52.725  ->  40.335 after one sweep
+
+Retrained on the union (original teacher labels on cnn_v2 states + DAgger corrections on student
+states), the student got WORSE:
+
+    pristine ALL[4200:5000]   DAgger student 63.960 median 59.44 | cnn_v2 50.720 median 44.50
+    mean +13.240 [+7.62,+16.77]  median +11.876  better 69/800
+
+Worse than plain BC (58.817). The DAgger states are ones a GOOD controller never visits, and the
+label there answers "what is optimal now that you have drifted here" -- which teaches recovery, not
+avoidance, and dilutes the dataset toward a distribution the final policy should not occupy.
+
+## BC as an auxiliary loss alongside policy optimisation -- worse, and the control proves it
+
+`bc_po.py`:  loss = PO_cost(student's OWN rollout) + alpha * MSE(student(teacher_obs), u_teacher).
+The PO term is computed on the student's own trajectory through the differentiable plant, so it never
+has to survive a distribution transfer; the teacher enters only as a regulariser.
+
+    alpha=500   init val 44.871 -> best 45.550, ending 49.567     DEGRADED
+    alpha=0     init val 44.871 -> best 44.032                     improved
+    (identical init, seed, budget, LR -- only the BC term differs)
+
+**The teacher signal is actively harmful.** And the alpha=500 trace shows it directly: as the BC loss
+falls 0.02015 -> 0.01265, val climbs 44.9 -> 49.6. Fitting the teacher better makes the controller
+drive worse, monotonically.
+
+## The mechanism, corrected
+
+The objection raised earlier in this file was that MSE distillation learns E[u|obs] and averages the
+privileged component to zero, so the student inherits only the nominal policy. That is WRONG and was
+refuted by measurement: R^2(teacher | student) = 0.974. The student learns the teacher fine.
+
+The real mechanism is one step subtler. The teacher's action at step t is optimal GIVEN THAT
+SEGMENT'S REALISED FUTURE DRAWS. A causal student at the same observation faces a DISTRIBUTION over
+futures. So teacher actions are sample-specific optima, and
+
+    E[ sample-specific optimum | obs ]  !=  causal-optimal action
+
+Averaging over open-loop optimal plans yields a policy optimal for no realisation -- the standard
+reason certainty-equivalent planning is not optimal in stochastic control. Pulling a policy toward
+those actions moves it AWAY from the causal optimum, which is exactly what the alpha sweep measures.
+
+## Summary of the whole line
+
+    construction                      teacher/labels        student
+    steer_lookup (coordinate descent)  42.669 -> 37.800      --
+    plain BC                           --                     58.817  vs cnn_v2 50.720
+    DAgger round 1                     52.725 -> 40.335       63.960  vs cnn_v2 50.720
+    BC+PO alpha=500                    --                     45.550  vs 44.032 at alpha=0
+
+Every TEACHER construction succeeds: coordinate descent reliably finds sequences ~5 points better
+than whatever warm-starts it, including on the student's own bad trajectories. Every IMITATION step
+fails. The gap is not fixable by more rounds or better regularisation, because the target itself is
+the wrong object -- seed-conditioned optima are not what a causal policy should imitate.
+
+Pure policy optimisation on the true objective (alpha=0) remains the best training signal available
+here, which is what cnn_v2 already is.

@@ -44,6 +44,7 @@ K = int(os.environ.get('K', 9))
 HZ = int(os.environ.get('HZ', 25))
 SPAN = float(os.environ.get('SPAN', 0.25))
 SWEEPS = int(os.environ.get('SWEEPS', 4))
+WARM = os.environ.get('WARM', 'cnn_v2.pt')   # policy that warm-starts the plan AND records obs
 
 
 def score(c, tg):
@@ -129,15 +130,18 @@ def main():
     start = int(sys.argv[2]) if len(sys.argv) > 2 else 6000
     tag = sys.argv[3] if len(sys.argv) > 3 else 'sl'
     plant = Plant(device=DEV)
-    net = AblNet('PM').to(DEV); net.load_state_dict(torch.load('cnn_v2.pt', map_location=DEV)); net.eval()
+    net = AblNet('PM').to(DEV); net.load_state_dict(torch.load(WARM, map_location=DEV)); net.eval()
     ALL = sorted(Path('data/SYNTHETIC').iterdir())
     files = ALL[start:start + nseg]
     segs = [load_segment(f) for f in files]
     B, T = len(segs), COST_END_IDX
     deltas = torch.linspace(-SPAN, SPAN, K, device=DEV)
-    print(f'[{tag}] segs={B} start={start} K={K} HZ={HZ} SPAN={SPAN} SWEEPS={SWEEPS}', flush=True)
+    print(f'[{tag}] segs={B} start={start} K={K} HZ={HZ} SPAN={SPAN} SWEEPS={SWEEPS} warm={WARM}', flush=True)
 
-    # warm start from cnn_v2's own actions -- never from zero, which produced false optima twice here
+    # Warm start from WARM's own actions. For DAgger rounds WARM is the CURRENT STUDENT, so the
+    # coordinate descent runs on the student's own state distribution and the labels correct exactly
+    # where it goes wrong -- which is the failure mode plain BC hit (58.8 vs 50.7 closed loop despite
+    # R^2 0.974 per-step). Never warm-start from zero: that produced false optima twice here.
     with torch.no_grad():
         torch.manual_seed(0)
         S = Stepper(plant, segs, T)
@@ -150,7 +154,7 @@ def main():
 
     c, tg, _, _ = run_plan(plant, segs, plan, T)
     best_cost, best_plan = score(c, tg).mean().item(), plan.clone()
-    print(f'[{tag}] warm start (cnn_v2)   {best_cost:8.3f}', flush=True)
+    print(f'[{tag}] warm start            {best_cost:8.3f}', flush=True)
 
     for sw in range(SWEEPS):
         plan = sweep_once(plant, segs, plan.clone(), T, deltas)
