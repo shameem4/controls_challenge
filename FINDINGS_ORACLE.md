@@ -345,3 +345,41 @@ the MoE gate, and the 2-DOF corrector. cnn_v2 was already the selected best chec
 
 Every variant is worse than the controller we started with. The teacher constructions all succeed;
 every route from teacher to policy fails.
+
+## Why BC fails, quantitatively: the precision bar, not the information gap
+
+Prompted by the right question -- doesn't the student see `future_plan` too? It does. `build_ff_window`
+feeds it 25 steps of future target, the same preview the teacher had. The teacher's only extra
+information is the realised noise draws. So information is not the constraint. PRECISION is.
+
+    teacher action std                    0.2800
+    student residual RMS                  0.0478    (R^2 = 0.971)
+      x mean plant gain G(v) = 1.537
+    action error -> lataccel error        0.0735
+
+    cnn_v2's ACTUAL tracking error RMS    0.0609    (its lataccel cost 18.57 = 5000*mean(e^2))
+
+    ratio 0.0735 / 0.0609 = 1.21x
+
+**The student's imitation error, expressed in lataccel, is 1.21x the entire tracking error a good
+controller makes.** Cloning at R^2 0.974 therefore does not inherit the teacher's skill -- it injects
+a fresh error source larger than the one it was meant to reduce. That is the 58.817 vs 50.720,
+with the magnitude explained rather than just the sign.
+
+The bar is brutal because the cost is quadratic at 5000x: an entire lataccel cost of 18.57 is an RMS
+error of only 0.061. To BREAK EVEN, behaviour cloning needs roughly **R^2 > 0.99** in action space,
+not 0.97.
+
+Note the student did learn most of what distinguishes the teacher: std(u_teacher - u_cnn) = 0.207
+against a residual of 0.0478, so it closes 76.9% of the teacher-vs-cnn_v2 gap in action space. It
+captured three quarters of the signal and still lost, because the last quarter costs more than the
+first three quarters gain.
+
+This subsumes rather than replaces the sample-specific-optima argument above. Precision explains the
+MAGNITUDE of the failure; the privileged-information argument explains why the residual cannot be
+trained away -- part of it is a function of draws the student will never observe, so no amount of
+data or capacity drives it to zero.
+
+General statement for this benchmark: behaviour cloning is viable only if the student matches the
+teacher to under ~1% action variance. That is a far higher bar than BC usually faces, and it is set
+by the quadratic cost and the tight error budget, not by anything about the teacher.
