@@ -310,3 +310,38 @@ the wrong object -- seed-conditioned optima are not what a causal policy should 
 
 Pure policy optimisation on the true objective (alpha=0) remains the best training signal available
 here, which is what cnn_v2 already is.
+
+## PO fine-tuning from the BC student: initialisation is a net liability
+
+Identical seed, LR (1e-4), and budget (300 iters); only the starting weights differ.
+
+    PO from cnn_v2 (control)   init val 44.871 -> best 44.032
+    PO from BC student         init val 55.382 -> best 47.828   (still trending, not converged)
+
+Policy optimisation does claw the BC student back (55.4 -> 47.8) but after equal budget it remains
+3.8 behind the control. BC pretraining on this teacher is not neutral -- it is damage that has to be
+spent undoing before any budget goes into improving. That is STRONGER than this session's earlier
+BC->PO null, where BC init was merely irrelevant; here, with a teacher that genuinely beats the
+incumbent, BC init is actively costly. Consistent with the mechanism: the teacher is not
+uninformative, it teaches the wrong thing.
+
+### The control itself does not survive the real sim
+
+    pristine ALL[4200:5000]   PO-from-cnn_v2 51.720 median 44.79 | cnn_v2 50.720 median 44.50
+    mean +1.000 [+0.24,+2.03]  median -0.0252  better 404/800
+
+Surrogate val said 44.032 vs 44.871 (an improvement); the real sim says 51.720 vs 50.720 (a
+significant regression). FOURTH surrogate/real-sim reversal in this session, after the gain prior,
+the MoE gate, and the 2-DOF corrector. cnn_v2 was already the selected best checkpoint of a
+1000-iteration run, so 300 further iterations at lr 1e-4 only wander.
+
+### Final tally for the whole teacher/student line
+
+    cnn_v2                       50.720   (pristine ALL[4200:5000])
+    PO from cnn_v2, 300 iters    51.720   worse, CI excludes zero
+    BC student                   58.817
+    DAgger student               63.960
+    PO from BC student           worse still (val 47.828 vs control 44.032)
+
+Every variant is worse than the controller we started with. The teacher constructions all succeed;
+every route from teacher to policy fails.

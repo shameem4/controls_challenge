@@ -1,0 +1,5 @@
+=== pristine ALL[4200:5000], n=800 ===
+  PO-from-cnn_v2          51.720  median  44.79  p90   75.14
+  cnn_v2                  50.720  median  44.50  p90   74.90
+
+  mean  +1.000 [ +0.24, +2.03] median -0.0252 better 404/800
