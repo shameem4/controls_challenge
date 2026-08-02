@@ -82,3 +82,47 @@ makes the oracle good is a function of the realised draws, which are white (|aut
 it averages toward zero. The student would inherit the nominal policy -- measured at 54.43 sampled,
 worse than cnn_v2's 46.26. That measurement should gate any training run: on a WORKING oracle,
 compute how much of `u_oracle` is predictable from observations and whether cnn_v2 already emits it.
+
+---
+
+## Calibration against a documented reference entry (RyanL2/commacontrol)
+
+Its README lists every arm with scores, which pins the bands far better than leaderboard
+descriptions do:
+
+| controller | score | nature |
+|---|---|---|
+| continuous_lookup_noclip | 6.880 | injects the closed-form optimum into the simulator |
+| continuous_lookup | 6.89 | same, respecting rate limits |
+| token_lookup | 7.05 | replays a DP-optimal output-token sequence |
+| steer_lookup | 39.9 | per-segment coordinate descent on real steering commands (a LOOKUP) |
+| cem_mpc | ~76 | honest online CEM-MPC |
+| PID | ~68 | upstream baseline |
+
+Three corrections and one confirmation.
+
+**Our earlier band framing was wrong.** This file previously said ~20-30 was "seed-exploited action
+optimisation". It is not. Careful per-segment coordinate descent on ACTIONS tops out at **39.9**.
+Everything below ~10 is TRAJECTORY INJECTION, which bypasses the plant entirely. There is essentially
+nothing in between -- the gap is not populated because optimising actions against a known seed is
+genuinely hard, not because nobody tried.
+
+**That corroborates the three failed oracle attempts above.** A careful coordinate descent reaches
+39.9, only ~7 points better than our fully CAUSAL 46.91. So the payoff from seed exploitation via
+actions is small, and the difficulty is intrinsic rather than a defect of our search.
+
+**Their honest controller is far behind ours.** `cem_mpc` at ~76 is the only causal entry there;
+`steer_lookup` is a per-segment lookup despite the "genuine steering commands" framing. Our cnn_v2 at
+46.91 beats their honest method by ~29 points.
+
+**Confirmation:** their closed-form optimum 6.880 (with rate limit + 1024-bin quantisation) matches
+our independently derived Tikhonov optimum of 6.69 (lataccel 1.53 + jerk 5.16, lam = 2). Two
+implementations, same quantity.
+
+### Consequence
+
+Nothing cheap remains to borrow. The closed-form c* we already compute in `ff_pi.smooth()`. Reaching
+39.9 requires exactly the per-segment oracle construction that failed three ways above. And the
+honest-frontier estimate of ~36 should be treated with more suspicion now: the only documented honest
+entry we can actually inspect scores 76, and 39.9 -- which we had been reading as near-frontier -- is
+a lookup.
