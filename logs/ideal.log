@@ -1,0 +1,10 @@
+[ideal] segs=32 mu=0.001
+[ideal] deconvolved actions: mean|u| 0.211  max|u| 2.000  frac at rail 0.0017
+  t=100  mean|u_ideal-u_cnn|=0.0505
+  t=200  mean|u_ideal-u_cnn|=0.4420
+  t=300  mean|u_ideal-u_cnn|=0.4236
+  t=400  mean|u_ideal-u_cnn|=0.4610
+
+[ideal] IDEAL-ACTION replay cost  365.301  (lataccel 347.040  jerk 18.261)
+[ideal] tracking error vs c*: RMS 0.2635
+[ideal] saved obs (32, 400, 37)  u_ideal (32, 400)

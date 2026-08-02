@@ -126,3 +126,56 @@ Nothing cheap remains to borrow. The closed-form c* we already compute in `ff_pi
 honest-frontier estimate of ~36 should be treated with more suspicion now: the only documented honest
 entry we can actually inspect scores 76, and 39.9 -- which we had been reading as near-frontier -- is
 a lookup.
+
+---
+
+# The distillation plan, completed: the teacher is worse than the student
+
+Plan: segment -> closed-form optimal trajectory -> ideal control actions -> BC a CNN on
+(observation, ideal action) pairs. Built and verified end to end. It fails for a structural reason,
+not an engineering one.
+
+## Building the teacher (ideal_mpc.py)
+
+The optimal TRAJECTORY is closed form -- the cost is a convex quadratic in the lataccel trajectory
+alone, so `(I + 2 D'D) c* = tau`. Getting ACTIONS from it took four attempts:
+
+    one-step inversion        116679   H[1]=0.02, so hitting c*[t+1] needs ~50x gain -> rails
+    open-loop deconvolution      365   jerk 18.3 (good!) but lataccel 347 -- nothing corrects drift
+    DMC without free response  19000   omits past action changes still propagating; jerk 2388
+    DMC, complete                 51.9 correct
+
+The free-response term was the whole difference (19000 -> 62 -> 51.9 after tuning MU). The increment
+model assumes the plant is settled with u held at u(t-1); it is not, and without
+`free_j = sum_m (SSTEP[j+1+m] - SSTEP[m]) * du(t-m)` the solver keeps re-commanding motion already
+on its way. Reachability weighting (rows scaled by SSTEP[j+1]) matters too, since the first ~3
+horizon steps are nearly unreachable and an unweighted solve over-drives to reach them.
+
+    MU sweep (HH=25, 16 segments):  0.02 -> 1281   0.1 -> 196   0.5 -> 62.6
+                                    1.0 -> 52.1    2.0 -> 51.9  5.0 -> 54.8   12.0 -> 55.5
+
+## Why the plan cannot work
+
+    DMC teacher   51.9        cnn_v2   43.6   (same split, same seed, torch sim)
+
+**The teacher is 8 points worse than the student it was meant to teach.** Distilling it produces a
+student bounded by ~52.
+
+That is not a tuning shortfall -- 51.9 is the classical plateau. Four independent model-based designs
+now agree: ff_pi 59.06, ff_pi_boot 51.22, this DMC 51.9, RyanL2's CEM-MPC ~76. Model-based control on
+this plant tops out at ~51-52, and the learned net at 46.9 is already past it.
+
+So a useful teacher must beat 46.9, and the only way to do that is PRIVILEGED information -- knowing
+the realised draws. But those draws are white (|autocorr| <= 0.011), so MSE distillation learns
+E[u_oracle | obs] and the privileged component averages to zero; the student inherits the nominal
+policy, measured at 54.43.
+
+**The teacher must beat the student to be worth distilling, and building a controller better than
+cnn_v2 is the original open problem.** The pipeline is sound and cannot bootstrap past its own input.
+
+## Byproduct worth keeping
+
+`ideal_mpc.py` is a working linear-MPC controller on this plant (51.9 torch / classical-plateau
+class), built from the analytic reference plus a correct DMC formulation. It is the first MPC in this
+project that works at all -- earlier online-MPC attempts diverged (9353) or landed at 944-16237. It
+does not beat ff_pi_boot, but it independently confirms where the model-based ceiling is.

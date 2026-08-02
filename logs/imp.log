@@ -1,0 +1,9 @@
+[imp] segs=32 HH=20 MU=0.003
+  t=100  mean|u_ideal-u_cnn|=0.0380
+  t=200  mean|u_ideal-u_cnn|=1.2845
+  t=300  mean|u_ideal-u_cnn|=1.2834
+  t=400  mean|u_ideal-u_cnn|=1.3029
+
+[imp] TEACHER replay cost 18229.107  (lataccel 15840.705  jerk 2388.402)
+[imp] reference: cnn_v2 ~43.6 on this split (torch, same seed)
+[imp] saved obs (32, 399, 37)
