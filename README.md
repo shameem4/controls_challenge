@@ -380,10 +380,20 @@ explanation is not.
   bootstrap changes that assumption. Retuning was not attempted because gain tuning on this family
   has overfit every previous attempt (86.96 vs 81.40 on the PID stack), and it would need
   `sigma=0.15` plus the held-out guard to be trustworthy.
-- **Why the derivative term helps at all.** CMA drives `d` from its stock −0.053 toward ~0.0005, yet
-  setting `d = 0` outright is measurably *worse* (+0.45). It also prefers the noisy measured error
-  over the clean smoothed reference, which is the opposite of what the model-preference argument
-  predicts. No explanation offered.
+- ~~**Why the derivative term helps at all.**~~ **Resolved: a negative `d` is not a derivative, it is
+  a low-pass filter.** In comma's discrete form `u = p·e_t + d·(e_t − e_{t−1}) = (p+d)·e_t − d·e_{t−1}`,
+  so `p=0.195, d=−0.053` is the two-tap FIR `0.142·e_t + 0.053·e_{t−1}` — both taps positive, summing
+  to `p`. DC gain is identical for every `d`, so steady-state tracking is untouched; only the
+  high-frequency path changes. At 5 Hz (Nyquist) `d=−0.053` gives |H| = 0.089 against a DC gain of
+  0.195 (a ratio of 0.46, i.e. 54% attenuation), `d=0` is flat, and Ziegler-Nichols' `d=+0.60`
+  *amplifies* 7.15× — which is the visible jitter in `step_response.png` and part of why ZN scores
+  3198. The right sign is negative because the error carries the plant's noise, whose increments are
+  white and therefore unpredictable, while the plant has 2–4 steps of dead time: a correction issued
+  against high-frequency disturbance arrives after that disturbance has changed. Consistent with the
+  measurement, the gain shows up in **lataccel** (44.67 vs 45.04 at `d=0`) more than in jerk (21.01
+  vs 21.09) — the mechanism is "stop issuing late corrections against unpredictable noise", not
+  "less jerk". Same principle as the Tikhonov reference, `ff_pi`'s 1.79× detuning and the ~2-step
+  lookahead optimum: on a dead-time plant with white disturbance, react less.
 - **Absolute scores carry several points of subset uncertainty** (see caveat 2 above). The ratio to
   PID is the robust statistic; small cross-entry gaps on the leaderboard are not resolvable.
 

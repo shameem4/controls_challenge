@@ -67,6 +67,7 @@ class Stepper:
         self.act = [self.steer0[:, i] for i in range(CONTEXT_LENGTH)]
         self.cur = self.lat[-1]
         self.t = CONTEXT_LENGTH
+        self.mode = 'sample'      # probes may set 'expected' to measure the conditional mean
 
     def snapshot(self):
         return (list(self.lat[-CONTEXT_LENGTH:]), list(self.act[-CONTEXT_LENGTH:]),
@@ -95,7 +96,7 @@ class Stepper:
                          torch.stack([self.v[:, i] for i in range(t - CONTEXT_LENGTH + 1, t + 1)], 1),
                          torch.stack([self.a[:, i] for i in range(t - CONTEXT_LENGTH + 1, t + 1)], 1)], -1)
         past = torch.stack(self.lat[-CONTEXT_LENGTH:], 1)
-        pred = self.p.step(s, self.p.tokenize(past), mode='sample')
+        pred = self.p.step(s, self.p.tokenize(past), mode=self.mode)
         pred = torch.clamp(pred, self.cur - MAX_ACC_DELTA, self.cur + MAX_ACC_DELTA)
         self.cur = torch.where(torch.tensor(t >= CONTROL_START_IDX, device=DEV), pred, self.target[:, t])
         self.lat.append(self.cur)

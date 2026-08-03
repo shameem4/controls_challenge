@@ -1,0 +1,9 @@
+=== classical tuning rules from the measured FOPDT, on held-out ALL[500:1500] ===
+  comma stock              total=  113.13  lataccel=  87.11  jerk=  26.02  median= 74.22
+  IMC lambda=L             total=  140.86  lataccel= 106.41  jerk=  34.46  median= 70.50
+  IMC lambda=2L            total=  119.52  lataccel=  97.24  jerk=  22.27  median= 81.88
+  IMC lambda=3L            total=  142.96  lataccel= 124.22  jerk=  18.74  median= 99.65
+  AMIGO PI                 total=  137.11  lataccel= 117.35  jerk=  19.76  median= 95.28
+  Ziegler-Nichols PID      total= 3198.08  lataccel=1324.60  jerk=1873.48  median=3319.24
+  Cohen-Coon PID           total= 5348.81  lataccel=3300.96  jerk=2047.85  median=5275.43
+  ZN gains, d=0            total=  823.19  lataccel= 561.03  jerk= 262.16  median=261.07

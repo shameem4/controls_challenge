@@ -1,0 +1,4 @@
+[pid] segs=64 start=2000 DELTA=0.1 HZ=12 NSAMP=60 ctrl=cnn_v2.pt
+[pid] collected 1433 paired perturbation samples
+  DC gain (response at HZ): mean 0.199  median 0.168  std 0.393
+  |lataccel| coverage: median 0.171  p90 0.992  frac>1 9.8%  frac>2 1.2%
