@@ -3,6 +3,7 @@ selection.  Usage: python ablate.py <cfg> <iters> [gumbel|expected] [warmstart.p
   - train_mode 'gumbel' (stochastic, default) or 'expected' (deterministic plant)
   - warmstart.pt: load weights and fine-tune (full horizon from the start)"""
 import sys, os, numpy as np, torch
+from pathlib import Path
 from torch_sim import Plant, load_segment, rollout, cost
 from nets import AblNet, AblPolicy
 from train import TRAIN, VAL, ALL
@@ -22,6 +23,14 @@ SOFT = train_mode.endswith('_soft'); train_mode = train_mode[:-5] if SOFT else t
 TBPTT = int(os.environ.get('TBPTT', 30))
 TRAIN_N = int(os.environ.get('TRAIN_N', 0))                   # >0 => use ALL[2000:2000+N] (bigger set, still disjoint)
 if TRAIN_N: TRAIN = ALL[2000:2000 + TRAIN_N]
+# TRAIN_LIST: path to a newline-delimited file of segment paths, for training on an arbitrary
+# hand-picked subset. Whatever it points at is the ENTIRE training set, so anything in it is
+# burned for evaluation -- pick the holdout accordingly.
+TRAIN_LIST = os.environ.get('TRAIN_LIST')
+if TRAIN_LIST: TRAIN = [Path(l) for l in open(TRAIN_LIST).read().split() if l]
+# TAG namespaces the checkpoints. Without it two runs of the same cfg overwrite each other's
+# checkpoints, which has already destroyed one control arm in this project.
+TAG = os.environ.get('TAG', cfg_arg)
 os.makedirs('ckpts', exist_ok=True)
 plant = Plant(device=DEV)
 net = AblNet(cfg).to(DEV)
@@ -44,7 +53,7 @@ def seeded_val(seeds=(0, 1)):
     return float(np.mean(tots))
 
 best = 1e9
-print(f"[{cfg_arg}] params={sum(p.numel() for p in net.parameters())} iters={iters} train_mode={train_mode} soft={SOFT}", flush=True)
+print(f"[{TAG}] n_train={len(TRAIN)} params={sum(p.numel() for p in net.parameters())} iters={iters} train_mode={train_mode} soft={SOFT}", flush=True)
 for it in range(iters):
     stop = COST_END_IDX if init_ckpt else min(150 + it, COST_END_IDX)   # fine-tune: full horizon from the start
     opt.zero_grad(); tl = 0.0
@@ -56,8 +65,8 @@ for it in range(iters):
         loss.backward(); tl += loss.item()
     torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0); opt.step()
     if it % 25 == 0 or it == iters - 1:
-        torch.save(net.state_dict(), f'ckpts/abl{cfg_arg}_{it:04d}.pt')
+        torch.save(net.state_dict(), f'ckpts/abl{TAG}_{it:04d}.pt')
         vc = seeded_val(); tag = ''
         if vc < best: best = vc; tag = ' *'
-        print(f"[{cfg_arg}] it{it:3d} stop={stop} train={tl:6.2f} torch_val={vc:6.2f}{tag}", flush=True)
-print(f"[{cfg_arg}] done best_torch={best:.2f}", flush=True)
+        print(f"[{TAG}] it{it:3d} stop={stop} train={tl:6.2f} torch_val={vc:6.2f}{tag}", flush=True)
+print(f"[{TAG}] done best_torch={best:.2f}", flush=True)
