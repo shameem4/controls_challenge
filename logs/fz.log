@@ -1,0 +1,10 @@
+=== PRISTINE ALL[5000:6000] n=1000 ===
+  pid_boot nominal (0.195,0.100)           69.455  median  55.69
+  retune fixed (0.145,0.100)               70.533  median  56.57
+  fixed easy gains (0.145,0.140)           93.090  median  49.76
+  FUZZY  i: 0.140(easy)->0.100(hard)       66.833  median  53.31
+
+  retune vs nominal                        mean   +1.078 [  -2.98,  +4.31] median +0.9730 better 262/1000
+  easy-gains vs nominal                    mean  +23.634 [ +10.00, +39.61] median -4.4903 better 840/1000
+  fuzzy vs nominal                         mean   -2.622 [  -5.81,  +0.13] median -1.7432 better 745/1000
+  fuzzy vs best fixed retune               mean   -3.700 [  -7.15,  -0.74] median -2.9380 better 852/1000

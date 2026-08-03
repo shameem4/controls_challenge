@@ -1,0 +1,17 @@
+  fuzzy                                    66.833  median  53.31
+  pid_boot nominal                         69.455  median  55.69
+
+    quantile     fuzzy   nominal    delta
+         10%     20.34     21.44    -1.10
+         25%     35.99     38.93    -2.94
+         50%     53.31     55.69    -2.39
+         75%     68.85     70.42    -1.56
+         90%     92.27     92.32    -0.04
+         95%    122.69    118.21    +4.48
+         99%    663.90    675.76   -11.86
+         max    2197.1    2602.9   -405.9
+
+  best 50%   nominal     35.00  fuzzy     33.31  delta     -1.69  contribution  -0.845
+  50-90%     nominal     68.46  fuzzy     69.06  delta     +0.59  contribution  +0.238
+  90-99%     nominal    140.98  fuzzy    137.40  delta     -3.57  contribution  -0.321
+  worst 1%   nominal   1188.39  fuzzy   1019.04  delta   -169.35  contribution  -1.693

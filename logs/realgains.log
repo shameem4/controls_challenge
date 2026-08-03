@@ -1,0 +1,11 @@
+=== do synthetic-condition-optimal gains transfer to REAL data? (pid_boot, n=1000) ===
+  nominal p=0.195 i=0.100             70.186  median  55.26
+  gentle-opt   p=0.10  i=0.20        1736.491  median  56.10
+  corner-opt   p=0.195 i=0.05        102.150  median  87.49
+  lowspeed-opt p=0.35  i=0.10         86.729  median  58.67
+  roll-opt     p=0.10  i=0.10         72.295  median  58.13
+
+  gentle-opt p=0.10 i=0.20       mean +1666.305 [+1231.22,+2159.98] median -0.1155 better 508/1000
+  corner-opt p=0.195 i=0.05      mean +31.964 [+26.81,+36.48] median +29.7560 better 22/1000
+  lowspd-opt p=0.35 i=0.10       mean +16.543 [+10.21,+23.75] median +1.9402 better 326/1000
+  roll-opt   p=0.10 i=0.10       mean  +2.109 [ -0.99, +4.55] median +2.6180 better 148/1000

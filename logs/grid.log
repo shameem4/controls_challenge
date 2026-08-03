@@ -1,0 +1,9 @@
+  done: v=8 m/s (low speed)
+  done: v=22 m/s (nominal)
+  done: v=34 m/s (high speed)
+  done: roll = -1.0 (off-camber)
+  done: roll = +1.0
+  done: a_ego = +2 (accelerating)
+  done: gentle step (0.5)
+  done: hard corner entry (2.5)
+wrote step_grid.png

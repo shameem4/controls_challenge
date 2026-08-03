@@ -1,0 +1,12 @@
+condition                    nominal      best    gain  best p  best i
+v=8 m/s (low speed)           131.69    117.81   10.5%   0.350   0.100
+v=22 m/s (nominal)            122.72    122.72    0.0%   0.195   0.100
+v=34 m/s (high speed)         140.71    140.71    0.0%   0.195   0.100
+roll = -1.0 (off-camber)      161.07    142.63   11.5%   0.100   0.100
+roll = +1.0                   150.82    150.82    0.0%   0.195   0.100
+a_ego = +2 (accelerating)     132.36    129.81    1.9%   0.350   0.100
+gentle step (0.5)              54.51     45.65   16.3%   0.100   0.200
+hard corner entry (2.5)      1382.90    969.16   29.9%   0.195   0.050
+
+  nominal pid_boot gains are p=0.195 i=0.100
+  best p across conditions: [0.1, 0.195, 0.35]   best i: [0.05, 0.1, 0.2]

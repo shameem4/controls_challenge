@@ -1,0 +1,5 @@
+=== CONFIRMATORY headline ALL[:5000] n=5000 ===
+  FUZZY  i: 0.140(easy)->0.100(hard)       67.144  median  53.27
+  pid_boot nominal (0.195,0.100)           68.412  median  55.49
+
+  fuzzy vs pid_boot nominal                mean   -1.268 [  -2.67,  +0.26] median -1.7482 better 3633/5000
