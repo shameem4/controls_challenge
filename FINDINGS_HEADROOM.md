@@ -138,8 +138,24 @@ are inconsistent in sign (+0.51, −0.14, +0.36, +0.53, −0.06), so there is no
 there is quality and there is noise.
 
 The `hr500`-vs-`full2000` tail difference is therefore a between-arm effect of the training
-distribution, not evidence that median and tail must be traded. That points at capacity or
-optimisation as the binding constraint rather than an intrinsic conflict: `AblNet` has **11,243
-parameters**. The decisive test is a wider network — if capacity binds, it improves both ends at
-once; if it reproduces the same frontier, the frontier is real and data selection should be
-abandoned.
+distribution, not evidence that median and tail must be traded.
+
+**Capacity is not the explanation either, and that is already settled** — see `15fa575`. A
+from-scratch A/B with identical data, curriculum, batch, schedule and iteration count, differing only
+in width:
+
+| | torch val | real sim `ALL[5000:6000]` |
+|---|---|---|
+| released `cnn_PM` (11k) | — | mean 49.795, median 44.06 |
+| retrained small (11k) | 48.62 | mean 49.750, median 45.93 |
+| retrained big (89k) | 48.30 | mean 50.075, median 45.60 |
+
+`big − small = +0.325`, 95% CI [−0.792, +1.854]. Eight times the width converges to the same place
+and is marginally worse in the real sim, with the small arm reproducing the released checkpoint
+(49.750 vs 49.795) as a recipe check. More capacity is a strictly larger policy class, so that result
+closes capacity and policy-class expressiveness together.
+
+So the constraint is neither the cost structure, nor a median-vs-tail frontier, nor model size. With
+data selection now closed too, what remains is what the policy OBSERVES or the training signal
+itself — and the productive work this session was on the classical side, where mechanisms are visible
+and two real wins came out of them.
