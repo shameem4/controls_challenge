@@ -98,3 +98,48 @@ fails to improve.
 
 The remaining lever is not which segments to train on, but the ~31.24 noise floor and the median
 segment, where `cnn_dual` already sits ~10 points above a floor it cannot reach by reweighting data.
+
+---
+
+# Addendum: is the median-vs-tail trade a real frontier?
+
+Prompted by the objection that optimising for normal driving must make hard corners miss, and that
+the quadratic jerk term then dominates. Two checks, both against data already collected.
+
+## Hard segments are not jerk-dominated
+
+`cnn_dual` cost composition by headroom decile on `ALL[2000:4000]`:
+
+| decile | cost | tracking | jerk | jerk % | J* |
+|---|---|---|---|---|---|
+| 0 (easiest) | 8.32 | 5.01 | 3.30 | 39.7 | 1.58 |
+| 4 | 42.03 | 23.33 | 18.69 | 44.5 | 6.48 |
+| 8 | 66.15 | 36.90 | 29.25 | 44.2 | 7.40 |
+| 9 (hardest) | 100.65 | 58.67 | 41.99 | **41.7** | 14.67 |
+
+The jerk share is flat — and the hardest decile's share (41.7%) is slightly *below* the middle
+deciles' (44.6%). Of the 51.7-point excess gap between the hardest 10% and the easiest 90%, tracking
+supplies 36.1 and jerk 24.4. Across segments, excess correlates with tracking at r=+0.948 and with
+jerk at r=+0.849.
+
+So corners carry no special quadratic jerk penalty. Both terms scale together at roughly 57/43
+tracking/jerk everywhere. The cost structure is not the reason the tail resists improvement.
+
+## No frontier is visible across 73 checkpoints
+
+If a genuine median-vs-tail frontier existed, checkpoints buying a better median would show a worse
+tail. Across all 73 checkpoints from the five training arms, evaluated identically on
+`ALL[4200:4700]` (mean is tail-sensitive, median is not):
+
+    correlation(mean, median) = +0.232
+
+Positive, not negative — checkpoints are broadly better or worse at *both*. Within-arm correlations
+are inconsistent in sign (+0.51, −0.14, +0.36, +0.53, −0.06), so there is no frontier at this scale;
+there is quality and there is noise.
+
+The `hr500`-vs-`full2000` tail difference is therefore a between-arm effect of the training
+distribution, not evidence that median and tail must be traded. That points at capacity or
+optimisation as the binding constraint rather than an intrinsic conflict: `AblNet` has **11,243
+parameters**. The decisive test is a wider network — if capacity binds, it improves both ends at
+once; if it reproduces the same frontier, the frontier is real and data selection should be
+abandoned.
