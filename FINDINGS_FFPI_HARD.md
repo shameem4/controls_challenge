@@ -90,3 +90,60 @@ evaluate on segments never used for selection. That is the next experiment, and 
 scheduling nulls it starts from a measured mechanism rather than a hope.
 
 Reproduce: `python diag_ffpi.py 5000 1000`. Segment list: `ffpi_hard_segments.csv`.
+
+---
+
+# Follow-up: the parameter is real, the gate took three attempts
+
+## The parameter transfers
+
+`gain_scale=2.1` was fit on the hard 25 of `ALL[5000:6000]`. Applied to the hard segments of the
+**tuning** split, which it was never fit on:
+
+| `gain_scale` | worst 25 (tuning) | saturating segments (n=32) | rest |
+|---|---|---|---|
+| 1.79 (shipped) | 245.27 | 178.89 | 43.89 |
+| **2.10** | **193.43 (−21%)** | **142.09 (−21%)** | 47.86 |
+| 2.50 | 277.62 | 206.15 | 54.76 |
+
+Same shape, same optimum, on segments it never saw. The mechanism is real.
+
+## Three gates, two failures
+
+The whole difficulty is *when* to apply it. Tuning split, vs `ff_pi_boot` at 50.178:
+
+| gate | best config | result |
+|---|---|---|
+| sigmoid on log `J*` (anticipatory, blunt) | gs 1.79, lam 8.0 | **+0.463** — every config worse |
+| rate clamp binding, hold 3–8 (reactive) | gs 2.1, hold 8 | **+0.772** — every config worse |
+| same, latching to end of segment | gs 2.1, hold 25 | **+1.383** — monotonically worse with hold |
+| **peak abs tau over the preview (predictive, precise)** | **gs 2.1, tau 2.5–3.5** | **−1.917** |
+
+The reactive gate is the informative failure. It is *precise* — it fired on 23 of 800 segments,
+matching the saturating count almost exactly — and it still made those segments **worse**, better on
+only 6 of the 23. By the time the clamp binds, the over-command has already happened; cutting a
+memoryless feedforward afterwards only leaves the loop mismatched. This is why `pid_awu` worked and
+this did not: the integrator is a *persistent state* that keeps growing during saturation, so freezing
+it undoes ongoing damage. The feedforward has no memory, so there is nothing to undo — it has to be
+prevented.
+
+Peak `|tau|` over the preview separates the target far better than `J*` (3.78 vs 0.72) and fires
+early enough to prevent rather than react.
+
+## Validated result
+
+| split | `ff_pi_boot` | `ff_pi_tau` | mean delta [95% CI] | fires on |
+|---|---|---|---|---|
+| tuning `ALL[3000:3800]`, n=800 | 50.178 | 48.262 | −1.917 [−4.82, −0.08] | 56/800 |
+| **pristine `ALL[5000:8000]`, n=3000** | **53.248** | **50.742** | **−2.506 [−3.62, −1.54]** | 207/3000 |
+
+p99 falls 253.9 → 173.8. The median delta is 0.000 — this is a pure tail fix, which is the honest
+description of it. Promoted as the best classical controller.
+
+## Process note
+
+The identity gate caught a second silent bug here. `ff_pi_sat` initially reused the attribute names
+`prev_lat` and `frozen`, which `ff_pi_boot` already uses for its inherited anti-windup. Writing
+`prev_lat` before calling the parent made the parent compare the current lataccel to itself, so its
+anti-windup never fired — worth +0.6 on the tuning split, and entirely invisible without the
+"defaults must reproduce the base class bit-for-bit" check.
