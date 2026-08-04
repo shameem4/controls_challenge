@@ -20,8 +20,10 @@ below on how precisely those are comparable).
 | `ff_pi_tuned` — same, CMA-ES tuned | `controllers/ff_pi_tuned.py` | — | — | **54.56** | −51% |
 | `ff_pi_rl2` — + rate-limit anti-windup | `controllers/ff_pi_rl2.py` | — | — | **52.30** | −53% |
 | `ff_pi_boot` — + bootstrapped integrator (best classical) | `controllers/ff_pi_boot.py` | 0.63 | 19.92 | **51.22** | −54% |
-| **`cnn` — learned preview net (default, `cnn_v2.pt`)** | `controllers/cnn.py` | — | — | **46.91** | **−58%** |
-| `cnn` with `cnn_dual.pt` — BC→PO, tied with the above | `controllers/cnn.py` | 0.531 | 20.33 | **46.89** | −58% |
+| `ff_pi_tau` — + preview-gated feedforward detune (best classical) | `controllers/ff_pi_tau.py` | — | — | **—** | — |
+| **`cnn` — learned preview net (default, `cnn_v3.pt`)** | `controllers/cnn.py` | — | — | **45.74** | **−59%** |
+| `cnn` with `cnn_v2.pt` — same recipe, stopped at 400 iters | `controllers/cnn.py` | — | — | **46.91** | −58% |
+| `cnn` with `cnn_dual.pt` — BC→PO, tied with `cnn_v2` | `controllers/cnn.py` | 0.531 | 20.33 | **46.89** | −58% |
 | `cnn` with `cnn_PM.pt` — v1 tag, a below-average run | `controllers/cnn.py` | 0.545 | 20.61 | **47.87** | −57% |
 
 `ff_pi_tuned` re-tunes the six `ff_pi` parameters with CMA-ES on a 400-segment set disjoint from
@@ -29,7 +31,16 @@ every eval split (component costs not recorded for the 5000 run, hence the dashe
 60 segments produced a 16% *apparent* gain that was almost entirely overfitting — this metric's
 subset noise is large enough that small tuning sets fit the sample, not the controller.
 
-The default `cnn` controller (`cnn_v2.pt`) scores **46.91** on the full 5000 and **50.72** on
+**`cnn_v3.pt` (46.91 → 45.74) — the earlier checkpoints were undertrained.** Identical architecture
+and recipe to `cnn_v2`, trained 6.75x longer (2700 iterations / 10,800 rollouts against 400 / 1,600).
+It beats `cnn_v2` by −1.167 [−1.91, −0.64] on the headline 5000 with median −0.364 and 3016/5000
+segments improved (sign z=+14.6), and it is the first cnn result here to improve mean, median, p99
+and win-rate together rather than trading median for tail. The ~48 ceiling that eleven interventions
+kept hitting was the iteration budget, not the method — see `FINDINGS_GRAD_ARM.md`, which also closes
+the gradient-batch hypothesis as a negative once the arms are matched on compute instead of
+iterations.
+
+The previous default `cnn` controller (`cnn_v2.pt`) scores **46.91** on the full 5000 and **50.72** on
 `ALL[4200:5000]`, a pristine split it never saw for training *or* checkpoint selection (`cnn_PM.pt`
 scores 47.87 and 52.31 on the same two). It is a pure function of the observed state, the 5-second
 preview, and its own recent actions — **no per-segment memorization**.
@@ -426,7 +437,8 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 | Path | Purpose |
 |---|---|
 | `controllers/cnn.py`, `nets.py` | **Deliverable** learned preview net (`AblNet`, cfg `PM`) + eval wrapper |
-| `cnn_v2.pt` | **Default** `cnn` weights (46.91) — plain policy optimisation, the documented recipe |
+| `cnn_v3.pt` | **Default** `cnn` weights (45.74) — same recipe as `cnn_v2`, trained to convergence |
+| `cnn_v2.pt` | Previous default (46.91) — plain policy optimisation, stopped at 400 iterations |
 | `cnn_dual.pt` | BC→PO weights (46.89); kept as evidence the schedule adds nothing over a matched control |
 | `cnn_PM.pt` | v1 weights (47.87), tag `v1-learned-47.87`; a below-average run, kept for reproducibility |
 | `dual_train.py`, `FINDINGS_GAIN_PRIOR.md` | Two-phase BC→PO trainer, and the writeup showing it is a null |
