@@ -13,10 +13,16 @@ from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
 # and multi-horizon preview-error features [M]. Weights trained end-to-end via Gumbel rollouts
 # with soft-token full BPTT (see torch_sim.py).
 #
-# Three interchangeable weight sets, identical architecture (cfg 'PM'):
-#   cnn_v2.pt    46.91 on the full 5000  <- DEFAULT. Plain policy optimisation, 1000 iters, exactly
-#                the documented retrain recipe. Statistically tied with cnn_dual.pt and carries no
-#                unexplained-mechanism claim, so it is the one shipped.
+# Four interchangeable weight sets, identical architecture (cfg 'PM'):
+#   cnn_v3.pt    45.74 on the full 5000  <- DEFAULT. Same recipe as cnn_v2, just trained to
+#                convergence: 2700 iterations at ACC=4 (10,800 rollouts) against the released
+#                checkpoints' 400 iterations (1,600). The prior checkpoints were simply
+#                UNDERTRAINED. Beats cnn_v2 by -1.167 [-1.91,-0.64] on the headline 5000, median
+#                -0.364, better on 3016/5000 (sign z=+14.6), and improves mean, median, p99 and
+#                win-rate together -- the first cnn result here that does not trade median for
+#                tail. See FINDINGS_GRAD_ARM.md.
+#   cnn_v2.pt    46.91 on the full 5000. Plain policy optimisation, 1000 iters. Was the default
+#                until cnn_v3; statistically tied with cnn_dual.pt.
 #   cnn_dual.pt  46.89. Behaviour cloning onto ff_pi, then policy optimisation (dual_train.py).
 #                Kept ONLY as evidence for a negative result: against cnn_v2 as a matched control
 #                it is a coin flip (-0.016, CI [-0.61,+0.39], 2490/5000), so the BC->PO schedule
@@ -27,7 +33,7 @@ from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
 # larger than most effects worth chasing -- compare against a fresh matched control, never against
 # whatever was shipped last.
 _ROOT = Path(__file__).resolve().parent.parent
-CKPT = os.environ.get('CNN_CKPT', 'cnn_v2.pt')
+CKPT = os.environ.get('CNN_CKPT', 'cnn_v3.pt')
 CFG = os.environ.get('CNN_CFG', 'PM')
 
 

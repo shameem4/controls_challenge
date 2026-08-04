@@ -89,7 +89,9 @@ def validate(seeds=(0, 1), chunk=40):
 STATE = f'ckpts/{TAG}_state.pt'
 start_it = 0
 if os.path.exists(STATE):
-    st = torch.load(STATE, map_location=DEV)
+    # weights_only=False: the state holds numpy RNG state, which the (newer) default
+    # weights_only=True refuses to unpickle. This file is written by this script only.
+    st = torch.load(STATE, map_location=DEV, weights_only=False)
     net.load_state_dict(st['net']); opt.load_state_dict(st['opt'])
     start_it = st['it'] + 1
     np.random.set_state(st['np_rng']); torch.set_rng_state(st['torch_rng'].cpu())
