@@ -58,6 +58,11 @@ if MATCH_ACC:
     ITERS = ITERS * MATCH_ACC // ACC
 SAVE_EVERY = int(os.environ.get('SAVE_EVERY', 25))
 VAL_EVERY = int(os.environ.get('VAL_EVERY', 25))
+# PATIENCE: stop after this many consecutive validations with no new best. Fixed iteration budgets
+# are what produced the false "~48 ceiling" -- every arm was compared at a point none had converged
+# to, so the A/Bs measured learning SPEED rather than final quality. Train to a plateau instead.
+# 0 disables and ITERS becomes a hard budget again.
+PATIENCE = int(os.environ.get('PATIENCE', 0))
 TBPTT = 30
 
 ALL = sorted(Path('data/SYNTHETIC').iterdir())
@@ -101,6 +106,7 @@ print(f"[{TAG}] cfg={CFG} ch={CH} params={nparam:,} iters={ITERS} "
       f"ACC={ACC} (eff batch {bs*ACC}) preview_H={PREV_H} "
       f"train={len(TRAIN)} val={len(VAL)}", flush=True)
 best = (1e9, None)
+stale = 0
 for it in range(start_it, ITERS):
     stop = min(150 + it, COST_END_IDX)          # curriculum, as in ablate.py
     opt.zero_grad(); tl = 0.0
@@ -123,7 +129,14 @@ for it in range(start_it, ITERS):
         mn, md = validate()
         tag = ''
         if mn < best[0]:
-            best = (mn, f'ckpts/cap_{TAG}_{it:05d}.pt'); tag = ' *'
+            best = (mn, f'ckpts/cap_{TAG}_{it:05d}.pt'); tag = ' *'; stale = 0
+        else:
+            stale += 1
         print(f"[{TAG}] it{it:4d}/{ITERS} stop={stop} train={tl:6.2f} "
-              f"val mean={mn:6.2f} median={md:6.2f}{tag}", flush=True)
+              f"val mean={mn:6.2f} median={md:6.2f}{tag}"
+              f"{'' if not PATIENCE else f'  stale={stale}/{PATIENCE}'}", flush=True)
+        if PATIENCE and stale >= PATIENCE:
+            print(f"[{TAG}] PLATEAU: no new best in {stale} validations "
+                  f"({stale*VAL_EVERY} iters); stopping at it{it}", flush=True)
+            break
 print(f"[{TAG}] done params={nparam:,} best val mean={best[0]:.2f} -> {best[1]}", flush=True)
