@@ -20,7 +20,7 @@ below on how precisely those are comparable).
 | `ff_pi_tuned` — same, CMA-ES tuned | `controllers/ff_pi_tuned.py` | — | — | **54.56** | −51% |
 | `ff_pi_rl2` — + rate-limit anti-windup | `controllers/ff_pi_rl2.py` | — | — | **52.30** | −53% |
 | `ff_pi_boot` — + bootstrapped integrator (best classical) | `controllers/ff_pi_boot.py` | 0.63 | 19.92 | **51.22** | −54% |
-| `ff_pi_tau` — + preview-gated feedforward detune (best classical) | `controllers/ff_pi_tau.py` | — | — | **—** | — |
+| `ff_pi_tau` — + preview-gated feedforward detune (best classical) | `controllers/ff_pi_tau.py` | 0.605 | 19.22 | **49.47** | −55% |
 | **`cnn` — learned preview net (default, `cnn_v3.pt`)** | `controllers/cnn.py` | — | — | **45.74** | **−59%** |
 | `cnn` with `cnn_v2.pt` — same recipe, stopped at 400 iters | `controllers/cnn.py` | — | — | **46.91** | −58% |
 | `cnn` with `cnn_dual.pt` — BC→PO, tied with `cnn_v2` | `controllers/cnn.py` | 0.531 | 20.33 | **46.89** | −58% |
