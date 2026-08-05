@@ -13,8 +13,12 @@ from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
 # and multi-horizon preview-error features [M]. Weights trained end-to-end via Gumbel rollouts
 # with soft-token full BPTT (see torch_sim.py).
 #
-# Four interchangeable weight sets, identical architecture (cfg 'PM'):
-#   cnn_v3.pt    45.74 on the full 5000  <- DEFAULT. Same recipe as cnn_v2, just trained to
+# Five interchangeable weight sets (cfg 'PM'; width is inferred from the checkpoint):
+#   cnn_v4.pt    45.32 on the full 5000  <- DEFAULT. Same recipe again, trained to a PLATEAU
+#                (patience 16 validations) rather than a fixed budget: 5325 iterations. Beats
+#                cnn_v3 by -0.422 [-0.86,-0.02] on the headline, median -0.518, 3295/5000
+#                (sign z=+22.5). See FINDINGS_CAPACITY_PLATEAU.md.
+#   cnn_v3.pt    45.74 on the full 5000. Same recipe as cnn_v2, just trained to
 #                convergence: 2700 iterations at ACC=4 (10,800 rollouts) against the released
 #                checkpoints' 400 iterations (1,600). The prior checkpoints were simply
 #                UNDERTRAINED. Beats cnn_v2 by -1.167 [-1.91,-0.64] on the headline 5000, median
@@ -33,7 +37,7 @@ from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
 # larger than most effects worth chasing -- compare against a fresh matched control, never against
 # whatever was shipped last.
 _ROOT = Path(__file__).resolve().parent.parent
-CKPT = os.environ.get('CNN_CKPT', 'cnn_v3.pt')
+CKPT = os.environ.get('CNN_CKPT', 'cnn_v4.pt')
 CFG = os.environ.get('CNN_CFG', 'PM')
 
 

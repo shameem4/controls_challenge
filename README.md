@@ -21,7 +21,8 @@ below on how precisely those are comparable).
 | `ff_pi_rl2` — + rate-limit anti-windup | `controllers/ff_pi_rl2.py` | — | — | **52.30** | −53% |
 | `ff_pi_boot` — + bootstrapped integrator | `controllers/ff_pi_boot.py` | 0.63 | 19.92 | **51.22** | −54% |
 | `ff_pi_tau` — + preview-gated feedforward detune (best classical) | `controllers/ff_pi_tau.py` | 0.605 | 19.22 | **49.47** | −55% |
-| **`cnn` — learned preview net (default, `cnn_v3.pt`)** | `controllers/cnn.py` | — | — | **45.74** | **−59%** |
+| **`cnn` — learned preview net (default, `cnn_v4.pt`)** | `controllers/cnn.py` | — | — | **45.32** | **−59%** |
+| `cnn` with `cnn_v3.pt` — same recipe, 2700 iters | `controllers/cnn.py` | — | — | **45.74** | −59% |
 | `cnn` with `cnn_v2.pt` — same recipe, stopped at 400 iters | `controllers/cnn.py` | — | — | **46.91** | −58% |
 | `cnn` with `cnn_dual.pt` — BC→PO, tied with `cnn_v2` | `controllers/cnn.py` | 0.531 | 20.33 | **46.89** | −58% |
 | `cnn` with `cnn_PM.pt` — v1 tag, a below-average run | `controllers/cnn.py` | 0.545 | 20.61 | **47.87** | −57% |
@@ -437,7 +438,8 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 | Path | Purpose |
 |---|---|
 | `controllers/cnn.py`, `nets.py` | **Deliverable** learned preview net (`AblNet`, cfg `PM`) + eval wrapper |
-| `cnn_v3.pt` | **Default** `cnn` weights (45.74) — same recipe as `cnn_v2`, trained to convergence |
+| `cnn_v4.pt` | **Default** `cnn` weights (45.32) — trained to a plateau (5325 iters), not a fixed budget |
+| `cnn_v3.pt` | Previous default (45.74) — same recipe, fixed 2700-iteration budget |
 | `cnn_v2.pt` | Previous default (46.91) — plain policy optimisation, stopped at 400 iterations |
 | `cnn_dual.pt` | BC→PO weights (46.89); kept as evidence the schedule adds nothing over a matched control |
 | `cnn_PM.pt` | v1 weights (47.87), tag `v1-learned-47.87`; a below-average run, kept for reproducibility |
