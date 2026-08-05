@@ -40,10 +40,15 @@ CFG = os.environ.get('CNN_CFG', 'PM')
 class Controller(BaseController):
     """Eval wrapper for the AblNet preview controller (runs on CPU, one step at a time)."""
 
-    def __init__(self, ckpt=None, cfg=None, i_clip=5.0):
+    def __init__(self, ckpt=None, cfg=None, i_clip=5.0, ch=None):
         self.cfg = CFG if cfg is None else cfg
-        self.net = AblNet(self.cfg)
-        self.net.load_state_dict(torch.load(_ROOT / (ckpt or CKPT), map_location='cpu'))
+        sd = torch.load(_ROOT / (ckpt or CKPT), map_location='cpu')
+        # Infer the width from the checkpoint rather than assuming the default. Hardcoding ch=32
+        # made every wider checkpoint fail to load with a size-mismatch wall of text.
+        if ch is None:
+            ch = sd['ff_conv.0.weight'].shape[0]
+        self.net = AblNet(self.cfg, ch=ch, fb_hidden=ch, res_hidden=ch)
+        self.net.load_state_dict(sd)
         self.net.eval()
         self.integ = 0.0
         self.prev = 0.0
