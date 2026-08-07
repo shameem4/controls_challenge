@@ -42,7 +42,7 @@ PREV_H = int(os.environ.get('PREV_H', nets.H))
 nets.H = PREV_H
 from torch_sim import Plant, load_segment, rollout, cost
 from nets import AblNet, AblPolicy
-from tinyphysics import COST_END_IDX
+from tinyphysics import COST_END_IDX, LAT_ACCEL_COST_MULTIPLIER
 
 CH = int(sys.argv[1]) if len(sys.argv) > 1 else 32
 ITERS = int(sys.argv[2]) if len(sys.argv) > 2 else 400
@@ -63,6 +63,13 @@ VAL_EVERY = int(os.environ.get('VAL_EVERY', 25))
 # to, so the A/Bs measured learning SPEED rather than final quality. Train to a plateau instead.
 # 0 disables and ITERS becomes a hard budget again.
 PATIENCE = int(os.environ.get('PATIENCE', 0))
+# JERK_W scales the jerk term in the TRAINING loss only. Validation and all reported costs stay on
+# the true benchmark cost (lat*50 + jerk), so a reweighted arm is always judged on the real metric.
+# JERK_W=0 trains for tracking alone.
+JERK_W = float(os.environ.get('JERK_W', 1.0))
+# WARM: fine-tune from an existing checkpoint instead of training from scratch. With a warm start the
+# curriculum is skipped (full horizon from iteration 0), as in ablate.py.
+WARM = os.environ.get('WARM')
 TBPTT = 30
 
 ALL = sorted(Path('data/SYNTHETIC').iterdir())
@@ -71,13 +78,15 @@ VAL = ALL[4000:4200]
 
 plant = Plant(device=DEV)
 net = AblNet(CFG, h=PREV_H, ch=CH, fb_hidden=CH, res_hidden=CH).to(DEV)
+if WARM:
+    net.load_state_dict(torch.load(WARM, map_location=DEV))
 nparam = sum(p.numel() for p in net.parameters())
 opt = torch.optim.Adam(net.parameters(), 2e-4)
 os.makedirs('ckpts', exist_ok=True)
 
 
 def validate(seeds=(0, 1), chunk=40):
-    tot = []
+    tot = []; lats = []; jerks = []
     for s in seeds:
         torch.manual_seed(s)
         with torch.no_grad():
@@ -85,8 +94,12 @@ def validate(seeds=(0, 1), chunk=40):
                 segs = [load_segment(f) for f in VAL[i:i + chunk]]
                 traj, tg = rollout(plant, segs, AblPolicy(net, len(segs), DEV),
                                    mode='sample', stop=COST_END_IDX)
-                tot.append(cost(traj, tg)[2].cpu().numpy())
+                l, j, t = cost(traj, tg)
+                tot.append(t.cpu().numpy())
+                lats.append((l * LAT_ACCEL_COST_MULTIPLIER).cpu().numpy())
+                jerks.append(j.cpu().numpy())
     c = np.concatenate(tot)
+    validate.last = (float(np.concatenate(lats).mean()), float(np.concatenate(jerks).mean()))
     return float(c.mean()), float(np.median(c))
 
 
@@ -108,14 +121,15 @@ print(f"[{TAG}] cfg={CFG} ch={CH} params={nparam:,} iters={ITERS} "
 best = (1e9, None)
 stale = 0
 for it in range(start_it, ITERS):
-    stop = min(150 + it, COST_END_IDX)          # curriculum, as in ablate.py
+    stop = COST_END_IDX if WARM else min(150 + it, COST_END_IDX)   # fine-tune: full horizon at once
     opt.zero_grad(); tl = 0.0
     for _ in range(ACC):
         idx = np.random.randint(0, len(TRAIN), bs)
         segs = [load_segment(TRAIN[k]) for k in idx]
         traj, tg = rollout(plant, segs, AblPolicy(net, bs, DEV), mode='gumbel',
                            tbptt=TBPTT, stop=stop, soft_tokens=True)
-        loss = cost(traj, tg)[2].mean() / ACC
+        _l, _j, _ = cost(traj, tg)
+        loss = (_l * LAT_ACCEL_COST_MULTIPLIER + JERK_W * _j).mean() / ACC
         loss.backward(); tl += loss.item()
     torch.nn.utils.clip_grad_norm_(net.parameters(), 1.0); opt.step()
     if it % SAVE_EVERY == 0 or it == ITERS - 1:
@@ -132,8 +146,9 @@ for it in range(start_it, ITERS):
             best = (mn, f'ckpts/cap_{TAG}_{it:05d}.pt'); tag = ' *'; stale = 0
         else:
             stale += 1
+        _vl, _vj = validate.last
         print(f"[{TAG}] it{it:4d}/{ITERS} stop={stop} train={tl:6.2f} "
-              f"val mean={mn:6.2f} median={md:6.2f}{tag}"
+              f"val mean={mn:6.2f} median={md:6.2f} [track {_vl:6.2f} jerk {_vj:6.2f}]{tag}"
               f"{'' if not PATIENCE else f'  stale={stale}/{PATIENCE}'}", flush=True)
         if PATIENCE and stale >= PATIENCE:
             print(f"[{TAG}] PLATEAU: no new best in {stale} validations "
