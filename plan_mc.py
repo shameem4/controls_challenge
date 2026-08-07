@@ -37,7 +37,7 @@ from torch_sim import Plant, load_segment
 from nets import AblNet, AblPolicy
 from tinyphysics import (CONTEXT_LENGTH, CONTROL_START_IDX, COST_END_IDX, FUTURE_PLAN_STEPS,
                          STEER_RANGE, MAX_ACC_DELTA, DEL_T)
-from plan_var import basis, policy_base
+from plan_var import policy_base
 
 DEV = 'cuda'
 TEMP = 0.8
@@ -50,6 +50,25 @@ ITERS = int(os.environ.get('ITERS', 2))       # MPPI refinement iterations per c
 NBASIS = int(os.environ.get('NBASIS', 3))
 BETA = float(os.environ.get('BETA', 0.8))
 MODE = os.environ.get('MODE', 'sample')       # 'sample' = Monte Carlo, 'expected' = the old planner
+BASIS = os.environ.get('BASIS', 'poly')       # 'poly' = polynomial, 'block' = piecewise-constant
+
+
+def make_basis(H, n, kind):
+    """Plan parameterisation over the horizon.
+
+    'block' is piecewise-constant over n equal segments. It scales gracefully from n=1 (a single
+    number: hold one correction over the whole horizon) to n=H (fully independent per-step actions),
+    which is exactly the resolution question. A polynomial basis cannot answer it -- past degree ~4
+    the k**j columns are numerically collinear.
+    """
+    if kind == 'poly':
+        k = torch.arange(H, device=DEV, dtype=torch.float32) / max(H - 1, 1)
+        return torch.stack([k ** j for j in range(n)], 0)
+    B = torch.zeros(n, H, device=DEV)
+    edges = torch.linspace(0, H, n + 1).round().long()
+    for i in range(n):
+        B[i, edges[i]:max(edges[i + 1], edges[i] + 1)] = 1.0
+    return B
 
 
 @torch.no_grad()
@@ -111,7 +130,7 @@ def run(plant, segs, net, planner=True, seed=0):
     sa = [a[:, i] for i in range(CONTEXT_LENGTH)]
     cur = lat[-1]
     pol = AblPolicy(net, B, DEV)
-    Bmat = basis(H, NBASIS)
+    Bmat = make_basis(H, NBASIS, BASIS)
     theta = torch.zeros(B, NBASIS, device=DEV)
     plan_prev = None
     traj, vars_, dus = [], [], []
@@ -174,7 +193,7 @@ def main():
     ALL = sorted(Path('data/SYNTHETIC').iterdir())
     segs = [load_segment(f) for f in ALL[start:start + nseg]]
     print(f'  segs={nseg} H={H} K={K} M={M} SIGMA={SIGMA} TMPPI={TMPPI} ITERS={ITERS} '
-          f'BETA={BETA} MODE={MODE}', flush=True)
+          f'BETA={BETA} MODE={MODE} BASIS={BASIS} NBASIS={NBASIS}', flush=True)
     print(f'  {"arm":26} {"track":>8} {"jerk":>8} {"total":>8} {"E[Var]":>10} {"mean|du|":>9}', flush=True)
     l, j, vv, du = run(plant, segs, net, planner=False)
     print(f'  {"cnn_v4 (baseline)":26} {l.mean():8.2f} {j.mean():8.2f} {(l + j).mean():8.2f} '

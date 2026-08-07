@@ -63,3 +63,37 @@ true cost -- and the gap costs more compute to close than it is worth.
 This is the fifth model-based planning attempt in the project and the first whose failure is fully
 attributed: not chaos, not roughness, not noise, not convergence, not plan consistency, not certainty
 equivalence. Just aim.
+
+---
+
+## Addendum: plan parameterisation is not the limit
+
+The last untested lever was the plan family -- 3 smooth coefficients over 20 steps is restrictive, and
+a richer parameterisation might aim better. Tested with a piecewise-constant **block** basis, which
+scales cleanly from n=1 (one number held over the horizon) to n=20 (fully independent per-step
+actions). A polynomial basis cannot answer this: past degree ~4 the `k**j` columns are collinear.
+
+Sampled MPPI, K=12, M=4, 2 iterations, BETA=0.8, 16 pristine segments:
+
+| resolution | track | jerk | total | E[Var] | mean abs du |
+|---|---|---|---|---|---|
+| n=1 | 74.39 | 17.26 | 91.65 | 0.001012 | 0.01100 |
+| n=3 | 49.09 | 16.71 | 65.81 | 0.001018 | 0.01046 |
+| **n=6** | 43.39 | 16.55 | **59.94** | 0.001009 | 0.01053 |
+| n=10 | 44.79 | 17.60 | 62.38 | 0.001041 | 0.01055 |
+| n=20 (per-step) | 49.49 | 18.88 | 68.36 | 0.001075 | 0.01149 |
+| poly n=3 (reference) | 42.18 | 17.32 | 59.51 | 0.001024 | 0.01054 |
+
+**There is an interior optimum at n ~ 6**, and it lands exactly where the 3-coefficient polynomial
+already was (59.94 vs 59.51 at the same budget). Resolution was never the binding constraint.
+
+Past the optimum the cost rises and so do both action roughness (0.01053 -> 0.01149) and plant variance
+(0.001009 -> 0.001075). Two causes, both expected: 12 candidates cannot cover a 10-20 dimensional
+search, and a rougher plan reintroduces the endogenous noise penalty of
+`FINDINGS_ENDOGENOUS_NOISE.md`. Full per-step freedom is the worst setting tested that still has a
+working search.
+
+So the best planner across everything tried remains **56.37** (poly n=3, K=16, M=12, 3 iterations)
+against `cnn_v4`'s **44.28**. Every lever has now been swept -- objective (mean vs expected cost),
+rollout mode (expected vs sampled), plan consistency, warm starting, compute, and parameterisation --
+and the residual is still aim.
