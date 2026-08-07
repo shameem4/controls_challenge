@@ -75,3 +75,33 @@ one.
 
 Rejected as a controller. Kept as the derivation and measurement of a term the project had been
 silently dropping, and as the reason not to attempt model-based planning here a fifth time.
+
+---
+
+## Addendum: the planner discarded its plan every step
+
+The planner re-solves from scratch at every control step -- `theta` is reset to zero, optimised for
+KSTEP gradient steps, the first action is emitted, and the whole plan is thrown away. Standard MPC
+carries the plan forward; omitting that was a defect.
+
+Two hypotheses for why it would matter, one right and one wrong:
+
+* **convergence** -- a handful of gradient steps from zero never reaches the optimum. Correct: warm
+  starting is worth **31 points**, 159.02 -> 127.86.
+* **action jitter** -- consecutive actions coming from different partially-converged optima would be
+  rough, and `FINDINGS_ENDOGENOUS_NOISE.md` showed roughness raises the plant's own variance ~30%, so
+  the planner would be inflating the noise it was minimising. **Refuted by measurement.**
+
+| arm | total | E[Var] | mean abs du |
+|---|---|---|---|
+| `cnn_v4` | 50.30 | 0.001066 | 0.01378 |
+| planner, no warm start | 159.02 | 0.001481 | 0.02188 |
+| planner, warm-started | 127.86 | 0.002419 | 0.02263 |
+
+Warm starting left the action roughness unchanged (0.02188 -> 0.02263) and raised the variance. So the
+planner's actions are ~1.6x rougher than the policy's either way, and the gain came from convergence
+alone. The roughness originates in the BASE plan -- recomputed from a new true state each step -- not
+in the correction on top of it.
+
+The verdict is unchanged: 127.86 against a baseline of 50.30, from a planner whose `theta = 0` is
+exactly that baseline.

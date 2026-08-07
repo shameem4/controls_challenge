@@ -42,6 +42,7 @@ LR = float(os.environ.get('LR', 0.05))
 WVAR = float(os.environ.get('WVAR', 1.0))   # weight on the variance term (1.0 = the true objective)
 NBASIS = int(os.environ.get('NBASIS', 3))   # smooth basis size: constant, ramp, quadratic
 LAM_U = float(os.environ.get('LAM_U', 0.0))
+WARMSTART = int(os.environ.get('WARMSTART', 1))
 
 
 def basis(H, n):
@@ -83,14 +84,21 @@ def policy_base(plant, net, ctx_act, ctx_roll, ctx_v, ctx_a, ctx_lat, cur, targe
     return torch.stack(out, 1)                                  # [B, H]
 
 
-def plan_step(plant, ctx_act, ctx_roll, ctx_v, ctx_a, ctx_lat, cur, tau, Bmat, u_base):
+def plan_step(plant, ctx_act, ctx_roll, ctx_v, ctx_a, ctx_lat, cur, tau, Bmat, u_base, theta_prev=None):
     """Optimise smooth coefficients over the horizon; return the first action of the best plan.
 
     All arithmetic is on the conditional mean and variance, so this is deterministic and
     differentiable end to end.
     """
     Bn, Hh = ctx_act.shape[0], Bmat.shape[1]
-    theta = torch.zeros(Bn, Bmat.shape[0], device=DEV, requires_grad=True)
+    # WARM START across control steps. Resetting theta to zero every step means consecutive actions
+    # come from different partially-converged optima, and that inconsistency IS action jitter -- which
+    # FINDINGS_ENDOGENOUS_NOISE showed raises the plant's own variance ~30%. Standard MPC practice is
+    # to carry the plan forward; omitting it made the planner inflate the noise it was minimising.
+    if theta_prev is None or not WARMSTART:
+        theta = torch.zeros(Bn, Bmat.shape[0], device=DEV, requires_grad=True)
+    else:
+        theta = theta_prev.detach().clone().requires_grad_(True)
     opt = torch.optim.Adam([theta], lr=LR)
     A = 5000.0 / Hh
     Bc = 100.0 / (max(Hh - 1, 1) * DEL_T ** 2)
@@ -119,7 +127,7 @@ def plan_step(plant, ctx_act, ctx_roll, ctx_v, ctx_a, ctx_lat, cur, tau, Bmat, u
         loss.backward()
         opt.step()
     with torch.no_grad():
-        return (u_base[:, 0] + (theta @ Bmat)[:, 0]).clamp(*STEER_RANGE)
+        return (u_base[:, 0] + (theta @ Bmat)[:, 0]).clamp(*STEER_RANGE), theta.detach()
 
 
 @torch.no_grad()
@@ -142,7 +150,9 @@ def run(plant, segs, net, planner=True, seed=0):
     cur = lat[-1]
     pol = AblPolicy(net, B, DEV)
     Bmat = basis(H, NBASIS)
-    traj, vars_ = [], []
+    traj, vars_, dus = [], [], []
+    prev_u = act[-1]
+    theta_prev = None
     for t in range(CONTEXT_LENGTH, T):
         fe = min(t + FUTURE_PLAN_STEPS, T)
         ctx = dict(target=target[:, t], cur=cur, roll=roll[:, t], v=v[:, t], a=a[:, t],
@@ -157,10 +167,13 @@ def run(plant, segs, net, planner=True, seed=0):
             if tau.shape[1] < H:                       # pad the tail with the last target
                 tau = torch.cat([tau, tau[:, -1:].expand(B, H - tau.shape[1])], 1)
             ub = policy_base(plant, net, ca, cr, cv, cak, cl, cur, target, roll, v, a, t, T)
-            u = plan_step(plant, ca, cr, cv, cak, cl, cur, tau, Bmat, ub)
+            u, theta_prev = plan_step(plant, ca, cr, cv, cak, cl, cur, tau, Bmat, ub, theta_prev)
         if t < CONTROL_START_IDX:
             u = steer0[:, t]
         u = u.clamp(*STEER_RANGE).detach()
+        if t >= CONTROL_START_IDX:
+            dus.append((u - prev_u).abs())
+        prev_u = u
         act.append(u); sr.append(roll[:, t]); sv.append(v[:, t]); sa.append(a[:, t])
         with torch.no_grad():
             st = torch.stack([torch.stack(act[-CONTEXT_LENGTH:], 1), torch.stack(sr[-CONTEXT_LENGTH:], 1),
@@ -178,7 +191,7 @@ def run(plant, segs, net, planner=True, seed=0):
     c = torch.stack(traj, 1); tg = target[:, CONTROL_START_IDX:T]
     lat_c = ((c - tg) ** 2).mean(1) * 5000.0
     jerk = (((c[:, 1:] - c[:, :-1]) / DEL_T) ** 2).mean(1) * 100.0
-    return lat_c, jerk, float(torch.cat(vars_).mean())
+    return lat_c, jerk, float(torch.cat(vars_).mean()), float(torch.stack(dus, 1).mean())
 
 
 def main():
@@ -189,14 +202,15 @@ def main():
     net.load_state_dict(torch.load('cnn_v4.pt', map_location=DEV)); net.eval()
     ALL = sorted(Path('data/SYNTHETIC').iterdir())
     segs = [load_segment(f) for f in ALL[start:start + nseg]]
-    print(f'  segs={nseg} H={H} KSTEP={KSTEP} LR={LR} WVAR={WVAR} NBASIS={NBASIS}', flush=True)
-    print(f'  {"arm":28} {"track":>8} {"jerk":>8} {"total":>8} {"E[Var]":>10}', flush=True)
-    l, j, vv = run(plant, segs, net, planner=False)
-    print(f'  {"cnn_v4 (baseline)":28} {l.mean():8.2f} {j.mean():8.2f} {(l + j).mean():8.2f} {vv:10.6f}',
-          flush=True)
-    l, j, vv = run(plant, segs, net, planner=True)
-    print(f'  {"planner (mean+variance)":28} {l.mean():8.2f} {j.mean():8.2f} {(l + j).mean():8.2f} {vv:10.6f}',
-          flush=True)
+    print(f'  segs={nseg} H={H} KSTEP={KSTEP} LR={LR} WVAR={WVAR} NBASIS={NBASIS} '
+          f'WARMSTART={WARMSTART}', flush=True)
+    print(f'  {"arm":28} {"track":>8} {"jerk":>8} {"total":>8} {"E[Var]":>10} {"mean|du|":>9}', flush=True)
+    l, j, vv, du = run(plant, segs, net, planner=False)
+    print(f'  {"cnn_v4 (baseline)":28} {l.mean():8.2f} {j.mean():8.2f} {(l + j).mean():8.2f} '
+          f'{vv:10.6f} {du:9.5f}', flush=True)
+    l, j, vv, du = run(plant, segs, net, planner=True)
+    print(f'  {"planner":28} {l.mean():8.2f} {j.mean():8.2f} {(l + j).mean():8.2f} '
+          f'{vv:10.6f} {du:9.5f}', flush=True)
 
 
 if __name__ == '__main__':
