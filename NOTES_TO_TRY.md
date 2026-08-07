@@ -87,3 +87,55 @@ GAMMA). `nickgkan` reports that their learned neuro-fuzzy system UNDERPERFORMS t
 system on seen maps while generalising better to unseen ones -- learned rules losing to tuned rules
 in-distribution. Combined with our own BC result (teacher works, student loses; the bar is R^2 > 0.99
 in action space) and a GAMMA sweep that peaked exactly at linear, the prior on that variant is low.
+
+---
+
+# Calibration against the #1 entry (2026-08-06)
+
+Ryan Lei's write-up of the entry that tied for #1 (score **6.880**), plus his repo `RyanL2/commacontrol`.
+
+## What it confirms
+
+* **6.880 is injection, not control.** It solves the closed-form Tikhonov optimum of the cost in the
+  lataccel trajectory alone and plays it in. Our README already says this; his numbers match ours
+  closely (his continuous floor 6.18 / grid-feasible 7.046, our analytic J* 6.69).
+* **CEM-MPC plateaus at rough PID parity** after a residual/trust-region reformulation. That is a
+  third independent MPC result landing at or behind a tuned classical controller, alongside
+  nurikserikbayev's OSQP/ARX at ~57 and our own neural-plant attempts. MPC is closed.
+* **The benchmark measures how cleanly you inject the analytic optimum, not control quality.**
+  Same conclusion as our own "What this benchmark actually measures" section.
+
+## Where we actually stand — the important reframing
+
+The commonly quoted "real controllers cluster at ~36-40" conflates two very different things. His
+**39.9 is a steer-lookup**: per-segment offline coordinate descent against the true seeded costs.
+That is an offline optimiser, not a causal controller.
+
+Compared like with like:
+
+| | offline per-segment optimiser | causal controller |
+|---|---|---|
+| Ryan Lei | 39.9 (build set) | CEM-MPC ~ PID parity |
+| ours | **38.25** (`steer_opt`, 128 pristine) | **45.32** (`cnn_v4`, 5000) |
+
+Our offline optimiser is already slightly better than his, and there is **no public evidence of a
+causal controller below ~45**. `cnn_v4` at 45.32 is plausibly at or near the causal state of the art,
+which reframes the remaining gap: it is not that others are 9 points ahead of us.
+
+## A checkable disagreement: the noise magnitude
+
+His analysis uses **sigma ~ 0.044**. We measure **E[sigma^2] = 0.001174**, i.e. sigma ~ 0.0343 --
+28% lower, 64% lower in variance -- taken directly from the plant's conditional output distribution
+(`segfloor.py`: sum p_i b_i^2 - (sum p_i b_i)^2, mean 0.001127 on 2000 pristine segments).
+
+Ours must be the right one, by a simple consistency argument. The causal total floor is
+`sigma^2 * 26614`. At sigma = 0.044 that is **51.5** -- but `cnn_v4` scores **45.32**, which would be
+below a floor no causal controller can beat. At our sigma it is 31.24, which is consistent with every
+number we have. (Treating his figure with care: it is read from a prose summary and may be measured
+against a different quantity, e.g. realised lataccel innovations after the rate clamp rather than the
+pre-clamp conditional distribution.)
+
+Worth keeping in mind that this is the SECOND independent quantity where an outside analysis disagrees
+with our measurement -- the other being the DC gain (~2.0 theirs vs our G(v) = 0.0093v + 1.34). Both
+are directly measurable and both are worth a definitive check, since the floor and the feedforward
+gain are load-bearing for everything else.
