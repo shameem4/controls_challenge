@@ -57,3 +57,59 @@ spectrum. That assumes a CIRCULAR difference -- the FFT wraps `c[N-1]` back to `
 jump that is not in the cost -- and inflated the jerk term by 67% (36.20 against the true 21.67),
 breaking the Parseval check at 64.88 vs 50.30. Taking the spectrum of the actual difference signal
 fixes it exactly. The tracking half was correct throughout, which is what localised the bug.
+
+---
+
+## The 0.5-1 Hz peak is the Bode waterbed, not a fixable defect
+
+The obvious intervention -- notch the feedback path in that band -- is a **null**, and the reason is
+that it has the wrong sign.
+
+`ff_pi_notch` adds a second-order RBJ notch on the feedback term (`depth=0` reproduces `ff_pi_tau`
+bit-for-bit; the mirrored body was gated at 1e-6). Tuning split, 400 segments:
+
+| config | mean | median |
+|---|---|---|
+| `ff_pi_tau` (depth=0) | **49.871** | **46.09** |
+| f0=0.7 Q=2 depth=0.3 (best of 18) | 49.733 | 46.76 |
+| f0=0.7 Q=2 depth=1.0 | 56.338 | 51.99 |
+| f0=0.5 Q=1 depth=1.0 | 71.372 | 65.14 |
+
+Best is -0.14 on the mean and *worse* on the median, and every deeper notch is monotonically worse.
+
+**Why.** Error from disturbance is `S d` with `S = 1/(1+L)`. Reducing loop gain at a frequency RAISES
+sensitivity there, so notching the feedback degrades disturbance rejection exactly where the error
+lives. A notch only helps if the band contains self-generated ringing; here it contains amplified
+plant noise.
+
+Confirmed directly by sweeping the feedback gain and re-measuring the tracking-cost spectrum
+(128 segments):
+
+| gain | 0-0.1 Hz | 0.1-0.25 | 0.25-0.5 | 0.5-1.0 | 1.0-2.0 | 2.0-5.0 | total |
+|---|---|---|---|---|---|---|---|
+| 0.50 | **46.16** | 21.38 | 11.61 | **7.18** | 3.75 | 1.75 | 91.85 |
+| 0.75 | 12.86 | 10.58 | 10.39 | 9.18 | 4.28 | 1.78 | 49.07 |
+| **1.00** | 4.17 | 5.76 | 7.54 | 10.18 | 5.44 | 1.82 | **34.90** |
+| 1.50 | **3.57** | 5.78 | 8.48 | **52.70** | 12.56 | 2.02 | 85.11 |
+| 2.00 | 40.08 | 74.81 | 347.00 | 1052.80 | 58.80 | 9.07 | 1582.57 |
+
+This is the waterbed exactly: low-frequency error falls monotonically with gain (46.16 -> 3.57) while
+0.5-1.0 Hz rises monotonically (7.18 -> 10.18 -> 52.70 -> 1052.80). The peak **can** be removed --
+gain 0.5 puts that band at 7.18, better than the seed-aware optimum's 7.09 -- but it costs 46.16 at
+low frequency. Total cost is minimised at gain 1.0, the tuned value, so `ff_pi_tau` already sits at
+the optimum of the trade.
+
+## What this settles
+
+The concentration is real but it is a **fundamental limit, not a defect**. Bode's integral says
+sensitivity reduction at low frequency must be paid for above it, and dead time L ~ 0.25 s caps the
+usable bandwidth near 1/(2L) ~ 2 Hz, so the payment lands at 0.5-1 Hz. That is where it appears.
+
+It also explains cleanly why the seed-aware optimum wins there: it is **not causal feedback**. It
+pre-compensates a noise draw it can see, and Bode's integral does not constrain feedforward from
+future information. Consistent with `FINDINGS_SEED_ORACLE.md`, where the optimum's tracking (17.75)
+sits below the causal lataccel floor of 19.50.
+
+So the 58% of the gap concentrated in one octave is not addressable by any causal loop shaping. It is
+the price of feedback under dead time, and both the classical controller and the CNN are already
+paying it at the optimal rate.
