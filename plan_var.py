@@ -43,6 +43,11 @@ WVAR = float(os.environ.get('WVAR', 1.0))   # weight on the variance term (1.0 =
 NBASIS = int(os.environ.get('NBASIS', 3))   # smooth basis size: constant, ramp, quadratic
 LAM_U = float(os.environ.get('LAM_U', 0.0))
 WARMSTART = int(os.environ.get('WARMSTART', 1))
+# BETA: plan-consistency filter. The emitted action blends the newly optimised plan with the PREVIOUS
+# plan's prediction FOR THE SAME TIMESTEP, so unlike an EMA on the raw action it adds no lag -- both
+# terms estimate the same time index. An EMA on cnn_v4's action was catastrophic for exactly that
+# reason (tracking 28.63 -> 111.01 at alpha=0.85).
+BETA = float(os.environ.get('BETA', 0.0))
 
 
 def basis(H, n):
@@ -127,7 +132,7 @@ def plan_step(plant, ctx_act, ctx_roll, ctx_v, ctx_a, ctx_lat, cur, tau, Bmat, u
         loss.backward()
         opt.step()
     with torch.no_grad():
-        return (u_base[:, 0] + (theta @ Bmat)[:, 0]).clamp(*STEER_RANGE), theta.detach()
+        return (u_base + theta @ Bmat).clamp(*STEER_RANGE), theta.detach()
 
 
 @torch.no_grad()
@@ -153,6 +158,7 @@ def run(plant, segs, net, planner=True, seed=0):
     traj, vars_, dus = [], [], []
     prev_u = act[-1]
     theta_prev = None
+    plan_prev = None
     for t in range(CONTEXT_LENGTH, T):
         fe = min(t + FUTURE_PLAN_STEPS, T)
         ctx = dict(target=target[:, t], cur=cur, roll=roll[:, t], v=v[:, t], a=a[:, t],
@@ -167,7 +173,13 @@ def run(plant, segs, net, planner=True, seed=0):
             if tau.shape[1] < H:                       # pad the tail with the last target
                 tau = torch.cat([tau, tau[:, -1:].expand(B, H - tau.shape[1])], 1)
             ub = policy_base(plant, net, ca, cr, cv, cak, cl, cur, target, roll, v, a, t, T)
-            u, theta_prev = plan_step(plant, ca, cr, cv, cak, cl, cur, tau, Bmat, ub, theta_prev)
+            plan_new, theta_prev = plan_step(plant, ca, cr, cv, cak, cl, cur, tau, Bmat, ub, theta_prev)
+            if BETA > 0 and plan_prev is not None:
+                # shift the previous plan so entry k refers to the same absolute time as plan_new[k]
+                shifted = torch.cat([plan_prev[:, 1:], plan_prev[:, -1:]], 1)
+                plan_new = BETA * shifted + (1.0 - BETA) * plan_new
+            plan_prev = plan_new
+            u = plan_new[:, 0]
         if t < CONTROL_START_IDX:
             u = steer0[:, t]
         u = u.clamp(*STEER_RANGE).detach()
@@ -203,7 +215,7 @@ def main():
     ALL = sorted(Path('data/SYNTHETIC').iterdir())
     segs = [load_segment(f) for f in ALL[start:start + nseg]]
     print(f'  segs={nseg} H={H} KSTEP={KSTEP} LR={LR} WVAR={WVAR} NBASIS={NBASIS} '
-          f'WARMSTART={WARMSTART}', flush=True)
+          f'WARMSTART={WARMSTART} BETA={BETA}', flush=True)
     print(f'  {"arm":28} {"track":>8} {"jerk":>8} {"total":>8} {"E[Var]":>10} {"mean|du|":>9}', flush=True)
     l, j, vv, du = run(plant, segs, net, planner=False)
     print(f'  {"cnn_v4 (baseline)":28} {l.mean():8.2f} {j.mean():8.2f} {(l + j).mean():8.2f} '

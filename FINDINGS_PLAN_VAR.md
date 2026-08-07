@@ -105,3 +105,43 @@ in the correction on top of it.
 
 The verdict is unchanged: 127.86 against a baseline of 50.30, from a planner whose `theta = 0` is
 exactly that baseline.
+
+---
+
+## Addendum 2: plan-consistency smoothing works, and isolates the failure to tracking
+
+Rather than replacing the emitted action each step, blend the newly optimised plan with the PREVIOUS
+plan's prediction for the SAME timestep:
+
+    plan <- BETA * shift(plan_prev) + (1 - BETA) * plan_new       emit plan[0]
+
+This is not an EMA on the action. Both terms estimate the same absolute time index, so it adds **no
+lag** -- which is why it succeeds where an EMA on `cnn_v4`'s raw action failed badly (tracking
+28.63 -> 111.01 at alpha=0.85, `FINDINGS_ENDOGENOUS_NOISE.md`).
+
+32 pristine segments, warm-started planner, KSTEP=6, WVAR=1:
+
+| BETA | track | jerk | total | E[Var] | mean abs du |
+|---|---|---|---|---|---|
+| `cnn_v4` baseline | **27.57** | 22.73 | **50.30** | 0.001066 | 0.01378 |
+| 0.0 | 87.61 | 40.24 | 127.86 | 0.002419 | 0.02263 |
+| 0.5 | 93.90 | 29.87 | 123.77 | 0.001663 | 0.01524 |
+| **0.8** | 67.84 | 22.68 | **90.52** | 0.001210 | 0.01127 |
+| 0.9 | 85.15 | 19.92 | 105.07 | 0.001097 | 0.00959 |
+| 0.95 | 166.84 | **16.22** | 183.07 | **0.001052** | **0.00755** |
+
+**It solves the problem it was aimed at, completely.** Cost falls 127.86 -> 90.52, a 29% improvement,
+and at high BETA the planner beats the baseline on *every* smoothness measure at once: jerk 16.22 vs
+22.73, plant variance 0.001052 vs 0.001066, action roughness 0.00755 vs 0.01378. The variance-aware
+objective plus a consistent plan really does produce a quieter, smoother controller than the trained
+policy.
+
+**And it isolates what is actually wrong.** Tracking never improves -- 67.84 at the optimum against
+the baseline's 27.57, and it collapses to 166.84 as the plan goes stale. Every remaining point of the
+gap is aiming, not execution quality. That is the certainty-equivalence failure in its purest form:
+planning on the conditional mean produces a trajectory that is smooth and quiet but systematically in
+the wrong place once the realised trajectory diverges from the mean.
+
+Best planner 90.52 against a 50.30 baseline. Still rejected as a controller, but the failure is now
+attributed rather than assumed: **not roughness, not noise, not convergence, not plan consistency --
+purely the mean-trajectory approximation.**
