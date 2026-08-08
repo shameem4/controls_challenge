@@ -1,0 +1,474 @@
+<title>Controller Test Drive &mdash; comma.ai controls challenge</title>
+<style>
+  :root {
+    --bg: #0f1319;  --panel: #161b23;  --panel2: #1b2129;  --line: #262f3b;
+    --ink: #e2e7ef;  --dim: #8b95a5;  --faint: #5b6675;
+    --road: #1f2630;  --road-edge: #394452;
+    --ref: #4fa89b;  --car: #e29338;  --err: #c9564c;  --ok: #6f9e5c;
+    --shadow: 0 1px 0 rgba(255,255,255,.04), 0 8px 24px rgba(0,0,0,.35);
+    --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #f4f6f9;  --panel: #ffffff;  --panel2: #eef1f6;  --line: #dbe1ea;
+      --ink: #18202a;  --dim: #5d6878;  --faint: #97a1af;
+      --road: #e4e9f0;  --road-edge: #b9c3d0;
+      --ref: #2e7e73;  --car: #b96f18;  --err: #b3423a;  --ok: #4d7a3d;
+      --shadow: 0 1px 2px rgba(20,30,45,.06), 0 8px 24px rgba(20,30,45,.08);
+    }
+  }
+  :root[data-theme="light"] {
+    --bg: #f4f6f9;  --panel: #ffffff;  --panel2: #eef1f6;  --line: #dbe1ea;
+    --ink: #18202a;  --dim: #5d6878;  --faint: #97a1af;
+    --road: #e4e9f0;  --road-edge: #b9c3d0;
+    --ref: #2e7e73;  --car: #b96f18;  --err: #b3423a;  --ok: #4d7a3d;
+    --shadow: 0 1px 2px rgba(20,30,45,.06), 0 8px 24px rgba(20,30,45,.08);
+  }
+  :root[data-theme="dark"] {
+    --bg: #0f1319;  --panel: #161b23;  --panel2: #1b2129;  --line: #262f3b;
+    --ink: #e2e7ef;  --dim: #8b95a5;  --faint: #5b6675;
+    --road: #1f2630;  --road-edge: #394452;
+    --ref: #4fa89b;  --car: #e29338;  --err: #c9564c;  --ok: #6f9e5c;
+    --shadow: 0 1px 0 rgba(255,255,255,.04), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--ink);
+    font-family: var(--sans); font-size: 15px; line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+
+  header { display: flex; flex-direction: column; gap: 6px; margin-bottom: 22px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 11px; letter-spacing: .22em;
+    text-transform: uppercase; color: var(--ref);
+  }
+  h1 {
+    font-family: var(--mono); font-weight: 600; font-size: clamp(21px, 3.2vw, 30px);
+    margin: 0; letter-spacing: -.01em; text-wrap: balance;
+  }
+  .sub { color: var(--dim); max-width: 66ch; margin: 2px 0 0; }
+
+  .bar {
+    display: flex; flex-wrap: wrap; gap: 10px 14px; align-items: flex-end;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 16px;
+  }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field > label {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .16em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  select, button {
+    font-family: var(--mono); font-size: 13px; color: var(--ink);
+    background: var(--panel2); border: 1px solid var(--line);
+    border-radius: 7px; padding: 7px 11px; cursor: pointer;
+  }
+  select:focus-visible, button:focus-visible, input:focus-visible {
+    outline: 2px solid var(--ref); outline-offset: 2px;
+  }
+  button:hover { border-color: var(--ref); }
+  button.primary { background: var(--ref); border-color: var(--ref); color: #08110f; font-weight: 600; }
+  :root[data-theme="light"] button.primary, @media (prefers-color-scheme: light) { }
+  .spacer { flex: 1 1 auto; }
+  .ghosts { display: flex; gap: 10px; flex-wrap: wrap; }
+  .ghost-chip {
+    display: inline-flex; align-items: center; gap: 6px; font-family: var(--mono);
+    font-size: 11px; color: var(--dim); background: var(--panel2);
+    border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; cursor: pointer;
+  }
+  .ghost-chip input { margin: 0; accent-color: var(--ref); }
+  .swatch { width: 9px; height: 9px; border-radius: 2px; }
+
+  .stage {
+    display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
+    gap: 16px; margin-bottom: 16px;
+  }
+  @media (max-width: 860px) { .stage { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+    box-shadow: var(--shadow); overflow: hidden;
+  }
+  .card h2 {
+    font-family: var(--mono); font-size: 10px; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--faint); margin: 0; padding: 12px 14px 0;
+  }
+  canvas { display: block; width: 100%; }
+  #road { height: 430px; }
+  #trace { height: 132px; }
+  #steer { height: 96px; }
+
+  .readout { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .stat { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
+  .stat .k {
+    font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em;
+    text-transform: uppercase; color: var(--faint);
+  }
+  .stat .v {
+    font-family: var(--mono); font-size: 20px; font-variant-numeric: tabular-nums;
+    letter-spacing: -.02em; margin-top: 2px;
+  }
+  .stat .u { font-size: 11px; color: var(--dim); margin-left: 3px; }
+
+  table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+  th, td { text-align: right; padding: 6px 6px; border-bottom: 1px solid var(--line); }
+  th:first-child, td:first-child { text-align: left; }
+  th {
+    font-size: 9.5px; letter-spacing: .13em; text-transform: uppercase;
+    color: var(--faint); font-weight: 500;
+  }
+  td { font-variant-numeric: tabular-nums; }
+  tr.active td { color: var(--car); }
+  tr.active td:first-child { font-weight: 600; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 7px; }
+
+  .scrub { display: flex; align-items: center; gap: 12px; padding: 0 2px; }
+  input[type=range] { flex: 1; accent-color: var(--ref); height: 22px; }
+  .clock { font-family: var(--mono); font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums; }
+
+  .note {
+    font-size: 13px; color: var(--dim); border-left: 2px solid var(--line);
+    padding-left: 12px; margin: 18px 0 0; max-width: 72ch;
+  }
+  .note b { color: var(--ink); font-weight: 600; }
+  code { font-family: var(--mono); font-size: .92em; color: var(--ref); }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="eyebrow">comma.ai controls challenge &middot; lateral control</div>
+    <h1>Controller Test Drive</h1>
+    <p class="sub">
+      Watch a controller steer a real segment. The road is drawn from the <span style="color:var(--ref)">commanded</span>
+      lateral acceleration; the <span style="color:var(--car)">car</span> drifts when it fails to produce it.
+      Run others as ghosts to see where they part company.
+    </p>
+  </header>
+
+  <div class="bar">
+    <div class="field">
+      <label for="seg">Segment</label>
+      <select id="seg"></select>
+    </div>
+    <div class="field">
+      <label for="ctrl">Driving</label>
+      <select id="ctrl"></select>
+    </div>
+    <div class="field">
+      <label>Ghosts</label>
+      <div class="ghosts" id="ghosts"></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="field">
+      <label for="speed">Speed</label>
+      <select id="speed">
+        <option value="0.5">0.5&times;</option>
+        <option value="1" selected>1&times;</option>
+        <option value="2">2&times;</option>
+        <option value="4">4&times;</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <button id="play" class="primary">Play</button>
+    </div>
+    <div class="field">
+      <label>&nbsp;</label>
+      <button id="restart">Restart</button>
+    </div>
+  </div>
+
+  <div class="stage">
+    <div class="card">
+      <h2>Road view</h2>
+      <canvas id="road"></canvas>
+      <div class="scrub" style="padding:0 14px 12px">
+        <span class="clock" id="clock">0.0 s</span>
+        <input type="range" id="pos" min="0" max="399" value="0" step="1" aria-label="Scrub through segment">
+        <span class="clock" id="dur">40.0 s</span>
+      </div>
+    </div>
+
+    <div class="card readout">
+      <div class="grid2">
+        <div class="stat">
+          <div class="k">Lataccel error</div>
+          <div class="v" id="err">0.00<span class="u">m/s&sup2;</span></div>
+        </div>
+        <div class="stat">
+          <div class="k">Steer command</div>
+          <div class="v" id="cmd">0.00</div>
+        </div>
+        <div class="stat">
+          <div class="k">Speed</div>
+          <div class="v" id="spd">0<span class="u">m/s</span></div>
+        </div>
+        <div class="stat">
+          <div class="k">Cost so far</div>
+          <div class="v" id="run">0.0</div>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Controller</th><th>Total</th><th>Track</th><th>Jerk</th></tr>
+        </thead>
+        <tbody id="tbl"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
+    <h2>Lateral acceleration &mdash; commanded (dashed) vs achieved &middot; m/s&sup2;</h2>
+    <canvas id="trace"></canvas>
+  </div>
+  <div class="card">
+    <h2>Steer command &middot; torque</h2>
+    <canvas id="steer"></canvas>
+  </div>
+
+  <p class="note">
+    <b>How to read the drift.</b> The benchmark scores lateral <i>acceleration</i> error, not position, so
+    integrating that error freely over 40 s would show metres of wander the cost never penalises. The lane
+    offset here is a leaky integral (&asymp;3 s memory) of the heading error <code>(a_achieved &minus; a_commanded) / v</code> &mdash;
+    corner drift reads true, while long-run drift does not accumulate fictitiously.
+    Costs shown are the real benchmark numbers from <code>tinyphysics</code>, steps 100&ndash;500.
+  </p>
+</div>
+
+<script>
+const DATA = /*__DATA__*/;
+const $ = s => document.querySelector(s);
+// Ghost/legend hues. Deliberately excludes amber: amber is reserved for whichever controller is
+// DRIVING, so the active car always reads as the subject and ghosts never impersonate it.
+const COLORS = ['#7f8aa0', '#a07bb8', '#5f9ea0', '#6f9e5c'];
+
+let segIdx = 0, ctrlKey = DATA.controllers[0].key, ghosts = new Set();
+let frame = 0, playing = false, speed = 1, last = 0;
+
+const segSel = $('#seg'), ctrlSel = $('#ctrl');
+DATA.segments.forEach((s, i) => segSel.add(new Option(s.label, i)));
+DATA.controllers.forEach(c => ctrlSel.add(new Option(c.name, c.key)));
+ctrlKey = DATA.controllers[DATA.controllers.length - 1].key;
+ctrlSel.value = ctrlKey;
+
+const ghostBox = $('#ghosts');
+DATA.controllers.forEach((c, i) => {
+  const l = document.createElement('label');
+  l.className = 'ghost-chip';
+  l.innerHTML = `<input type="checkbox" data-k="${c.key}"><span class="swatch" style="background:${COLORS[i]}"></span>${c.key}`;
+  ghostBox.appendChild(l);
+});
+ghostBox.addEventListener('change', e => {
+  const k = e.target.dataset.k;
+  if (!k) return;
+  e.target.checked ? ghosts.add(k) : ghosts.delete(k);
+  draw();
+});
+
+function seg() { return DATA.segments[segIdx]; }
+function N() { return seg().target.length; }
+
+// Lane offset: leaky double integration of the heading error, ~3 s memory.
+function laneOffsets(key) {
+  const s = seg(), r = s.runs[key], dt = DATA.dt, decay = Math.exp(-dt / 3.0);
+  const off = new Float32Array(s.target.length);
+  let psi = 0, y = 0;
+  for (let i = 0; i < s.target.length; i++) {
+    const v = Math.max(s.v[i], 1e-3);
+    psi = psi * decay + ((r.lat[i] - s.target[i]) / v) * dt;
+    y = y * decay + v * psi * dt;
+    off[i] = y;
+  }
+  return off;
+}
+
+let OFF = {};
+function recompute() {
+  OFF = {};
+  DATA.controllers.forEach(c => { OFF[c.key] = laneOffsets(c.key); });
+}
+
+function fit(cv) {
+  const r = cv.getBoundingClientRect(), d = window.devicePixelRatio || 1;
+  cv.width = r.width * d; cv.height = r.height * d;
+  const g = cv.getContext('2d'); g.setTransform(d, 0, 0, d, 0, 0);
+  return [g, r.width, r.height];
+}
+const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+
+function drawRoad() {
+  const [g, W, H] = fit($('#road'));
+  const s = seg(), i0 = frame;
+  const AHEAD = 40;                       // 4 s of road ahead
+  const SX = 30;                          // px per metre, LATERAL  (deviation must be legible)
+  const HALF = 1.85;                      // lane half-width, metres
+  g.clearRect(0, 0, W, H);
+  const cx = W / 2, carY = H - 62, topY = 16;
+
+  // Centre line in metres, from the COMMANDED lateral acceleration.
+  const mx = [0], my = [0];
+  let psi = 0, x = 0, y = 0;
+  for (let k = 1; k <= AHEAD && i0 + k < s.target.length; k++) {
+    const v = Math.max(s.v[i0 + k], 1e-3);
+    psi += (s.target[i0 + k] / v) * DATA.dt;
+    x += v * Math.sin(psi) * DATA.dt;
+    y += v * Math.cos(psi) * DATA.dt;
+    mx.push(x); my.push(y);
+  }
+  if (mx.length < 3) return;
+  const SY = (carY - topY) / Math.max(my[my.length - 1], 1e-3);   // longitudinal: fill the frame
+
+  const P = mx.map((_, k) => [cx - mx[k] * SX, carY - my[k] * SY]);
+  // Screen-space normals, robust to tiny spacing between consecutive points.
+  const nrm = P.map((_, k) => {
+    const a = P[Math.max(k - 1, 0)], b = P[Math.min(k + 1, P.length - 1)];
+    const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
+    return [dy / L, -dx / L];
+  });
+  const side = sgn => P.map(([px, py], k) => [px + nrm[k][0] * HALF * SX * sgn,
+                                              py + nrm[k][1] * HALF * SX * sgn]);
+  const L = side(1), R = side(-1);
+
+  g.beginPath();
+  L.forEach(([px, py], k) => k ? g.lineTo(px, py) : g.moveTo(px, py));
+  for (let k = R.length - 1; k >= 0; k--) g.lineTo(R[k][0], R[k][1]);
+  g.closePath();
+  g.fillStyle = css('--road'); g.fill();
+
+  g.strokeStyle = css('--road-edge'); g.lineWidth = 2;
+  [L, R].forEach(E => { g.beginPath(); E.forEach(([px, py], k) => k ? g.lineTo(px, py) : g.moveTo(px, py)); g.stroke(); });
+
+  g.setLineDash([9, 11]); g.strokeStyle = css('--ref'); g.lineWidth = 2.5;
+  g.beginPath(); P.forEach(([px, py], k) => k ? g.lineTo(px, py) : g.moveTo(px, py));
+  g.stroke(); g.setLineDash([]);
+
+  const carAt = (off, color, solid) => {
+    const px = cx - off * SX;
+    const lean = Math.max(-0.45, Math.min(0.45, off * 0.30));
+    g.save(); g.translate(px, carY); g.rotate(lean);
+    g.globalAlpha = solid ? 1 : 0.40;
+    g.fillStyle = color;
+    g.beginPath();
+    if (g.roundRect) g.roundRect(-13, -22, 26, 44, 6); else g.rect(-13, -22, 26, 44);
+    g.fill();
+    if (solid) { g.fillStyle = css('--road'); g.globalAlpha = .85; g.fillRect(-8, -12, 16, 11); }
+    g.restore();
+  };
+
+  DATA.controllers.forEach((c, i) => {
+    if (c.key !== ctrlKey && ghosts.has(c.key)) carAt(OFF[c.key][i0], COLORS[i], false);
+  });
+
+  const off = OFF[ctrlKey][i0];
+  g.strokeStyle = Math.abs(off) > 0.35 ? css('--err') : css('--faint');
+  g.lineWidth = 2; g.setLineDash([3, 4]);
+  g.beginPath(); g.moveTo(cx, carY); g.lineTo(cx - off * SX, carY); g.stroke(); g.setLineDash([]);
+  carAt(off, css('--car'), true);
+
+  g.font = '11px ' + css('--mono');
+  g.fillStyle = Math.abs(off) > 0.35 ? css('--err') : css('--faint');
+  g.fillText('lane offset ' + (off >= 0 ? '+' : '\u2212') + Math.abs(off).toFixed(2) + ' m', 12, H - 14);
+  g.fillStyle = css('--faint');
+  g.fillText('4 s ahead \u00B7 lateral scale exaggerated ' + (SX / SY).toFixed(1) + '\u00D7', 12, H - 30);
+}
+
+function series(cvId, get, zero) {
+  const [g, W, H] = fit($(cvId));
+  const s = seg(), n = N(), pad = 8;
+  g.clearRect(0, 0, W, H);
+  let lo = Infinity, hi = -Infinity;
+  const sets = get();
+  sets.forEach(({ d }) => d.forEach(v => { lo = Math.min(lo, v); hi = Math.max(hi, v); }));
+  if (!isFinite(lo)) return;
+  const m = (hi - lo) * 0.12 + 1e-3; lo -= m; hi += m;
+  const X = i => pad + (W - 2 * pad) * i / (n - 1);
+  const Y = v => H - pad - (H - 2 * pad) * (v - lo) / (hi - lo);
+
+  if (zero && lo < 0 && hi > 0) {
+    g.strokeStyle = css('--line'); g.lineWidth = 1;
+    g.beginPath(); g.moveTo(pad, Y(0)); g.lineTo(W - pad, Y(0)); g.stroke();
+  }
+  sets.forEach(({ d, c, w, dash }) => {
+    g.strokeStyle = c; g.lineWidth = w || 1.6;
+    g.setLineDash(dash || []);
+    g.beginPath(); d.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)));
+    g.stroke(); g.setLineDash([]);
+  });
+  g.strokeStyle = css('--ink'); g.globalAlpha = .5; g.lineWidth = 1;
+  g.beginPath(); g.moveTo(X(frame), pad); g.lineTo(X(frame), H - pad); g.stroke();
+  g.globalAlpha = 1;
+}
+
+function draw() {
+  const s = seg(), r = s.runs[ctrlKey];
+  drawRoad();
+  series('#trace', () => [
+    { d: s.target, c: css('--ref'), w: 2, dash: [5, 5] },
+    { d: r.lat, c: css('--car'), w: 1.7 },
+  ], true);
+  series('#steer', () => [{ d: r.steer, c: css('--car'), w: 1.5 }], true);
+
+  const e = r.lat[frame] - s.target[frame];
+  $('#err').innerHTML = (e >= 0 ? '' : '\u2212') + Math.abs(e).toFixed(2) + '<span class="u">m/s\u00B2</span>';
+  $('#err').style.color = Math.abs(e) > 0.3 ? css('--err') : css('--ink');
+  $('#cmd').textContent = r.steer[frame].toFixed(3);
+  $('#spd').innerHTML = s.v[frame].toFixed(0) + '<span class="u">m/s</span>';
+
+  let lat = 0, jrk = 0;
+  for (let i = 0; i <= frame; i++) {
+    lat += (r.lat[i] - s.target[i]) ** 2;
+    if (i) jrk += ((r.lat[i] - r.lat[i - 1]) / DATA.dt) ** 2;
+  }
+  const nn = frame + 1;
+  $('#run').textContent = (5000 * lat / nn + 100 * jrk / Math.max(nn - 1, 1)).toFixed(1);
+
+  $('#tbl').innerHTML = DATA.controllers.map((c, i) => {
+    const q = s.runs[c.key];
+    return `<tr class="${c.key === ctrlKey ? 'active' : ''}">
+      <td><span class="dot" style="background:${COLORS[i]}"></span>${c.key}</td>
+      <td>${q.cost.toFixed(1)}</td><td>${q.lat_cost.toFixed(1)}</td><td>${q.jerk_cost.toFixed(1)}</td></tr>`;
+  }).join('');
+
+  $('#pos').value = frame;
+  $('#clock').textContent = (frame * DATA.dt).toFixed(1) + ' s';
+  $('#dur').textContent = ((N() - 1) * DATA.dt).toFixed(1) + ' s';
+}
+
+function tick(ts) {
+  if (playing) {
+    if (!last) last = ts;
+    const adv = Math.floor((ts - last) / (100 / speed));
+    if (adv > 0) {
+      last = ts;
+      frame += adv;
+      if (frame >= N()) { frame = N() - 1; playing = false; $('#play').textContent = 'Play'; }
+      draw();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+
+segSel.onchange = e => { segIdx = +e.target.value; frame = 0; $('#pos').max = N() - 1; recompute(); draw(); };
+ctrlSel.onchange = e => { ctrlKey = e.target.value; draw(); };
+$('#speed').onchange = e => { speed = +e.target.value; };
+$('#pos').oninput = e => { frame = +e.target.value; playing = false; $('#play').textContent = 'Play'; draw(); };
+$('#play').onclick = () => {
+  if (frame >= N() - 1) frame = 0;
+  playing = !playing; last = 0;
+  $('#play').textContent = playing ? 'Pause' : 'Play';
+};
+$('#restart').onclick = () => { frame = 0; draw(); };
+window.addEventListener('resize', draw);
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+new MutationObserver(draw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+$('#pos').max = N() - 1;
+recompute();
+draw();
+requestAnimationFrame(tick);
+</script>
