@@ -19,14 +19,30 @@ from pathlib import Path
 from tinyphysics import (TinyPhysicsModel, TinyPhysicsSimulator, CONTROL_START_IDX,
                          COST_END_IDX, DEL_T, LAT_ACCEL_COST_MULTIPLIER)
 
-# Chosen for driving character, and screened so the car is MOVING throughout (vmin > 5 m/s).
-# 193 of 2000 pristine segments are stationary for part of the window -- the "cheapest" segment in
-# the set is simply a parked car, which scores ~0.5 and shows nothing.
+# Screened so the car is MOVING throughout (vmin > 5 m/s): 193 of 2000 pristine segments are
+# stationary for part of the window, and the "cheapest" one is simply a parked car.
+#
+# The earlier hand-picked set was chosen for driving character alone, and turned out to be
+# unrepresentative in a way that actively misled: its most dramatic segment was one of the ~30%
+# where `pid` shows the least lane deviation despite costing far more. These five are drawn from a
+# 205-segment sweep (ALL[5000:5240], `segsel.py`) by binning on steering activity and taking the
+# median-cost segment of each band, so the character spread is deliberate but the ranking within
+# each is typical. On the first four, `cnn_v4` has both the lowest cost AND the lowest drawn lane
+# deviation, which is the population behaviour (it wins cost on 145/205 and path on 125/205).
+#
+# The fifth is the counterexample, kept deliberately. On 06585 `pid` really does hold the tightest
+# line -- 0.425 m drawn deviation against `cnn_v4`'s 0.655 m -- while costing 52% more (7967 vs
+# 5244). It is not a contradiction: `pid`'s error is zero-mean chatter, which the 3 s leaky
+# integrator behind the drawn offset averages away and which the cost charges for in full, while
+# the others hold a persistent lag through the sustained corner. The eye lowpasses; the cost does
+# not. Showing only the first four would hide a real effect; showing only this one, as the earlier
+# set effectively did, implies `pid` drives best, which the 205-segment sweep refutes.
 SEGMENTS = [
-    ('06308', 'Gentle - straight cruise, 20 m/s'),
-    ('05541', 'Typical - flowing curves, 19 m/s'),
-    ('05913', 'Winding - busy steering, 26 m/s'),
-    ('06585', 'Hard corner - 6.9 m/s2 at 32 m/s'),
+    ('05161', 'Gentle - light steering, 25 m/s'),
+    ('05034', 'Typical - median segment, 25 m/s'),
+    ('05150', 'Winding - busy steering, 27 m/s'),
+    ('05115', 'Demanding - top decile activity, 25 m/s'),
+    ('06585', 'Counterexample - pid holds the tightest line and costs 52% more'),
 ]
 
 CONTROLLERS = [

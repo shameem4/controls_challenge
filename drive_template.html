@@ -98,7 +98,7 @@
   }
   canvas { display: block; width: 100%; }
   #road { height: 470px; }
-  #wheels { height: 168px; }
+  #wheels { height: 216px; }
   #trace { height: 132px; }
   #steer { height: 96px; }
 
@@ -453,6 +453,20 @@ function drawWheels() {
     g.fillText(c.key, cx, cy + R + 20);
     g.font = '12px ' + css('--mono'); g.fillStyle = css('--ink');
     g.fillText((st >= 0 ? '+' : '\u2212') + Math.abs(st).toFixed(3), cx, cy + R + 36);
+
+    // Chatter over the last 2 s. The road view cannot show this: turning lataccel into a drawn
+    // path is a double integral, so it attenuates exactly the band the jerk cost charges for.
+    // A controller can hold a clean line and still be paying here -- that is the whole reason
+    // the drawn path and the cost rank controllers differently.
+    const a = s.runs[c.key].steer, lo = Math.max(1, frame - 19);
+    let ch = 0; for (let j = lo; j <= frame; j++) ch += Math.abs(a[j] - a[j - 1]);
+    ch /= Math.max(1, frame - lo + 1);
+    const bw = Math.min(cw * 0.52, 96), bx = cx - bw / 2, by = cy + R + 48;
+    g.fillStyle = css('--line'); g.fillRect(bx, by, bw, 6);
+    g.fillStyle = col; g.globalAlpha = active ? 1 : .55;
+    g.fillRect(bx, by, bw * Math.min(1, ch / 0.08), 6);
+    g.globalAlpha = 1; g.font = '10px ' + css('--mono'); g.fillStyle = css('--dim');
+    g.fillText('chatter ' + ch.toFixed(4), cx, by + 19);
     g.textAlign = 'left';
   });
 }
