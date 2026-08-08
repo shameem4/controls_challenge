@@ -35,11 +35,23 @@ The trade is jerk bought with tracking. In cost units:
 
 | parent | d(jerk) | d(lat) | exchange rate | jerk weight needed to break even |
 |---|---|---|---|---|
-| stock `pid`, w=0.15 | -4.62 | +11.20 | 0.41 | ~7x current |
+| stock `pid`, w=0.15 | -4.62 | +10.95 | 0.42 | 2.37x current |
 | `ff_pi_boot`, w=0.10 | -0.810 | +1.421 | **0.57** | **1.75x current** |
 
-Feedforward moved the crossover from roughly 7x the current jerk weight to 1.75x. Real progress on
+Feedforward moved the crossover from about 2.4x the current jerk weight to 1.75x. Real progress on
 the mechanism; the cost function still does not pay for it.
+
+> **Corrected 2026-08-08 after a bug bash.** This table first read `+11.20` / `0.41` / `~7x` for the
+> `pid` row. The d(lat) figure was arithmetically wrong -- `50*(2.199-1.980)` is 10.95, not 11.20 --
+> and, more seriously, the `~7x` break-even did not come from this row at all: it was carried over
+> from the 60-segment TUNING set (where the same computation gives ~5.6x) and presented alongside
+> held-out numbers. Break-even implied by this row's own figures is `10.95 / 4.62` = 2.37x. The
+> claim "feedforward moved the crossover from roughly 7x to 1.75x" was therefore overstated; the
+> honest version is 2.4x to 1.75x. The `ff_pi` row was correct as published.
+>
+> Caveat that stands: the two rows come from different held-out samples (n=200 for `pid`,
+> `ALL[5000:5200]`; n=300 for `ff_pi_boot`, `ALL[5000:5300]`), so the comparison between them is
+> indicative rather than matched.
 
 ## Two null results worth recording
 
