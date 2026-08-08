@@ -60,9 +60,28 @@ cleared it by 0.001. More importantly the **two unseen ranges disagree with each
 more than double the effect being tested for, so at n=150 between-range variation swamps the signal.
 The test is underpowered, not conclusive.
 
-RECOMMENDATION, unresolved: quote the cnn headline on `ALL[5000:]` (never trained, never tuned)
-rather than `ALL[:5000]`, exactly as `ff_pi_rl2`'s docstring already does for the classical arm --
-which reports both bases side by side. That removes the question instead of arguing about it.
+### RESOLVED at n=2000
+
+Rather than argue about the overlap, the headline was recomputed on pristine `ALL[5000:7000]`
+(n=2000, never trained, never selected on, never tuned), with matched controls run over the
+identical segments (`heldout_headline.py`):
+
+| controller | pristine mean | pristine median | lataccel | jerk | on the 5000 basis | shift |
+|---|---|---|---|---|---|---|
+| cnn_v4 | 47.366 | 43.218 | 27.097 | 20.269 | 45.32 | +2.04 |
+| ff_pi_tau | 51.264 | 45.435 | 32.273 | 18.991 | 49.47 | +1.79 |
+| pid | 112.663 | 73.394 | 86.957 | 25.706 | 110.76 | +1.90 |
+
+**difference-in-differences vs ff_pi_tau = +0.25.** The controller that never trained on anything
+shifts by nearly the same amount, so ~87% of the 2.04 is that `ALL[5000:7000]` is a harder stretch
+of road; contamination accounts for at most ~0.5% of cost. This agrees with the n=150 ratio test
+(-0.029) at 13x the sample size, and supersedes it -- the earlier "underpowered" caveat is settled.
+
+`cnn_v4` beats `ff_pi_tau` on pristine data by **-3.897, 95% CI [-4.794, -3.080], winning
+1470/2000**. The learned controller's advantage is real on segments it has never seen.
+
+Both bases are now stated in `README.md` and in `controllers/cnn.py`'s header, so the 5000-segment
+leaderboard number stays comparable while the overlap is disclosed rather than footnoted.
 
 ## Checked and clean
 
@@ -81,12 +100,18 @@ which reports both bases side by side. That removes the question instead of argu
 * Build guards active; the published page has 0 unsubstituted placeholders and 0 non-ASCII bytes.
 * `FINDINGS_VISUAL_VS_COST.md` reconciles exactly against its source log.
 
-## Known limitations, not fixed
+## Known limitations -- all since fixed
 
 * `ff_pi_blend` built its trajectory endpoint from `ff_pi_traj` DEFAULTS (tau=3.0) rather than the
-  tuned tau=1.0, so that arm may have been handicapped. The bang-bang degeneracy finding is likely
-  unaffected, since it concerns the one-step model's inability to rank interior blends at all.
-* `ff_pi_blend` forwards `kw` to both sub-controllers, so trajectory-only keys raise `TypeError`.
-  Loud failure, so it cannot silently corrupt a result.
-* `ff_pi_gate`'s EMA measures error against the raw target while the loop tracks the smoothed
-  reference. Minor inconsistency in the gating signal only.
+  tuned tau=1.0. **Fixed** via `TRAJ_TUNED`. Re-ran: best 45.93 against 44.93 with the untuned
+  endpoint -- WORSE, so the handicap was not what made the arm null. The bang-bang degeneracy is
+  intrinsic to the one-step model, as suspected.
+* `ff_pi_blend` forwarded `kw` to both sub-controllers by double-splatting, so an overlapping key
+  raised a duplicate-argument `TypeError`. **Fixed** by merging into one dict with `traj` winning.
+* `ff_pi_gate`'s EMA measured error against the raw target while the loop tracks the smoothed
+  reference, charging the deliberate cost-optimal smoothing deviation to the tracking side.
+  **Fixed**: `ff_pi_traj` records the feedback error it uses (`e_last`) and the gate reads it.
+  Re-ran: 41.59 vs parent 41.64, where the previous version gave 41.46 -- the apparent effect
+  shrinks to 0.1% with lataccel identical to three decimals on every row. Firing rate is unchanged
+  (mean w 0.0124 vs 0.0137), so the correction moved the signal, not the schedule. The gate arm's
+  null verdict is weaker still.

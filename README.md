@@ -27,6 +27,28 @@ below on how precisely those are comparable).
 | `cnn` with `cnn_dual.pt` — BC→PO, tied with `cnn_v2` | `controllers/cnn.py` | 0.531 | 20.33 | **46.89** | −58% |
 | `cnn` with `cnn_PM.pt` — v1 tag, a below-average run | `controllers/cnn.py` | 0.545 | 20.61 | **47.87** | −57% |
 
+### The learned controller trained on 2000 of those 5000 segments
+
+The 5000-segment basis above is the leaderboard's, so it is the right number for comparison — but
+`cap_ab.py` trains on `ALL[2000:4000]`, which sits **inside** it. A 40% overlap deserves stating
+rather than a footnote, so here is the same comparison on **pristine `ALL[5000:7000]`** (n=2000),
+never trained on, never used for checkpoint selection, never tuned against:
+
+| Controller | pristine mean | pristine median | lataccel | jerk | on the 5000 basis |
+|---|---|---|---|---|---|
+| **`cnn` (`cnn_v4.pt`)** | **47.37** | 43.22 | 27.10 | 20.27 | 45.32 |
+| `ff_pi_tau` (best classical) | 51.26 | 45.44 | 32.27 | 18.99 | 49.47 |
+| PID (baseline) | 112.66 | 73.39 | 86.96 | 25.71 | 110.76 |
+
+`cnn_v4` beats `ff_pi_tau` by **−3.897** paired, 95% CI [−4.794, −3.080], winning **1470/2000**
+segments. The learned controller's advantage is real on data it has never seen.
+
+**Is the 45.32 → 47.37 shift contamination?** Almost none of it. `ff_pi_tau` never trained on
+anything and moves the same way, 49.47 → 51.26. The difference-in-differences is **+0.25**, so about
+87% of the shift is that `ALL[5000:7000]` is simply a harder stretch of road, and contamination
+accounts for at most ~0.5% of cost. An independent check at n=150 using `ff_pi_boot` as the control
+gave a ratio-based difference-in-differences of −0.029, agreeing. See `FINDINGS_BUGBASH.md` §4.
+
 `ff_pi_tuned` re-tunes the six `ff_pi` parameters with CMA-ES on a 400-segment set disjoint from
 every eval split (component costs not recorded for the 5000 run, hence the dashes). Tuning on only
 60 segments produced a 16% *apparent* gain that was almost entirely overfitting — this metric's

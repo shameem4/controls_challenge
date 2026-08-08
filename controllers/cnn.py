@@ -14,6 +14,12 @@ from nets import AblNet, build_ff_window, build_multihorizon, V_SCALE
 # with soft-token full BPTT (see torch_sim.py).
 #
 # Five interchangeable weight sets (cfg 'PM'; width is inferred from the checkpoint):
+# NOTE ON BASES. The 5000-segment figures below are the leaderboard's, and cap_ab.py trains on
+# ALL[2000:4000], which is INSIDE that range. On pristine ALL[5000:7000] (n=2000, never trained,
+# never tuned) cnn_v4 scores 47.37 against ff_pi_tau's 51.26, paired -3.897 [-4.794, -3.080],
+# better on 1470/2000. The 45.32 -> 47.37 shift is range difficulty, not memorisation: ff_pi_tau
+# moves 49.47 -> 51.26 on the same segments, a difference-in-differences of +0.25. FINDINGS_BUGBASH.
+#
 #   cnn_v4.pt    45.32 on the full 5000  <- DEFAULT. Same recipe again, trained to a PLATEAU
 #                (patience 16 validations) rather than a fixed budget: 5325 iterations. Beats
 #                cnn_v3 by -0.422 [-0.86,-0.02] on the headline, median -0.518, 3295/5000

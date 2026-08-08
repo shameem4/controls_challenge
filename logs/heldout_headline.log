@@ -1,0 +1,7 @@
+PRISTINE ALL[5000:7000]  n=2000  (never trained, never tuned)
+  controller        mean    median      lat     jerk     sem
+  cnn_v4          47.366    43.218   27.097   20.269   2.752
+  ff_pi_tau       51.264    45.435   32.273   18.991   2.812
+  pid            112.663    73.394   86.957   25.706   5.576
+
+  cnn_v4 - ff_pi_tau, paired: -3.897  95% CI [-4.794, -3.080]  cnn better on 1470/2000
