@@ -459,7 +459,13 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
   // and gives the flow-field cue that makes speed readable.
   const DASH_M = 3, GAP_M = 9, PERIOD_M = DASH_M + GAP_M;
   const s0m = PATH.S[i0];
-  let d0 = Math.ceil((NEAR - (s0m % PERIOD_M)) / PERIOD_M) * PERIOD_M + (s0m % PERIOD_M);
+  // Dashes must be pinned to the WORLD, not to the camera: the dash at viewing distance d sits at
+  // world arc s0m + dir*d, and that has to stay a fixed multiple of the period, so
+  // d = -dir*s0m (mod PERIOD_M). The previous line solved d = +s0m (mod PERIOD_M), which put the
+  // dash at world 2*s0m: advancing by delta moved the dashes 2*delta while the camera moved delta,
+  // so they receded at delta and the forward view read as a rear view.
+  const mod = (a, m) => ((a % m) + m) % m;
+  const d0 = NEAR + mod(mod(-dir * s0m, PERIOD_M) - NEAR, PERIOD_M);
   const atArc = d => {                      // interpolate the path at arc distance d ahead/behind
     const tgt = s0m + dir * d;
     let lo = 0, hi = n - 1;
@@ -523,6 +529,8 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
     g.closePath(); g.fill(); g.globalAlpha = 1;
     g.strokeStyle = css('--line'); g.lineWidth = 1; g.stroke();
 
+    wheelOverlay(g, ox, oy, W, H, i0);
+
     const off = OFF[ctrlKey][i0];
     g.font = '11px ' + css('--mono');
     g.fillStyle = Math.abs(off) > 0.35 ? css('--err') : css('--faint');
@@ -539,6 +547,51 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
     g.fillStyle = css('--faint'); g.font = '9px ' + css('--mono');
     g.fillText('REAR', ox + 6, oy + H - 6);
   }
+}
+
+// The wheel as the driver sees it: bottom-centre, rising above the bonnet, turning with the car.
+// Ghost controllers cannot each have their own wheel here without becoming a pile of rims, so they
+// appear as coloured index marks on an outer arc -- the spread between marks IS the disagreement,
+// readable at a glance without occluding the road.
+function wheelOverlay(g, ox, oy, W, H, i0) {
+  const s = seg(), cs = DATA.controllers;
+  const cx = ox + W / 2, cy = oy + H * 0.995, R = Math.min(H * 0.175, W * 0.17);
+  const ang = st => Math.max(-2.79, Math.min(2.79, st * 160 * Math.PI / 180));   // cap at +-160 deg
+  const mark = (a, rad, len, color, w, alpha) => {
+    const d = a - Math.PI / 2;                       // 12 o'clock, rotated by the wheel angle
+    g.strokeStyle = color; g.lineWidth = w; g.globalAlpha = alpha;
+    g.beginPath();
+    g.moveTo(cx + Math.cos(d) * rad, cy + Math.sin(d) * rad);
+    g.lineTo(cx + Math.cos(d) * (rad + len), cy + Math.sin(d) * (rad + len));
+    g.stroke(); g.globalAlpha = 1;
+  };
+
+  // ghosts first, so the active wheel sits on top
+  cs.forEach((c, i) => {
+    if (c.key === ctrlKey || !ghosts.has(c.key)) return;
+    mark(ang(s.runs[c.key].steer[i0]), R * 1.10, R * 0.20, COLORS[i], 3, .85);
+  });
+
+  const a = ang(s.runs[ctrlKey].steer[i0]);
+  g.save(); g.translate(cx, cy); g.rotate(a);
+  g.strokeStyle = css('--car'); g.lineWidth = Math.max(4, R * 0.10);
+  g.beginPath(); g.arc(0, 0, R, Math.PI, Math.PI * 2 + 0.35, false); g.stroke();
+  g.beginPath(); g.arc(0, 0, R, 0.35, Math.PI, false); g.stroke();
+  g.lineWidth = Math.max(3, R * 0.075);
+  [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6].forEach(sp => {
+    g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(sp) * R, Math.sin(sp) * R); g.stroke();
+  });
+  g.fillStyle = css('--car'); g.beginPath(); g.arc(0, 0, R * 0.16, 0, Math.PI * 2); g.fill();
+  g.fillStyle = css('--panel'); g.globalAlpha = .95;
+  g.fillRect(-R * 0.045, -R - R * 0.14, R * 0.09, R * 0.20);   // 12 o'clock index
+  g.globalAlpha = 1;
+  g.restore();
+
+  g.font = '11px ' + css('--mono'); g.textAlign = 'center';
+  g.fillStyle = css('--car');
+  const st = s.runs[ctrlKey].steer[i0];
+  g.fillText((st >= 0 ? '+' : '\u2212') + Math.abs(st).toFixed(3), cx, cy - R - 12);
+  g.textAlign = 'left';
 }
 
 function drawWheels() {
