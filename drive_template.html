@@ -39,7 +39,7 @@
     font-family: var(--sans); font-size: 15px; line-height: 1.55;
     -webkit-font-smoothing: antialiased;
   }
-  .wrap { max-width: 1180px; margin: 0 auto; padding: 28px 20px 56px; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding: 28px 20px 56px; }
 
   header { display: flex; flex-direction: column; gap: 6px; margin-bottom: 22px; }
   .eyebrow {
@@ -87,6 +87,7 @@
     display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
     gap: 16px; margin-bottom: 16px;
   }
+  /* The driver's view now spans the full column, so give the page more room for it. */
   @media (max-width: 860px) { .stage { grid-template-columns: 1fr; } }
   .card {
     background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
@@ -97,13 +98,17 @@
     color: var(--faint); margin: 0; padding: 12px 14px 0;
   }
   canvas { display: block; width: 100%; }
-  #road { height: 470px; }
+  #road { height: 620px; }
   #wheels { height: 216px; }
   #trace { height: 132px; }
   #steer { height: 96px; }
 
   .readout { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .grid4 {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 14px 14px;
+  }
+  @media (max-width: 700px) { .grid4 { grid-template-columns: repeat(2, 1fr); } }
   .stat { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
   .stat .k {
     font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em;
@@ -194,42 +199,31 @@
     </div>
   </div>
 
-  <div class="stage">
-    <div class="card">
-      <h2>Road view</h2>
-      <canvas id="road"></canvas>
-      <div class="scrub" style="padding:0 14px 12px">
-        <span class="clock" id="clock">0.0 s</span>
-        <input type="range" id="pos" min="0" max="399" value="0" step="1" aria-label="Scrub through segment">
-        <span class="clock" id="dur">40.0 s</span>
-      </div>
+  <div class="card" style="margin-bottom:16px">
+    <h2>Driver's view &middot; rear-view mirror top right</h2>
+    <canvas id="road"></canvas>
+    <div class="scrub" style="padding:10px 14px 12px">
+      <span class="clock" id="clock">0.0 s</span>
+      <input type="range" id="pos" min="0" max="399" value="0" step="1" aria-label="Scrub through segment">
+      <span class="clock" id="dur">40.0 s</span>
     </div>
-
-    <div class="card readout">
-      <div class="grid2">
-        <div class="stat">
-          <div class="k">Lataccel error</div>
-          <div class="v" id="err">0.00<span class="u">m/s&sup2;</span></div>
-        </div>
-        <div class="stat">
-          <div class="k">Steer command</div>
-          <div class="v" id="cmd">0.00</div>
-        </div>
-        <div class="stat">
-          <div class="k">Speed</div>
-          <div class="v" id="spd">0<span class="u">m/s</span></div>
-        </div>
-        <div class="stat">
-          <div class="k">Cost so far</div>
-          <div class="v" id="run">0.0</div>
-        </div>
+    <div class="grid4">
+      <div class="stat">
+        <div class="k">Lataccel error</div>
+        <div class="v" id="err">0.00<span class="u">m/s&sup2;</span></div>
       </div>
-      <table>
-        <thead>
-          <tr><th>Controller</th><th>Total</th><th>Track</th><th>Jerk</th></tr>
-        </thead>
-        <tbody id="tbl"></tbody>
-      </table>
+      <div class="stat">
+        <div class="k">Steer command</div>
+        <div class="v" id="cmd">0.00</div>
+      </div>
+      <div class="stat">
+        <div class="k">Speed</div>
+        <div class="v" id="spd">0<span class="u">m/s</span></div>
+      </div>
+      <div class="stat">
+        <div class="k">Cost so far</div>
+        <div class="v" id="run">0.0</div>
+      </div>
     </div>
   </div>
 
@@ -242,9 +236,21 @@
     <h2>Lateral acceleration &mdash; commanded (dashed) vs achieved &middot; m/s&sup2;</h2>
     <canvas id="trace"></canvas>
   </div>
-  <div class="card">
+  <div class="card" style="margin-bottom:16px">
     <h2>Steer command &middot; torque</h2>
     <canvas id="steer"></canvas>
+  </div>
+
+  <div class="card">
+    <h2>Cost &middot; whole segment, every controller</h2>
+    <div style="padding:0 14px 14px">
+      <table>
+        <thead>
+          <tr><th>Controller</th><th>Total</th><th>Track</th><th>Jerk</th></tr>
+        </thead>
+        <tbody id="tbl"></tbody>
+      </table>
+    </div>
   </div>
 
   <p class="note">
@@ -339,105 +345,200 @@ const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).
 function drawRoad() {
   const [g, W, H] = fit($('#road'));
   const s = seg(), i0 = frame, n = s.target.length;
-  const AHEAD = 15, TRAIL = 15;          // ~1.5 s each side
-  const EX = 4;                          // deviation exaggeration (labelled on canvas)
-  const HALF = 1.85;                     // true lane half-width, metres
   g.clearRect(0, 0, W, H);
-  const cx = W / 2, carY = H * 0.72, topY = 18;
+  scene(g, 0, 0, W, H, i0, +1, false);          // forward: driver's view
+  const mw = Math.min(W * 0.30, 300), mh = mw * 0.42;
+  const mx = W - mw - 16, my = 16;
+  scene(g, mx, my, mw, mh, i0, -1, true);       // rearward: mirror
+}
 
-  // Distance covered looking ahead sets the scale, so the view stays framed at any speed.
-  // Derived from SPEED, not from the sample window: near the end of a segment the window collapses
-  // (iA clamps to n-1), and measuring the chord across it sent PPM from ~7 to ~78 px/m over the
-  // last few frames -- a 10x zoom that read as the world lurching backwards.
-  const iA = Math.min(i0 + AHEAD, n - 1), iT = Math.max(i0 - TRAIL, 0);
-  const dAhead = Math.max(s.v[i0] * AHEAD * DATA.dt, 8);
-  const PPM = (carY - topY) / dAhead;    // isotropic: road geometry stays true
+// One projector, used twice. `dir = +1` looks forward, `dir = -1` looks back over the shoulder --
+// the mirror is not a separate renderer, it is the same scene with the camera yawed 180 degrees,
+// which is why a car behind you appears in it without any extra bookkeeping.
+function scene(g, ox, oy, W, H, i0, dir, mirror) {
+  const s = seg(), n = s.target.length;
+  const EYE_H = 1.30;             // eye height, metres
+  const FOV = 1.02;               // ~58 deg horizontal
+  const NEAR = 2.5, FAR = 95;     // metres of road drawn
+  const HALF = 1.85;              // true lane half-width
+  const EX = 4;                   // lateral deviation exaggeration (labelled)
+  const horizon = oy + H * (mirror ? 0.40 : 0.44);
+  const focal = (W / 2) / Math.tan(FOV / 2);
 
-  // world -> screen, in the car's frame (heading up)
-  const c0 = Math.cos(-PATH.PS[i0]), s0 = Math.sin(-PATH.PS[i0]);
-  const proj = (wx, wy) => {
-    const dx = wx - PATH.X[i0], dy = wy - PATH.Y[i0];
-    const rx = dx * c0 - dy * s0, ry = dx * s0 + dy * c0;
-    return [cx + rx * PPM, carY - ry * PPM];
+  g.save();
+  g.beginPath(); g.rect(ox, oy, W, H); g.clip();
+
+  // sky/ground. The horizon is fixed: pitch is not modelled, only yaw and lateral offset.
+  const sky = g.createLinearGradient(0, oy, 0, horizon);
+  sky.addColorStop(0, css('--panel2')); sky.addColorStop(1, css('--panel'));
+  g.fillStyle = sky; g.fillRect(ox, oy, W, horizon - oy);
+  // Ground is the VERGE, not the road. Filling it with --road made the road strip invisible against
+  // its own surroundings -- a scanline probe found the drawn road spanning the full canvas width at
+  // every height, i.e. no road at all, only ground.
+  g.fillStyle = css('--bg'); g.fillRect(ox, horizon, W, oy + H - horizon);
+
+  // The camera sits on the DRIVEN car, so the world is expressed relative to its actual position:
+  // its own lateral error moves the road, which is what makes drifting off-line feel like drifting.
+  const selfOff = OFF[ctrlKey][i0] * EX;
+  // Heading psi means forward is (sin psi, cos psi) -- see worldPath(). So the forward component of
+  // a world delta is dx*sin+dy*cos and the lateral one is dx*cos-dy*sin, which is the dot product
+  // with nrmAt. Writing these with cos(-psi)/sin(-psi) inverted BOTH signs: harmless on straight
+  // road where psi ~ 0, but on a curve it threw points ahead behind the near plane, where proj()
+  // dropped them -- the road visibly ended about 9 m out instead of 95 m.
+  const cp = Math.cos(PATH.PS[i0]), sp = Math.sin(PATH.PS[i0]);
+  const nx0 = cp, ny0 = -sp;
+  const camX = PATH.X[i0] + nx0 * selfOff, camY = PATH.Y[i0] + ny0 * selfOff;
+
+  // world -> camera frame (metres): +f ahead, +r right. Returns null when behind the near plane.
+  const cam = (wx, wy) => {
+    const dx = wx - camX, dy = wy - camY;
+    let r = dx * cp - dy * sp, f = dx * sp + dy * cp;
+    if (dir < 0) { f = -f; r = -r; }
+    return [r, f];
   };
-  const nrmAt = i => [Math.cos(PATH.PS[i]), -Math.sin(PATH.PS[i])];   // left normal, world
-  const centre = i => proj(PATH.X[i], PATH.Y[i]);
-  const edgeAt = (i, sgn) => {
+  // camera -> screen. Ground plane only, so height is the constant eye height.
+  const proj = (r, f) => {
+    if (f < NEAR) return null;
+    const sx = ox + W / 2 + (mirror ? -r : r) * focal / f;
+    const sy = horizon + EYE_H * focal / f;
+    return [sx, sy];
+  };
+  const projW = (wx, wy) => { const [r, f] = cam(wx, wy); return proj(r, f); };
+  const nrmAt = i => [Math.cos(PATH.PS[i]), -Math.sin(PATH.PS[i])];
+  const edgeW = (i, sgn) => {
     const [nx, ny] = nrmAt(i);
-    return proj(PATH.X[i] + nx * HALF * sgn, PATH.Y[i] + ny * HALF * sgn);
+    return [PATH.X[i] + nx * HALF * sgn, PATH.Y[i] + ny * HALF * sgn];
   };
-  // actual position of a controller: commanded point pushed sideways by its (exaggerated) offset
-  const posOf = (key, i) => {
+  const posW = (key, i) => {
     const [nx, ny] = nrmAt(i), o = OFF[key][i] * EX;
-    return proj(PATH.X[i] + nx * o, PATH.Y[i] + ny * o);
+    return [PATH.X[i] + nx * o, PATH.Y[i] + ny * o];
   };
 
+  // Index window covering NEAR..FAR metres of arc in the viewing direction. Stepping by arc length
+  // rather than a fixed index count keeps the drawn distance constant across speeds.
   const idx = [];
-  for (let i = iT; i <= iA; i++) idx.push(i);
+  const step = dir > 0 ? 1 : -1;
+  for (let i = i0; i >= 0 && i < n; i += step) {
+    const d = Math.abs(PATH.S[i] - PATH.S[i0]);
+    if (d > FAR) break;
+    idx.push(i);
+  }
+  if (idx.length < 2) { g.restore(); return; }
 
-  // road surface
-  g.beginPath();
-  idx.forEach((i, k) => { const [x, y] = edgeAt(i, 1); k ? g.lineTo(x, y) : g.moveTo(x, y); });
-  for (let k = idx.length - 1; k >= 0; k--) { const [x, y] = edgeAt(idx[k], -1); g.lineTo(x, y); }
-  g.closePath(); g.fillStyle = css('--road'); g.fill();
-
-  g.strokeStyle = css('--road-edge'); g.lineWidth = 2;
-  [1, -1].forEach(sg => {
+  const strip = (sgnA, sgnB, fill) => {
+    const pts = [];
+    idx.forEach(i => { const p = projW(...edgeW(i, sgnA)); if (p) pts.push(p); });
+    const back = [];
+    idx.forEach(i => { const p = projW(...edgeW(i, sgnB)); if (p) back.push(p); });
+    if (pts.length < 2 || back.length < 2) return;
     g.beginPath();
-    idx.forEach((i, k) => { const [x, y] = edgeAt(i, sg); k ? g.lineTo(x, y) : g.moveTo(x, y); });
-    g.stroke();
-  });
+    pts.forEach(([x, y], k) => k ? g.lineTo(x, y) : g.moveTo(x, y));
+    for (let k = back.length - 1; k >= 0; k--) g.lineTo(back[k][0], back[k][1]);
+    g.closePath(); g.fillStyle = fill; g.fill();
+  };
+  strip(1, -1, css('--road'));
 
-  // Lane dashes keyed to ARC LENGTH modulo one dash period, so the phase is bounded and advances
-  // smoothly. The previous version used the raw world Y times the per-frame PPM: a cumulative
-  // coordinate in the thousands scaled by a varying factor, which jumped by up to 36,000 px against
-  // a 24 px period. Taken mod the period that is a fresh random phase every frame, and randomly
-  // re-phased dashes are read by the eye as backwards motion. Sized in metres so they stay physical.
-  const DASH_M = 3, GAP_M = 9, PERIOD_M = DASH_M + GAP_M;
-  g.setLineDash([DASH_M * PPM, GAP_M * PPM]);
-  g.lineDashOffset = -(PATH.S[i0] % PERIOD_M) * PPM;
-  g.strokeStyle = css('--ref'); g.lineWidth = 2.5; g.globalAlpha = .85;
-  g.beginPath();
-  idx.forEach((i, k) => { const [x, y] = centre(i); k ? g.lineTo(x, y) : g.moveTo(x, y); });
-  g.stroke(); g.setLineDash([]); g.lineDashOffset = 0; g.globalAlpha = 1;
-
-  // trails: where each car has actually been over the last 1.5 s
-  const trail = (key, color, w, alpha) => {
+  const polyline = (pts, color, w, alpha, dash) => {
+    if (pts.length < 2) return;
     g.strokeStyle = color; g.lineWidth = w; g.globalAlpha = alpha;
+    if (dash) { g.setLineDash(dash[0]); g.lineDashOffset = dash[1]; }
     g.beginPath();
-    for (let i = iT, k = 0; i <= i0; i++, k++) {
-      const [x, y] = posOf(key, i); k ? g.lineTo(x, y) : g.moveTo(x, y);
-    }
-    g.stroke(); g.globalAlpha = 1;
+    pts.forEach(([x, y], k) => k ? g.lineTo(x, y) : g.moveTo(x, y));
+    g.stroke();
+    if (dash) { g.setLineDash([]); g.lineDashOffset = 0; }
+    g.globalAlpha = 1;
   };
-  DATA.controllers.forEach((c, i) => {
-    if (c.key !== ctrlKey && ghosts.has(c.key)) trail(c.key, COLORS[i], 2, .55);
+  [1, -1].forEach(sg => {
+    const pts = [];
+    idx.forEach(i => { const p = projW(...edgeW(i, sg)); if (p) pts.push(p); });
+    polyline(pts, css('--road-edge'), mirror ? 1.5 : 2.5, 1);
   });
-  trail(ctrlKey, css('--car'), 3, .9);
 
-  const carAt = (key, color, solid, i) => {
-    const [px, py] = posOf(key, i);
-    const [ax, ay] = posOf(key, Math.max(i - 2, 0));
-    const ang = Math.atan2(px - ax, -(py - ay));
-    g.save(); g.translate(px, py); g.rotate(ang);
-    g.globalAlpha = solid ? 1 : .45; g.fillStyle = color;
+  // Centre line drawn as discrete world-space dashes. In perspective a screen-space lineDash would
+  // bunch toward the horizon; placing each dash at a fixed arc length keeps the spacing physical
+  // and gives the flow-field cue that makes speed readable.
+  const DASH_M = 3, GAP_M = 9, PERIOD_M = DASH_M + GAP_M;
+  const s0m = PATH.S[i0];
+  let d0 = Math.ceil((NEAR - (s0m % PERIOD_M)) / PERIOD_M) * PERIOD_M + (s0m % PERIOD_M);
+  const atArc = d => {                      // interpolate the path at arc distance d ahead/behind
+    const tgt = s0m + dir * d;
+    let lo = 0, hi = n - 1;
+    if (tgt <= PATH.S[0] || tgt >= PATH.S[n - 1]) return null;
+    while (hi - lo > 1) { const m = (lo + hi) >> 1; (PATH.S[m] < tgt ? lo = m : hi = m); }
+    const t = (tgt - PATH.S[lo]) / Math.max(PATH.S[hi] - PATH.S[lo], 1e-9);
+    return [PATH.X[lo] + (PATH.X[hi] - PATH.X[lo]) * t,
+            PATH.Y[lo] + (PATH.Y[hi] - PATH.Y[lo]) * t];
+  };
+  g.strokeStyle = css('--ref'); g.lineWidth = mirror ? 1.5 : 3; g.globalAlpha = .9;
+  for (let d = d0; d < FAR; d += PERIOD_M) {
+    const a = atArc(d), b = atArc(Math.min(d + DASH_M, FAR));
+    if (!a || !b) continue;
+    const pa = projW(a[0], a[1]), pb = projW(b[0], b[1]);
+    if (!pa || !pb) continue;
+    g.beginPath(); g.moveTo(pa[0], pa[1]); g.lineTo(pb[0], pb[1]); g.stroke();
+  }
+  g.globalAlpha = 1;
+
+  // Other controllers as cars. Size follows 1/f, so they shrink with distance like anything else.
+  const carAt = (key, color, i, solid) => {
+    const [wx, wy] = posW(key, i);
+    const [r, f] = cam(wx, wy);
+    const p = proj(r, f);
+    if (!p) return;
+    const wpx = (1.8 * focal) / f, hpx = (1.5 * focal) / f;
+    if (wpx < 1.5) return;
+    g.globalAlpha = solid ? .95 : .6; g.fillStyle = color;
     g.beginPath();
-    if (g.roundRect) g.roundRect(-11, -19, 22, 38, 5); else g.rect(-11, -19, 22, 38);
+    if (g.roundRect) g.roundRect(p[0] - wpx / 2, p[1] - hpx, wpx, hpx, Math.min(4, wpx * 0.18));
+    else g.rect(p[0] - wpx / 2, p[1] - hpx, wpx, hpx);
     g.fill();
-    if (solid) { g.fillStyle = css('--road'); g.globalAlpha = .8; g.fillRect(-7, -10, 14, 9); }
-    g.restore();
+    g.globalAlpha = 1;
   };
-  DATA.controllers.forEach((c, i) => {
-    if (c.key !== ctrlKey && ghosts.has(c.key)) carAt(c.key, COLORS[i], false, i0);
-  });
-  carAt(ctrlKey, css('--car'), true, i0);
+  // Every controller occupies the SAME arc position at a given step -- only the lateral offset
+  // differs -- so nothing is ever longitudinally behind and the mirror would show no cars at all.
+  // What IS genuinely behind is the line each controller actually drove, so the mirror draws
+  // trails and the forward view draws cars.
+  if (mirror) {
+    const traj = (key, color, w, alpha) => {
+      const pts = [];
+      idx.forEach(i => { const p = projW(...posW(key, i)); if (p) pts.push(p); });
+      polyline(pts, color, w, alpha);
+    };
+    DATA.controllers.forEach((c, i) => {
+      if (c.key !== ctrlKey && ghosts.has(c.key)) traj(c.key, COLORS[i], 1.5, .7);
+    });
+    traj(ctrlKey, css('--car'), 2, .95);
+  } else {
+    DATA.controllers.forEach((c, i) => {
+      if (c.key !== ctrlKey && ghosts.has(c.key)) carAt(c.key, COLORS[i], i0, false);
+    });
+  }
 
-  const off = OFF[ctrlKey][i0];
-  g.font = '11px ' + css('--mono');
-  g.fillStyle = Math.abs(off) > 0.35 ? css('--err') : css('--faint');
-  g.fillText('off line ' + (off >= 0 ? '+' : '\u2212') + Math.abs(off).toFixed(2) + ' m', 12, H - 30);
-  g.fillStyle = css('--faint');
-  g.fillText(s.v[i0].toFixed(0) + ' m/s \u00B7 deviation shown \u00D7' + EX, 12, H - 14);
+  if (!mirror) {
+    // bonnet, to anchor the eye and make the lateral offset legible against a fixed reference
+    g.fillStyle = css('--panel2'); g.globalAlpha = .96;
+    g.beginPath();
+    g.moveTo(ox, oy + H); g.lineTo(ox + W, oy + H);
+    g.lineTo(ox + W * 0.78, oy + H * 0.90); g.lineTo(ox + W * 0.22, oy + H * 0.90);
+    g.closePath(); g.fill(); g.globalAlpha = 1;
+    g.strokeStyle = css('--line'); g.lineWidth = 1; g.stroke();
+
+    const off = OFF[ctrlKey][i0];
+    g.font = '11px ' + css('--mono');
+    g.fillStyle = Math.abs(off) > 0.35 ? css('--err') : css('--faint');
+    g.fillText('off line ' + (off >= 0 ? '+' : '\u2212') + Math.abs(off).toFixed(2) + ' m',
+               ox + 12, oy + H - 30);
+    g.fillStyle = css('--faint');
+    g.fillText(s.v[i0].toFixed(0) + ' m/s \u00B7 deviation shown \u00D7' + EX, ox + 12, oy + H - 14);
+  }
+  g.restore();
+
+  if (mirror) {
+    g.strokeStyle = css('--road-edge'); g.lineWidth = 2;
+    g.strokeRect(ox, oy, W, H);
+    g.fillStyle = css('--faint'); g.font = '9px ' + css('--mono');
+    g.fillText('REAR', ox + 6, oy + H - 6);
+  }
 }
 
 function drawWheels() {

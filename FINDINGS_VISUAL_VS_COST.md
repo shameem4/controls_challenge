@@ -44,6 +44,24 @@ costing 52% more (7967 vs 5244). `pid` also moves the wheel the most (mean |dste
 
 **A path view structurally cannot show jerk cost, which is half the metric.**
 
+> **Corrected 2026-08-08.** The counterexample used throughout this document was 06585, and that
+> segment is CORRUPTED, not hard driving. 27 of its target steps exceed the plant's physical rate
+> limit by up to 9.1x -- the target swings +5.62 -> +1.33 -> -3.23 -> -5.64 in consecutive steps
+> around t=19-21 s -- and roughly 80% of its ~8000 cost comes from ~2 s of data no controller could
+> follow, with 7 of the 10 highest-cost steps sitting on those jumps. 0 of 495 sampled segments have
+> more than 5 such steps; 06585 has 27. Its cost figures are arithmetically correct but are not a
+> driving result, and the "persistent lag through a sustained corner" explanation attached to them
+> does not survive.
+>
+> The effect itself is real but far rarer than this document implied. Screening 637 clean segments
+> (no infeasible target steps) on the quantity the page actually draws, only **2 (0.3%)** have `pid`
+> drawing the tightest line while costing the most. The honest example is 05772, where `pid` holds
+> 0.083 m against `cnn_v4`'s 0.098 m -- 15% tighter -- while costing 39% more (69.4 vs 50.0). Note
+> the regime: 05772 peaks at 0.70 m/s2 at 33 m/s, i.e. gentle fast near-straight cruising, NOT a
+> corner. The surviving mechanism is unchanged -- `pid`'s error is zero-mean chatter that a 3 s leaky
+> integrator averages away and the cost charges in full -- but it is a chatter-vs-smoothness story,
+> not a cornering one. See `find_counterexample.py`.
+
 ## A wrong turn worth recording
 
 The first diagnosis was that the page dead-reckoned 40 s open-loop, amplifying DC bias

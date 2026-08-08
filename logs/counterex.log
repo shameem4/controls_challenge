@@ -1,0 +1,6 @@
+637 clean moving segments of 800
+segments where pid draws the tightest line AND costs the most: 2 (0.3%)
+
+seg          v   peak      pid cost   pid offff_pi_boot costff_pi_boot off  cnn_v4 costcnn_v4 off
+05772     33.3   0.70          69.4     0.083         51.5     0.116         50.0     0.098
+05594      7.2   0.18           7.9     0.062          4.8     0.065          5.3     0.069

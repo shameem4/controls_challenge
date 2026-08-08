@@ -30,19 +30,30 @@ from tinyphysics import (TinyPhysicsModel, TinyPhysicsSimulator, CONTROL_START_I
 # each is typical. On the first four, `cnn_v4` has both the lowest cost AND the lowest drawn lane
 # deviation, which is the population behaviour (it wins cost on 145/205 and path on 125/205).
 #
-# The fifth is the counterexample, kept deliberately. On 06585 `pid` really does hold the tightest
-# line -- 0.425 m drawn deviation against `cnn_v4`'s 0.655 m -- while costing 52% more (7967 vs
-# 5244). It is not a contradiction: `pid`'s error is zero-mean chatter, which the 3 s leaky
-# integrator behind the drawn offset averages away and which the cost charges for in full, while
-# the others hold a persistent lag through the sustained corner. The eye lowpasses; the cost does
-# not. Showing only the first four would hide a real effect; showing only this one, as the earlier
-# set effectively did, implies `pid` drives best, which the 205-segment sweep refutes.
+# The fifth is the counterexample, kept deliberately: a segment where `pid` really does draw the
+# tightest line while costing the most. On 05772 it holds 0.083 m against `cnn_v4`'s 0.098 m, 15%
+# tighter, while costing 39% more (69.4 vs 50.0).
+#
+# This slot previously held 06585, which was WRONG and actively misleading. That segment is
+# corrupted: 27 of its target steps exceed the plant's physical rate limit, by up to 9.1x, with the
+# target swinging +5.62 -> +1.33 -> -3.23 -> -5.64 in consecutive steps around t=19-21 s. About 80%
+# of its ~8000 cost comes from roughly 2 s of data no controller could follow, and 7 of the 10
+# highest-cost steps sit on those jumps. It is not a hard corner and was never a driving result.
+# 0 of 495 sampled segments have more than 5 such steps; 06585 has 27. See `find_counterexample.py`.
+#
+# The honest counterexample is also a different REGIME than previously claimed. 05772 peaks at
+# 0.70 m/s2 of lateral acceleration at 33 m/s -- gentle, fast, near-straight cruising, not a
+# sustained corner. The earlier "persistent lag through a sustained corner" explanation does not
+# survive. What survives is the mechanism: `pid`'s error is zero-mean chatter that the 3 s leaky
+# integrator behind the drawn offset averages away and the cost charges in full. On clean data this
+# is rare -- 2 of 637 segments, 0.3% -- which is itself the point: showing only this one would
+# imply `pid` drives best, and the 205-segment sweep refutes that.
 SEGMENTS = [
     ('05161', 'Gentle - light steering, 25 m/s'),
     ('05034', 'Typical - median segment, 25 m/s'),
     ('05150', 'Winding - busy steering, 27 m/s'),
     ('05115', 'Demanding - top decile activity, 25 m/s'),
-    ('06585', 'Counterexample - pid holds the tightest line and costs 52% more'),
+    ('05772', 'Counterexample - pid draws the tightest line and costs 39% more'),
 ]
 
 # Two families, so the comparison the visualisation exists to make is a controlled one: each
