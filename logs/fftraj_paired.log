@@ -1,0 +1,10 @@
+baseline ff_pi_boot (w=0), n=300: total 57.833  lat 0.7318  jerk 21.243
+
+w=0.10: total   58.444  lat 0.7602  jerk  20.433
+    paired delta   +0.611  95% CI [-0.224, +1.321]  arm better on 74/300 segments
+    jerk delta     -0.810  lat delta +1.421 (cost units)
+
+w=0.25: total   61.283  lat 0.8364  jerk  19.463
+    paired delta   +3.450  95% CI [+1.939, +4.850]  arm better on 28/300 segments
+    jerk delta     -1.780  lat delta +5.230 (cost units)
+

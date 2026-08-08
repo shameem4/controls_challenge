@@ -5,7 +5,8 @@ from pathlib import Path
 from functools import partial
 from tqdm.contrib.concurrent import process_map
 from tinyphysics import TinyPhysicsModel, TinyPhysicsSimulator
-from controllers.pid_traj import Controller
+import importlib, os
+Controller = importlib.import_module("controllers." + os.environ.get("CTRL", "pid_traj")).Controller
 
 N = int(sys.argv[1]) if len(sys.argv) > 1 else 60
 OFF = int(sys.argv[3]) if len(sys.argv) > 3 else 0
