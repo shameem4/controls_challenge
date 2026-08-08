@@ -557,12 +557,24 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
       }
       return pts;
     };
-    g.setLineDash([7, 6]);
+    // Deliberately quiet: the commanded centre line is the reference the eye should read first, and
+    // a bold forecast on top of it competed for that job. Thin, fine-dashed, and faded along its
+    // length -- which also matches how much it is worth, since the endpoint error grows from 0.14 m
+    // at 1 s to 0.61 m at 2 s. The near end, where it is reliable, stays the most visible part.
+    const fade = (pts, color, w, a0) => {
+      if (pts.length < 2) return;
+      g.strokeStyle = color; g.lineWidth = w; g.setLineDash([3, 6]);
+      for (let k = 1; k < pts.length; k++) {
+        g.globalAlpha = a0 * (1 - 0.85 * (k / (pts.length - 1)));
+        g.beginPath(); g.moveTo(pts[k - 1][0], pts[k - 1][1]); g.lineTo(pts[k][0], pts[k][1]);
+        g.stroke();
+      }
+      g.globalAlpha = 1; g.setLineDash([]);
+    };
     DATA.controllers.forEach((c, i) => {
-      if (c.key !== ctrlKey && ghosts.has(c.key)) polyline(project(c.key), COLORS[i], 2, .65);
+      if (c.key !== ctrlKey && ghosts.has(c.key)) fade(project(c.key), COLORS[i], 1.2, .40);
     });
-    polyline(project(ctrlKey), css('--car'), 3, .9);
-    g.setLineDash([]);
+    fade(project(ctrlKey), css('--car'), 1.6, .55);
 
     // bonnet, to anchor the eye and make the lateral offset legible against a fixed reference
     g.fillStyle = css('--panel2'); g.globalAlpha = .96;
@@ -594,6 +606,14 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
 }
 
 // Road bank, drawn as an attitude gauge rather than by rotating the world.
+//
+// TILT DIRECTION, established from the data rather than assumed. Regressing steer on target and
+// roll across the shown segments recovers steer ~ +0.574*target - 0.547*roll against the
+// feedforward's predicted +-1/G = +-0.661, confirming ff = (target - roll)/G. So a POSITIVE
+// roll_lataccel adds positive lateral acceleration; positive lataccel raises the heading psi, which
+// at psi = 0 steers toward +x, i.e. right. Gravity therefore pushes RIGHT, the road is banked down
+// to the right, and the bar's right end must sit lower. Verified on screen in both directions:
+// roll +0.409 puts the right end lower, roll -0.650 puts the left end lower.
 //
 // Rotating the whole scene was tried first and abandoned: the true angles are tiny -- median
 // 1.24 deg, max 3.80 deg across the shown segments -- so an honest tilt is invisible, and an
