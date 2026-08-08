@@ -97,7 +97,8 @@
     color: var(--faint); margin: 0; padding: 12px 14px 0;
   }
   canvas { display: block; width: 100%; }
-  #road { height: 430px; }
+  #road { height: 470px; }
+  #wheels { height: 168px; }
   #trace { height: 132px; }
   #steer { height: 96px; }
 
@@ -223,6 +224,11 @@
   </div>
 
   <div class="card" style="margin-bottom:16px">
+    <h2>Steering wheels &middot; every controller, same moment</h2>
+    <canvas id="wheels"></canvas>
+  </div>
+
+  <div class="card" style="margin-bottom:16px">
     <h2>Lateral acceleration &mdash; commanded (dashed) vs achieved &middot; m/s&sup2;</h2>
     <canvas id="trace"></canvas>
   </div>
@@ -287,10 +293,26 @@ function laneOffsets(key) {
   return off;
 }
 
-let OFF = {};
+let OFF = {}, PATH = null;
+// Commanded path in world coordinates, integrated once per segment. Rendering a window of this in
+// the car's own frame is what makes the road STREAM past instead of the car sitting still.
+function worldPath() {
+  const s = seg(), n = s.target.length, X = new Float64Array(n), Y = new Float64Array(n),
+        PS = new Float64Array(n);
+  let psi = 0, x = 0, y = 0;
+  for (let i = 0; i < n; i++) {
+    const v = Math.max(s.v[i], 1e-3);
+    psi += (s.target[i] / v) * DATA.dt;
+    x += v * Math.sin(psi) * DATA.dt;
+    y += v * Math.cos(psi) * DATA.dt;
+    X[i] = x; Y[i] = y; PS[i] = psi;
+  }
+  return { X, Y, PS };
+}
 function recompute() {
   OFF = {};
   DATA.controllers.forEach(c => { OFF[c.key] = laneOffsets(c.key); });
+  PATH = worldPath();
 }
 
 function fit(cv) {
@@ -303,78 +325,136 @@ const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).
 
 function drawRoad() {
   const [g, W, H] = fit($('#road'));
-  const s = seg(), i0 = frame;
-  const AHEAD = 40;                       // 4 s of road ahead
-  const SX = 30;                          // px per metre, LATERAL  (deviation must be legible)
-  const HALF = 1.85;                      // lane half-width, metres
+  const s = seg(), i0 = frame, n = s.target.length;
+  const AHEAD = 15, TRAIL = 15;          // ~1.5 s each side
+  const EX = 4;                          // deviation exaggeration (labelled on canvas)
+  const HALF = 1.85;                     // true lane half-width, metres
   g.clearRect(0, 0, W, H);
-  const cx = W / 2, carY = H - 62, topY = 16;
+  const cx = W / 2, carY = H * 0.72, topY = 18;
 
-  // Centre line in metres, from the COMMANDED lateral acceleration.
-  const mx = [0], my = [0];
-  let psi = 0, x = 0, y = 0;
-  for (let k = 1; k <= AHEAD && i0 + k < s.target.length; k++) {
-    const v = Math.max(s.v[i0 + k], 1e-3);
-    psi += (s.target[i0 + k] / v) * DATA.dt;
-    x += v * Math.sin(psi) * DATA.dt;
-    y += v * Math.cos(psi) * DATA.dt;
-    mx.push(x); my.push(y);
-  }
-  if (mx.length < 3) return;
-  const SY = (carY - topY) / Math.max(my[my.length - 1], 1e-3);   // longitudinal: fill the frame
+  // Distance covered looking ahead sets the scale, so the view stays framed at any speed.
+  const iA = Math.min(i0 + AHEAD, n - 1), iT = Math.max(i0 - TRAIL, 0);
+  const dAhead = Math.max(Math.hypot(PATH.X[iA] - PATH.X[i0], PATH.Y[iA] - PATH.Y[i0]), 4);
+  const PPM = (carY - topY) / dAhead;    // isotropic: road geometry stays true
 
-  const P = mx.map((_, k) => [cx - mx[k] * SX, carY - my[k] * SY]);
-  // Screen-space normals, robust to tiny spacing between consecutive points.
-  const nrm = P.map((_, k) => {
-    const a = P[Math.max(k - 1, 0)], b = P[Math.min(k + 1, P.length - 1)];
-    const dx = b[0] - a[0], dy = b[1] - a[1], L = Math.hypot(dx, dy) || 1;
-    return [dy / L, -dx / L];
-  });
-  const side = sgn => P.map(([px, py], k) => [px + nrm[k][0] * HALF * SX * sgn,
-                                              py + nrm[k][1] * HALF * SX * sgn]);
-  const L = side(1), R = side(-1);
-
-  g.beginPath();
-  L.forEach(([px, py], k) => k ? g.lineTo(px, py) : g.moveTo(px, py));
-  for (let k = R.length - 1; k >= 0; k--) g.lineTo(R[k][0], R[k][1]);
-  g.closePath();
-  g.fillStyle = css('--road'); g.fill();
-
-  g.strokeStyle = css('--road-edge'); g.lineWidth = 2;
-  [L, R].forEach(E => { g.beginPath(); E.forEach(([px, py], k) => k ? g.lineTo(px, py) : g.moveTo(px, py)); g.stroke(); });
-
-  g.setLineDash([9, 11]); g.strokeStyle = css('--ref'); g.lineWidth = 2.5;
-  g.beginPath(); P.forEach(([px, py], k) => k ? g.lineTo(px, py) : g.moveTo(px, py));
-  g.stroke(); g.setLineDash([]);
-
-  const carAt = (off, color, solid) => {
-    const px = cx - off * SX;
-    const lean = Math.max(-0.45, Math.min(0.45, off * 0.30));
-    g.save(); g.translate(px, carY); g.rotate(lean);
-    g.globalAlpha = solid ? 1 : 0.40;
-    g.fillStyle = color;
-    g.beginPath();
-    if (g.roundRect) g.roundRect(-13, -22, 26, 44, 6); else g.rect(-13, -22, 26, 44);
-    g.fill();
-    if (solid) { g.fillStyle = css('--road'); g.globalAlpha = .85; g.fillRect(-8, -12, 16, 11); }
-    g.restore();
+  // world -> screen, in the car's frame (heading up)
+  const c0 = Math.cos(-PATH.PS[i0]), s0 = Math.sin(-PATH.PS[i0]);
+  const proj = (wx, wy) => {
+    const dx = wx - PATH.X[i0], dy = wy - PATH.Y[i0];
+    const rx = dx * c0 - dy * s0, ry = dx * s0 + dy * c0;
+    return [cx + rx * PPM, carY - ry * PPM];
+  };
+  const nrmAt = i => [Math.cos(PATH.PS[i]), -Math.sin(PATH.PS[i])];   // left normal, world
+  const centre = i => proj(PATH.X[i], PATH.Y[i]);
+  const edgeAt = (i, sgn) => {
+    const [nx, ny] = nrmAt(i);
+    return proj(PATH.X[i] + nx * HALF * sgn, PATH.Y[i] + ny * HALF * sgn);
+  };
+  // actual position of a controller: commanded point pushed sideways by its (exaggerated) offset
+  const posOf = (key, i) => {
+    const [nx, ny] = nrmAt(i), o = OFF[key][i] * EX;
+    return proj(PATH.X[i] + nx * o, PATH.Y[i] + ny * o);
   };
 
-  DATA.controllers.forEach((c, i) => {
-    if (c.key !== ctrlKey && ghosts.has(c.key)) carAt(OFF[c.key][i0], COLORS[i], false);
+  const idx = [];
+  for (let i = iT; i <= iA; i++) idx.push(i);
+
+  // road surface
+  g.beginPath();
+  idx.forEach((i, k) => { const [x, y] = edgeAt(i, 1); k ? g.lineTo(x, y) : g.moveTo(x, y); });
+  for (let k = idx.length - 1; k >= 0; k--) { const [x, y] = edgeAt(idx[k], -1); g.lineTo(x, y); }
+  g.closePath(); g.fillStyle = css('--road'); g.fill();
+
+  g.strokeStyle = css('--road-edge'); g.lineWidth = 2;
+  [1, -1].forEach(sg => {
+    g.beginPath();
+    idx.forEach((i, k) => { const [x, y] = edgeAt(i, sg); k ? g.lineTo(x, y) : g.moveTo(x, y); });
+    g.stroke();
   });
 
-  const off = OFF[ctrlKey][i0];
-  g.strokeStyle = Math.abs(off) > 0.35 ? css('--err') : css('--faint');
-  g.lineWidth = 2; g.setLineDash([3, 4]);
-  g.beginPath(); g.moveTo(cx, carY); g.lineTo(cx - off * SX, carY); g.stroke(); g.setLineDash([]);
-  carAt(off, css('--car'), true);
+  // Lane dashes keyed to WORLD distance, so they stream past the car instead of crawling.
+  g.setLineDash([10, 14]); g.lineDashOffset = -(PATH.Y[i0] * PPM) % 24;
+  g.strokeStyle = css('--ref'); g.lineWidth = 2.5; g.globalAlpha = .85;
+  g.beginPath();
+  idx.forEach((i, k) => { const [x, y] = centre(i); k ? g.lineTo(x, y) : g.moveTo(x, y); });
+  g.stroke(); g.setLineDash([]); g.lineDashOffset = 0; g.globalAlpha = 1;
 
+  // trails: where each car has actually been over the last 1.5 s
+  const trail = (key, color, w, alpha) => {
+    g.strokeStyle = color; g.lineWidth = w; g.globalAlpha = alpha;
+    g.beginPath();
+    for (let i = iT, k = 0; i <= i0; i++, k++) {
+      const [x, y] = posOf(key, i); k ? g.lineTo(x, y) : g.moveTo(x, y);
+    }
+    g.stroke(); g.globalAlpha = 1;
+  };
+  DATA.controllers.forEach((c, i) => {
+    if (c.key !== ctrlKey && ghosts.has(c.key)) trail(c.key, COLORS[i], 2, .55);
+  });
+  trail(ctrlKey, css('--car'), 3, .9);
+
+  const carAt = (key, color, solid, i) => {
+    const [px, py] = posOf(key, i);
+    const [ax, ay] = posOf(key, Math.max(i - 2, 0));
+    const ang = Math.atan2(px - ax, -(py - ay));
+    g.save(); g.translate(px, py); g.rotate(ang);
+    g.globalAlpha = solid ? 1 : .45; g.fillStyle = color;
+    g.beginPath();
+    if (g.roundRect) g.roundRect(-11, -19, 22, 38, 5); else g.rect(-11, -19, 22, 38);
+    g.fill();
+    if (solid) { g.fillStyle = css('--road'); g.globalAlpha = .8; g.fillRect(-7, -10, 14, 9); }
+    g.restore();
+  };
+  DATA.controllers.forEach((c, i) => {
+    if (c.key !== ctrlKey && ghosts.has(c.key)) carAt(c.key, COLORS[i], false, i0);
+  });
+  carAt(ctrlKey, css('--car'), true, i0);
+
+  const off = OFF[ctrlKey][i0];
   g.font = '11px ' + css('--mono');
   g.fillStyle = Math.abs(off) > 0.35 ? css('--err') : css('--faint');
-  g.fillText('lane offset ' + (off >= 0 ? '+' : '\u2212') + Math.abs(off).toFixed(2) + ' m', 12, H - 14);
+  g.fillText('off line ' + (off >= 0 ? '+' : '\u2212') + Math.abs(off).toFixed(2) + ' m', 12, H - 30);
   g.fillStyle = css('--faint');
-  g.fillText('4 s ahead \u00B7 lateral scale exaggerated ' + (SX / SY).toFixed(1) + '\u00D7', 12, H - 30);
+  g.fillText(s.v[i0].toFixed(0) + ' m/s \u00B7 deviation shown \u00D7' + EX, 12, H - 14);
+}
+
+function drawWheels() {
+  const [g, W, H] = fit($('#wheels'));
+  const s = seg(), cs = DATA.controllers, cw = W / cs.length;
+  g.clearRect(0, 0, W, H);
+  const R = Math.min(cw * 0.30, H * 0.31), cy = H * 0.46;
+
+  cs.forEach((c, i) => {
+    const cx = cw * (i + 0.5), st = s.runs[c.key].steer[frame];
+    const active = c.key === ctrlKey;
+    const col = active ? css('--car') : COLORS[i];
+    const ang = Math.max(-4.9, Math.min(4.9, st * 160 * Math.PI / 180));
+
+    g.save(); g.translate(cx, cy); g.rotate(ang);
+    g.globalAlpha = active ? 1 : .55;
+    g.strokeStyle = col; g.lineWidth = active ? 5 : 3.5;
+    g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.stroke();
+    g.lineWidth = active ? 4 : 3;                       // three spokes, like a real wheel
+    [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6].forEach(a => {
+      g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(a) * R, Math.sin(a) * R); g.stroke();
+    });
+    g.fillStyle = col; g.beginPath(); g.arc(0, 0, R * 0.20, 0, Math.PI * 2); g.fill();
+    g.restore();
+
+    // twelve-o'clock marker: how far from centred, at a glance
+    g.save(); g.translate(cx, cy); g.rotate(ang);
+    g.fillStyle = css('--panel'); g.globalAlpha = .9;
+    g.fillRect(-2.5, -R - 4, 5, 9);
+    g.restore();
+
+    g.globalAlpha = 1; g.textAlign = 'center';
+    g.font = (active ? '600 ' : '') + '11px ' + css('--mono');
+    g.fillStyle = active ? css('--car') : css('--dim');
+    g.fillText(c.key, cx, cy + R + 20);
+    g.font = '12px ' + css('--mono'); g.fillStyle = css('--ink');
+    g.fillText((st >= 0 ? '+' : '\u2212') + Math.abs(st).toFixed(3), cx, cy + R + 36);
+    g.textAlign = 'left';
+  });
 }
 
 function series(cvId, get, zero) {
@@ -407,6 +487,7 @@ function series(cvId, get, zero) {
 function draw() {
   const s = seg(), r = s.runs[ctrlKey];
   drawRoad();
+  drawWheels();
   series('#trace', () => [
     { d: s.target, c: css('--ref'), w: 2, dash: [5, 5] },
     { d: r.lat, c: css('--car'), w: 1.7 },
