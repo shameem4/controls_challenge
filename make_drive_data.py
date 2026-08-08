@@ -100,7 +100,12 @@ def main():
     model = TinyPhysicsModel('models/tinyphysics.onnx', debug=False)
     root = Path('data/SYNTHETIC')
     lo, hi = CONTROL_START_IDX, COST_END_IDX
-    data = dict(dt=DEL_T, segments=[])
+    # Plant constants, so the page can project where the CURRENT steer command is taking the car.
+    # G(v) is the measured steady-state gain from steer to lataccel (`gain_fit.npy`, verified in
+    # verify_plant.py); ALPHA is the per-step fraction of the way to that steady state, a
+    # first-order stand-in for a plant whose real response has ~0.25 s of dead time.
+    gain_fit = np.load('gain_fit.npy')
+    data = dict(dt=DEL_T, gain_fit=[float(c) for c in gain_fit], alpha=0.40, segments=[])
 
     for seg, label in SEGMENTS:
         f = root / f'{seg}.csv'

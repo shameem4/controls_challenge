@@ -362,6 +362,12 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
   const NEAR = 2.5, FAR = 95;     // metres of road drawn
   const HALF = 1.85;              // true lane half-width
   const EX = 4;                   // lateral deviation exaggeration (labelled)
+  // 2 s. Validated against the replayed future by holding the current steer: mean endpoint error
+  // 0.14 m at 1 s, 0.61 m at 2 s, 1.45 m at 3 s. It degrades because a real driver keeps turning
+  // and this model does not, so 3 s would be nearly a lane width of fiction. 2 s is where the line
+  // still means something.
+  const PROJ_STEPS = 20;
+  const v0 = s.v[i0];
   const horizon = oy + H * (mirror ? 0.40 : 0.44);
   const focal = (W / 2) / Math.tan(FOV / 2);
 
@@ -521,6 +527,39 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
   }
 
   if (!mirror) {
+    // Where the CURRENT steer command is taking the car -- the control output projected forward,
+    // not the previewed target. Hold the wheel where it is and the plant settles at
+    // a_ss = G(v)*u + roll, approached first-order at ALPHA per step; integrating that lataccel
+    // gives heading and then position. So this is the driver's "where am I pointed", derived only
+    // from information available at this instant, and it diverges from the road exactly when the
+    // current command is wrong. Dashed, because it is a model extrapolation rather than data:
+    // the plant has ~0.25 s of dead time and ALPHA is a first-order stand-in for it.
+    const project = (key) => {
+      const u = s.runs[key].steer[i0], roll = s.roll[i0];
+      const G = DATA.gain_fit[0] * v0 * v0 + DATA.gain_fit[1] * v0 + DATA.gain_fit[2];
+      const a_ss = G * u + roll;
+      let a = s.runs[key].lat[i0], psi = PATH.PS[i0];
+      const off0 = OFF[key][i0] * EX;
+      let x = PATH.X[i0] + Math.cos(PATH.PS[i0]) * off0;
+      let y = PATH.Y[i0] - Math.sin(PATH.PS[i0]) * off0;
+      const pts = [];
+      for (let k = 0; k < PROJ_STEPS; k++) {
+        a += DATA.alpha * (a_ss - a);
+        psi += (a / Math.max(v0, 1e-3)) * DATA.dt;
+        x += v0 * Math.sin(psi) * DATA.dt;
+        y += v0 * Math.cos(psi) * DATA.dt;
+        const p = projW(x, y);
+        if (p) pts.push(p);
+      }
+      return pts;
+    };
+    g.setLineDash([7, 6]);
+    DATA.controllers.forEach((c, i) => {
+      if (c.key !== ctrlKey && ghosts.has(c.key)) polyline(project(c.key), COLORS[i], 2, .65);
+    });
+    polyline(project(ctrlKey), css('--car'), 3, .9);
+    g.setLineDash([]);
+
     // bonnet, to anchor the eye and make the lateral offset legible against a fixed reference
     g.fillStyle = css('--panel2'); g.globalAlpha = .96;
     g.beginPath();
@@ -596,14 +635,20 @@ function wheelOverlay(g, ox, oy, W, H, i0) {
 
 function drawWheels() {
   const [g, W, H] = fit($('#wheels'));
-  const s = seg(), cs = DATA.controllers, cw = W / cs.length;
+  // Same selection rule as the road view: the controller driving, plus whichever ghosts are ticked.
+  // Showing all six regardless made this panel disagree with everything else on the page.
+  const s = seg();
+  const cs = DATA.controllers.filter(c => c.key === ctrlKey || ghosts.has(c.key));
+  const cw = W / Math.max(cs.length, 1);
   g.clearRect(0, 0, W, H);
   const R = Math.min(cw * 0.30, H * 0.31), cy = H * 0.46;
 
   cs.forEach((c, i) => {
     const cx = cw * (i + 0.5), st = s.runs[c.key].steer[frame];
     const active = c.key === ctrlKey;
-    const col = active ? css('--car') : COLORS[i];
+    // Palette index comes from the FULL list, so a controller keeps its colour when the
+    // selection changes -- indexing the filtered list would reshuffle every colour on each tick.
+    const col = active ? css('--car') : COLORS[DATA.controllers.findIndex(x => x.key === c.key)];
     const ang = Math.max(-4.9, Math.min(4.9, st * 160 * Math.PI / 180));
 
     g.save(); g.translate(cx, cy); g.rotate(ang);
