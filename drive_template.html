@@ -149,6 +149,16 @@
       lateral acceleration; the <span style="color:var(--car)">car</span> drifts when it fails to produce it.
       Run others as ghosts to see where they part company.
     </p>
+    <p class="sub">
+      Six controllers in two families. Three close the loop on <b>lateral acceleration</b>
+      (<code>pid</code>, <code>ff_pi_boot</code>, <code>cnn_v4</code>); three close it on
+      <b>trajectory</b> &mdash; reconstructed position and heading error &mdash; so lateral
+      acceleration is emergent (<code>pid_traj</code>, <code>ff_pi_traj</code>). Each trajectory
+      controller shares a parent with a lataccel one and differs only in the error signal, so the
+      pairs are directly comparable. Watch the <b>wheels</b>, not the road: trajectory control is
+      smoother at the wheel and worse at the line, and the road view cannot show the first half of
+      that because drawing a path double-integrates the error away.
+    </p>
   </header>
 
   <div class="bar">
@@ -251,7 +261,9 @@ const DATA = /*__DATA__*/;
 const $ = s => document.querySelector(s);
 // Ghost/legend hues. Deliberately excludes amber: amber is reserved for whichever controller is
 // DRIVING, so the active car always reads as the subject and ghosts never impersonate it.
-const COLORS = ['#7f8aa0', '#a07bb8', '#5f9ea0', '#6f9e5c'];
+// Cool hues for the lataccel-error family, purples for the trajectory-error family, so the two
+// groups read apart at a glance. Amber (--car) stays reserved for whichever is actively driving.
+const COLORS = ['#7f8aa0', '#5b8fc9', '#6f9e5c', '#a07bb8', '#c77dae', '#8a6fc0'];
 
 let segIdx = 0, ctrlKey = DATA.controllers[0].key, ghosts = new Set();
 let frame = 0, playing = false, speed = 1, last = 0;

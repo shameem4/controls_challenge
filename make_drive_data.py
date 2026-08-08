@@ -45,11 +45,27 @@ SEGMENTS = [
     ('06585', 'Counterexample - pid holds the tightest line and costs 52% more'),
 ]
 
+# Two families, so the comparison the visualisation exists to make is a controlled one: each
+# trajectory controller shares a parent with a lataccel controller and differs ONLY in the error
+# signal fed to the feedback term. `ff_pi_tau` is dropped -- it was visually identical to
+# `ff_pi_boot` on 3 of the 4 old segments, so it cost a slot and showed nothing.
+#
+# Trajectory params are passed EXPLICITLY rather than relying on defaults. `pid_traj`'s defaults
+# (k_y=0.60, k_psi=1.20) sit at a DC gain of 9.0 and diverge -- they are the pre-sweep values from
+# `FINDINGS_TRAJ_PID.md`, kept only so the docstring's worked example matches. The values below are
+# the tuned ones from that sweep.
 CONTROLLERS = [
-    ('pid',        'PID (stock baseline)',            'pid',        {}),
-    ('ff_pi_boot', 'ff_pi_boot (feedforward + PI)',   'ff_pi_boot', dict(boot=0.005)),
-    ('ff_pi_tau',  'ff_pi_tau (best classical)',      'ff_pi_tau',  {}),
-    ('cnn_v4',     'cnn_v4 (learned, deliverable)',   'cnn',        dict(ckpt='cnn_v4.pt')),
+    # lataccel-error feedback
+    ('pid',          'PID (lataccel error)',              'pid',        {}),
+    ('ff_pi_boot',   'ff_pi_boot (lataccel error)',       'ff_pi_boot', dict(boot=0.005)),
+    ('cnn_v4',       'cnn_v4 (learned, deliverable)',     'cnn',        dict(ckpt='cnn_v4.pt')),
+    # trajectory-error feedback -- same parents, different error signal
+    ('pid_traj',     'pid_traj (trajectory error)',       'pid_traj',
+     dict(w=1.0, k_y=0.005, k_psi=0.96, tau=0.5, i=0.1)),
+    ('ff_pi_traj',   'ff_pi_traj w=1 (trajectory error)', 'ff_pi_traj',
+     dict(w=1.0, k_psi=0.16, tau=1.0)),
+    ('ff_pi_traj25', 'ff_pi_traj w=0.25 (blended)',       'ff_pi_traj',
+     dict(w=0.25, k_psi=0.40, tau=1.0)),
 ]
 
 
