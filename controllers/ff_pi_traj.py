@@ -86,6 +86,11 @@ class Controller(_Boot):
             self.integ += self.boot * ((u_true - ff) / self.ki - self.integ)
 
         e = desired - current_lataccel
+        # Exposed so a subclass can gate on the error the loop ACTUALLY tracks. `ff_pi_gate`
+        # previously measured its jerk/track ratio against the raw target, which is a different
+        # signal: the smoothing deviation is deliberate and cost-optimal, so charging it to the
+        # tracking side of the ratio biased the gate.
+        self.e_last = e
 
         v = max(float(state.v_ego), 1e-3)
         self.psi = self.psi * self.decay + (-e / v) * DT

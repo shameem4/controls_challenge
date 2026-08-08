@@ -56,10 +56,19 @@ GAIN_FIT = np.load(Path(__file__).resolve().parent.parent / 'gain_fit.npy')
 
 
 class Controller(BaseController):
+    # Trajectory endpoint defaults to the TUNED configuration from FINDINGS_FF_TRAJ.md, not to
+    # ff_pi_traj's own defaults. The first version of this controller inherited tau=3.0 where the
+    # sweep favoured tau=1.0, so the blend's trajectory endpoint was handicapped relative to the
+    # best available one and every interior blend inherited that handicap.
+    TRAJ_TUNED = dict(tau=1.0, k_psi=0.16, k_y=0.005, H=0)
+
     def __init__(self, alpha=0.40, b_lo=0.0, b_hi=1.0, b_fix=None,
                  traj=None, boot=0.005, **kw):
+        # `kw` carries ff_pi parameters common to BOTH arms; `traj` carries trajectory-only ones and
+        # wins on conflict. Merging into one dict rather than double-splatting means an overlapping
+        # key resolves instead of raising a duplicate-argument TypeError.
         self.L = _Boot(boot=boot, **kw)
-        self.T = _Traj(w=1.0, boot=boot, **(traj or {}), **kw)
+        self.T = _Traj(**{**dict(w=1.0, boot=boot), **self.TRAJ_TUNED, **kw, **(traj or {})})
         self.alpha = float(alpha)
         self.b_lo, self.b_hi = float(b_lo), float(b_hi)
         self.b_fix = None if b_fix is None else float(b_fix)

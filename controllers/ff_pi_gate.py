@@ -43,6 +43,7 @@ class Controller(_Traj):
         self.jerk_ema = 0.0
         self.u_prev = None
         self.share = 0.0
+        self.e_last = 0.0
 
     def update(self, target_lataccel, current_lataccel, state, future_plan):
         if self.w_max <= 0.0:
@@ -52,7 +53,11 @@ class Controller(_Traj):
                                             0.0, 1.0))
         u = super().update(target_lataccel, current_lataccel, state, future_plan)
 
-        e = target_lataccel - current_lataccel
+        # The error the feedback loop actually tracks -- the smoothed reference, not the raw target.
+        # `ff_pi_traj` records it during update(). Using the raw target here charged the deliberate,
+        # cost-optimal smoothing deviation to the tracking side of the ratio, understating the jerk
+        # share and so opening the gate in the wrong places.
+        e = self.e_last
         du = 0.0 if self.u_prev is None else (u - self.u_prev)
         self.u_prev = u
         a = self.ema
