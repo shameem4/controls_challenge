@@ -310,16 +310,17 @@ let OFF = {}, PATH = null;
 // the car's own frame is what makes the road STREAM past instead of the car sitting still.
 function worldPath() {
   const s = seg(), n = s.target.length, X = new Float64Array(n), Y = new Float64Array(n),
-        PS = new Float64Array(n);
-  let psi = 0, x = 0, y = 0;
+        PS = new Float64Array(n), S = new Float64Array(n);
+  let psi = 0, x = 0, y = 0, arc = 0;
   for (let i = 0; i < n; i++) {
     const v = Math.max(s.v[i], 1e-3);
     psi += (s.target[i] / v) * DATA.dt;
     x += v * Math.sin(psi) * DATA.dt;
     y += v * Math.cos(psi) * DATA.dt;
-    X[i] = x; Y[i] = y; PS[i] = psi;
+    arc += v * DATA.dt;                  // arc length: monotonic even where the path curves
+    X[i] = x; Y[i] = y; PS[i] = psi; S[i] = arc;
   }
-  return { X, Y, PS };
+  return { X, Y, PS, S };
 }
 function recompute() {
   OFF = {};
@@ -345,8 +346,11 @@ function drawRoad() {
   const cx = W / 2, carY = H * 0.72, topY = 18;
 
   // Distance covered looking ahead sets the scale, so the view stays framed at any speed.
+  // Derived from SPEED, not from the sample window: near the end of a segment the window collapses
+  // (iA clamps to n-1), and measuring the chord across it sent PPM from ~7 to ~78 px/m over the
+  // last few frames -- a 10x zoom that read as the world lurching backwards.
   const iA = Math.min(i0 + AHEAD, n - 1), iT = Math.max(i0 - TRAIL, 0);
-  const dAhead = Math.max(Math.hypot(PATH.X[iA] - PATH.X[i0], PATH.Y[iA] - PATH.Y[i0]), 4);
+  const dAhead = Math.max(s.v[i0] * AHEAD * DATA.dt, 8);
   const PPM = (carY - topY) / dAhead;    // isotropic: road geometry stays true
 
   // world -> screen, in the car's frame (heading up)
@@ -384,8 +388,14 @@ function drawRoad() {
     g.stroke();
   });
 
-  // Lane dashes keyed to WORLD distance, so they stream past the car instead of crawling.
-  g.setLineDash([10, 14]); g.lineDashOffset = -(PATH.Y[i0] * PPM) % 24;
+  // Lane dashes keyed to ARC LENGTH modulo one dash period, so the phase is bounded and advances
+  // smoothly. The previous version used the raw world Y times the per-frame PPM: a cumulative
+  // coordinate in the thousands scaled by a varying factor, which jumped by up to 36,000 px against
+  // a 24 px period. Taken mod the period that is a fresh random phase every frame, and randomly
+  // re-phased dashes are read by the eye as backwards motion. Sized in metres so they stay physical.
+  const DASH_M = 3, GAP_M = 9, PERIOD_M = DASH_M + GAP_M;
+  g.setLineDash([DASH_M * PPM, GAP_M * PPM]);
+  g.lineDashOffset = -(PATH.S[i0] % PERIOD_M) * PPM;
   g.strokeStyle = css('--ref'); g.lineWidth = 2.5; g.globalAlpha = .85;
   g.beginPath();
   idx.forEach((i, k) => { const [x, y] = centre(i); k ? g.lineTo(x, y) : g.moveTo(x, y); });
