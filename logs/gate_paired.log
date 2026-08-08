@@ -1,0 +1,10 @@
+baseline ff_pi_boot, n=400: total 56.738  lat 0.7133  jerk 21.073
+
+gate lo=0.5: total   57.176   paired delta  +0.438  95% CI [-0.181, +1.300]
+    better on 105/233 non-tied (167 identical)  sign-test p=0.1494
+    jerk +0.086   lat(cost units) +0.353
+
+gate lo=0.3: total   57.456   paired delta  +0.719  95% CI [-0.083, +1.661]
+    better on 161/346 non-tied (54 identical)  sign-test p=0.2162
+    jerk +0.093   lat(cost units) +0.626
+
