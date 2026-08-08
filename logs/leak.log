@@ -1,0 +1,4 @@
+  TRAIN  ALL[2000:4000]  n=150  mean   41.849   median  40.669   sem 1.911
+  VAL    ALL[4000:4150]  n=200  mean   44.612   median  43.765   sem 1.791
+  UNSEEN ALL[5000:7000]  n=150  mean   53.103   median  41.809   sem 9.055
+  UNSEEN ALL[9000:]      n=150  mean   43.743   median  44.356   sem 1.665

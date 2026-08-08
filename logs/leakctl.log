@@ -1,0 +1,14 @@
+  ff_pi_boot  TRAIN  [2000:2150]  n=150  mean   47.121   median  42.439
+  ff_pi_boot  VAL    [4000:4200]  n=200  mean   48.092   median  46.291
+  ff_pi_boot  UNSEEN [5000:5150]  n=150  mean   63.958   median  43.806
+  ff_pi_boot  UNSEEN [9000:9150]  n=150  mean   52.774   median  43.506
+
+=== ratio cnn/ff_pi_boot per range (a flat ratio means NO contamination) ===
+  range                    cnn med  ffpi med   ratio
+  TRAIN  [2000:2150]        40.669    42.439  0.9583
+  VAL    [4000:4200]        43.765    46.291  0.9454
+  UNSEEN [5000:5150]        41.809    43.806  0.9544
+  UNSEEN [9000:9150]        44.356    43.506  1.0195
+
+  train ratio 0.9583   unseen ratio 0.9870   difference-in-differences -0.0287
+  VERDICT: no evidence of contamination
