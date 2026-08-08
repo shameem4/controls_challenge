@@ -376,16 +376,42 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
   g.save();
   g.beginPath(); g.rect(ox, oy, W, H); g.clip();
 
+  // ROAD BANK, as camera roll. The camera is bolted to the car, the car leans with the road, so the
+  // WORLD rotates on screen while the car's own furniture -- bonnet, wheel, readouts -- stays put.
+  // That is the cue a driver already knows, which an aircraft-style attitude dial is not.
+  //
+  // Exaggerated, and it has to be: the true angles are median 1.24 deg and max 3.80 deg across
+  // these segments, which is invisible, while the FORCE is not -- on 05161 the mean |roll| is 0.97x
+  // the mean |target|, so gravity asks as much of the controller as the cornering does. The exact,
+  // unexaggerated number lives in the readout and in the filled band on the lataccel trace.
   const bank = Math.asin(Math.max(-1, Math.min(1, s.roll[i0] / 9.81)));
+  // x3. Chosen by measurement, not taste: the largest bank in these segments is 3.80 deg, and at
+  // x5 and x4 the horizon still left the top of the frame on the raised side, which reads as broken
+  // rather than banked. x3 puts the worst case at 11.4 deg, about 133 px of rise over the half
+  // width against a horizon sitting 273 px down, so both ends stay comfortably in view.
+  const ROLL_EX = 3;
+  const pivotX = ox + W / 2, pivotY = horizon;
+  // Sign: the world counter-rotates against the car. A positive roll pushes the car right, so the
+  // road tips down to the right and the car leans right-side-down; relative to a camera bolted to
+  // that car the world turns the OTHER way, putting the horizon higher on the right. Canvas
+  // rotate(+t) is clockwise with y down, so the world needs rotate(-bank). Getting this backwards
+  // is invisible in a still frame and obvious in motion, so it is measured: see the probe comparing
+  // where the ground starts on the left against the right.
+  g.translate(pivotX, pivotY);
+  g.rotate(-bank * ROLL_EX * (mirror ? -1 : 1));
+  g.translate(-pivotX, -pivotY);
 
-  // sky/ground. The horizon is fixed: pitch is not modelled, only yaw and lateral offset.
+  // Fills span the canvas DIAGONAL about the pivot, so no rotation can expose a corner. The first
+  // attempt at this used oversized-but-axis-aligned rects and left the sky uncovered at large
+  // angles, which a column probe caught as the "horizon" hitting y=0.
+  const D = Math.hypot(W, H) * 1.3;
   const sky = g.createLinearGradient(0, oy, 0, horizon);
   sky.addColorStop(0, css('--panel2')); sky.addColorStop(1, css('--panel'));
-  g.fillStyle = sky; g.fillRect(ox, oy, W, horizon - oy);
+  g.fillStyle = sky; g.fillRect(pivotX - D, pivotY - D, 2 * D, D);
   // Ground is the VERGE, not the road. Filling it with --road made the road strip invisible against
   // its own surroundings -- a scanline probe found the drawn road spanning the full canvas width at
   // every height, i.e. no road at all, only ground.
-  g.fillStyle = css('--bg'); g.fillRect(ox, horizon, W, oy + H - horizon);
+  g.fillStyle = css('--bg'); g.fillRect(pivotX - D, pivotY, 2 * D, D);
 
   // The camera sits on the DRIVEN car, so the world is expressed relative to its actual position:
   // its own lateral error moves the road, which is what makes drifting off-line feel like drifting.
@@ -576,6 +602,14 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
     });
     fade(project(ctrlKey), css('--car'), 1.6, .55);
 
+    // Everything from here is fixed to the CAR, not the world, so the roll is undone. The road,
+    // dashes, ghost cars and the forward projection all sit ABOVE this line because they are
+    // world-space geometry and must lean with the road; the bonnet, wheel and readouts sit below it
+    // because they are bolted to the car and would look absurd tilting.
+    g.translate(pivotX, pivotY);
+    g.rotate(bank * ROLL_EX * (mirror ? -1 : 1));
+    g.translate(-pivotX, -pivotY);
+
     // bonnet, to anchor the eye and make the lateral offset legible against a fixed reference
     g.fillStyle = css('--panel2'); g.globalAlpha = .96;
     g.beginPath();
@@ -584,7 +618,6 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
     g.closePath(); g.fill(); g.globalAlpha = 1;
     g.strokeStyle = css('--line'); g.lineWidth = 1; g.stroke();
 
-    bankIndicator(g, ox, oy, W, H, bank, s.roll[i0]);
     wheelOverlay(g, ox, oy, W, H, i0);
 
     const off = OFF[ctrlKey][i0];
@@ -593,7 +626,8 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
     g.fillText('off line ' + (off >= 0 ? '+' : '\u2212') + Math.abs(off).toFixed(2) + ' m',
                ox + 12, oy + H - 30);
     g.fillStyle = css('--faint');
-    g.fillText(s.v[i0].toFixed(0) + ' m/s \u00B7 deviation shown \u00D7' + EX, ox + 12, oy + H - 14);
+    g.fillText(s.v[i0].toFixed(0) + ' m/s \u00B7 deviation \u00D7' + EX +
+               ' \u00B7 bank \u00D7' + ROLL_EX, ox + 12, oy + H - 14);
   }
   g.restore();
 
@@ -603,78 +637,6 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
     g.fillStyle = css('--faint'); g.font = '9px ' + css('--mono');
     g.fillText('REAR', ox + 6, oy + H - 6);
   }
-}
-
-// Road bank, drawn as an attitude gauge rather than by rotating the world.
-//
-// TILT DIRECTION, established from the data rather than assumed. Regressing steer on target and
-// roll across the shown segments recovers steer ~ +0.574*target - 0.547*roll against the
-// feedforward's predicted +-1/G = +-0.661, confirming ff = (target - roll)/G. So a POSITIVE
-// roll_lataccel adds positive lateral acceleration; positive lataccel raises the heading psi, which
-// at psi = 0 steers toward +x, i.e. right. Gravity therefore pushes RIGHT, the road is banked down
-// to the right, and the bar's right end must sit lower. Verified on screen in both directions:
-// roll +0.409 puts the right end lower, roll -0.650 puts the left end lower.
-//
-// Rotating the whole scene was tried first and abandoned: the true angles are tiny -- median
-// 1.24 deg, max 3.80 deg across the shown segments -- so an honest tilt is invisible, and an
-// exaggerated one both distorts the road geometry the rest of the view depends on and left
-// uncovered corners in the sky fill at large angles. A probe across seven columns found the
-// horizon boundary bent by +-58 px rather than straight, i.e. not a rigid rotation at all.
-//
-// The gauge is self-contained and exact instead. The bar IS the road surface at its true angle,
-// magnified only inside the dial; the plumb line is gravity, always vertical; and the bar's fill
-// runs downhill, which is the direction gravity pushes the car. The number beside it is the
-// lateral acceleration that push contributes -- the quantity that actually matters, since the
-// feedforward has to cancel it and it can rival the cornering demand outright (on 05161 the mean
-// |roll| is 0.97x the mean |target|).
-function bankIndicator(g, ox, oy, W, H, bank, rollAcc) {
-  const R = Math.min(46, W * 0.06);
-  const cx = ox + R + 18, cy = oy + R + 18;
-  const MAG = 6;                                  // dial-only magnification, labelled below
-  const a = Math.max(-0.6, Math.min(0.6, bank * MAG));
-
-  g.save();
-  g.globalAlpha = .55; g.fillStyle = css('--panel');
-  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
-  g.globalAlpha = 1;
-  g.strokeStyle = css('--line'); g.lineWidth = 1;
-  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
-
-  // plumb line: gravity, fixed vertical
-  g.strokeStyle = css('--faint'); g.lineWidth = 1; g.setLineDash([2, 3]);
-  g.beginPath(); g.moveTo(cx, cy - R * 0.75); g.lineTo(cx, cy + R * 0.8); g.stroke();
-  g.setLineDash([]);
-
-  // the road surface
-  g.save(); g.translate(cx, cy); g.rotate(a);
-  g.strokeStyle = css('--roll'); g.lineWidth = 3;
-  g.beginPath(); g.moveTo(-R * 0.78, 0); g.lineTo(R * 0.78, 0); g.stroke();
-  g.fillStyle = css('--roll'); g.globalAlpha = .22;
-  g.fillRect(-R * 0.78, 0, R * 1.56, R * 0.42);
-  g.globalAlpha = 1;
-  // downhill arrow: which way gravity pushes the car
-  if (Math.abs(rollAcc) > 0.02) {
-    const dir = rollAcc >= 0 ? 1 : -1;
-    g.strokeStyle = css('--roll'); g.lineWidth = 2;
-    g.beginPath();
-    g.moveTo(0, -R * 0.16); g.lineTo(dir * R * 0.46, -R * 0.16); g.stroke();
-    g.beginPath();
-    g.moveTo(dir * R * 0.46, -R * 0.16);
-    g.lineTo(dir * R * 0.30, -R * 0.30); g.lineTo(dir * R * 0.30, -R * 0.02);
-    g.closePath(); g.fillStyle = css('--roll'); g.fill();
-  }
-  g.restore();
-
-  g.font = '10px ' + css('--mono'); g.textAlign = 'center';
-  g.fillStyle = css('--roll');
-  g.fillText((bank * 180 / Math.PI).toFixed(1) + '\u00B0', cx, cy + R + 13);
-  g.fillStyle = css('--faint');
-  g.fillText((rollAcc >= 0 ? '+' : '\u2212') + Math.abs(rollAcc).toFixed(2) + ' m/s\u00B2',
-             cx, cy + R + 25);
-  g.font = '9px ' + css('--mono');
-  g.fillText('bank \u00D7' + MAG + ' in dial', cx, cy + R + 36);
-  g.textAlign = 'left';
-  g.restore();
 }
 
 // The wheel as the driver sees it: bottom-centre, rising above the bonnet, turning with the car.
