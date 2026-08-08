@@ -57,7 +57,11 @@ DT = 0.1
 
 
 class Controller(BaseController):
-  def __init__(self, w=1.0, tau=3.0, H=8, k_y=0.60, k_psi=1.20,
+  # Defaults are the TUNED values from the sweep in FINDINGS_TRAJ_PID.md. The pre-sweep values
+  # (tau=3.0, k_y=0.60, k_psi=1.20) sit at a DC gain of 9.0 -- `k_y*tau^2 + k_psi*tau` -- and
+  # diverge outright, scoring 4,513 to 64,766 against stock pid's ~103. Leaving those as the
+  # no-argument default meant `Controller()` handed back a broken controller.
+  def __init__(self, w=1.0, tau=0.5, H=8, k_y=0.005, k_psi=0.96,
                p=0.195, i=0.100, d=-0.053):
     self.p, self.i, self.d = float(p), float(i), float(d)
     self.w = float(w)
@@ -72,28 +76,30 @@ class Controller(BaseController):
   def update(self, target_lataccel, current_lataccel, state, future_plan):
     e_lat = target_lataccel - current_lataccel
 
-    if self.w > 0.0:
-      v = max(float(state.v_ego), 1e-3)
-      # Same recursion as the visualisation, run causally: leaky double integration of the
-      # heading-error rate. Order matters -- psi advances first, then y integrates the new psi.
-      self.psi = self.psi * self.decay + (-e_lat / v) * DT
-      self.y = self.y * self.decay + v * self.psi * DT
+    # State advances unconditionally, even at w=0. Nothing here varies w per step today, but the
+    # ff_pi sibling did, and gating the RECURSION on the same flag that gates its USE left the
+    # trajectory state stale whenever the gate reopened. Guard the use, never the integration.
+    v = max(float(state.v_ego), 1e-3)
+    # Same recursion as the visualisation, run causally: leaky double integration of the
+    # heading-error rate. Order matters -- psi advances first, then y integrates the new psi.
+    self.psi = self.psi * self.decay + (-e_lat / v) * DT
+    self.y = self.y * self.decay + v * self.psi * DT
 
-      fut = future_plan.lataccel if future_plan.lataccel else []
-      h = min(self.H, len(fut))
-      if h > 0:
-        # Constant-error extrapolation to the lookahead point. `a_cur - mean(future target)` is the
-        # error we would keep accumulating if nothing changed.
-        th = h * DT
-        drift = current_lataccel - float(np.mean(fut[:h]))
-        y_pred = self.y + v * self.psi * th + 0.5 * drift * th * th
-      else:
-        y_pred = self.y
-
-      e_traj = -(self.k_y * y_pred + self.k_psi * v * self.psi)
-      error = (1.0 - self.w) * e_lat + self.w * e_traj
+    fut = future_plan.lataccel if future_plan.lataccel else []
+    h = min(self.H, len(fut))
+    if h > 0:
+      # Constant-error extrapolation to the lookahead point. `a_cur - mean(future target)` is the
+      # error we would keep accumulating if nothing changed.
+      th = h * DT
+      drift = current_lataccel - float(np.mean(fut[:h]))
+      y_pred = self.y + v * self.psi * th + 0.5 * drift * th * th
     else:
-      error = e_lat
+      y_pred = self.y
+
+    # At w=0 this is exactly e_lat: 0.0 * x is 0.0 for any finite x, so the identity gate holds
+    # bit-for-bit while the recursion above still advances.
+    e_traj = -(self.k_y * y_pred + self.k_psi * v * self.psi)
+    error = (1.0 - self.w) * e_lat + self.w * e_traj
 
     self.error_integral += error
     error_diff = error - self.prev_error

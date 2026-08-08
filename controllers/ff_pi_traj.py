@@ -52,12 +52,20 @@ class Controller(_Boot):
         self.y = 0.0            # lateral offset from the commanded path, m
 
     def update(self, target_lataccel, current_lataccel, state, future_plan):
-        if self.w == 0.0:
-            return super().update(target_lataccel, current_lataccel, state, future_plan)
+        # NO early return for w == 0, deliberately. An earlier version delegated to the parent in
+        # that case, which left the psi/y recursion below unexecuted. That is harmless at a constant
+        # w=0, but `ff_pi_gate` varies w per step and shuts the gate ~97% of the time, so the
+        # trajectory state advanced on only 2.9% of steps and was stale whenever the gate opened --
+        # the gated arm was not testing the mechanism it claimed to. State must track continuously
+        # regardless of how much of it is currently being used.
+        #
+        # Bit-exactness at w=0 is preserved instead by construction: the blend below is
+        # (1-0)*e + 0*x, and 0.0*x is exactly 0.0 for any finite x, so e_fb is e to the last bit.
+        # The identity gate covers this.
+        #
         # The parent computes the smoothed reference inline and does not retain it, so the feedback
         # error cannot be recovered after the fact. The body below mirrors ff_pi_boot.update and
-        # differs in ONE place: the error handed to the PI. w=0 takes the branch above and
-        # reproduces the parent bit-for-bit.
+        # differs in ONE place: the error handed to the PI.
         future = future_plan.lataccel if future_plan.lataccel else []
         c, k0 = self.smooth(target_lataccel, future)
         desired = c[k0]

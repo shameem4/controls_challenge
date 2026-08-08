@@ -18,11 +18,21 @@ steps (mean applied `w` = 0.0137), and a constant `w=0.10` costs +0.611, so line
 | arm | total | paired delta | 95% CI | better on | sign p |
 |---|---|---|---|---|---|
 | `ff_pi_boot` | **56.738** | -- | -- | -- | -- |
-| gate lo=0.5 | 57.176 | +0.438 | [-0.181, +1.300] | 105/233 non-tied | 0.149 |
-| gate lo=0.3 | 57.456 | +0.719 | [-0.083, +1.661] | 161/346 non-tied | 0.216 |
+| gate lo=0.5 | 57.501 | +0.763 | [-0.095, +2.120] | 105/232 non-tied | 0.168 |
+| gate lo=0.3 | 58.846 | +2.109 | **[+0.563, +3.905]** | 157/342 non-tied | 0.144 |
+
+> **Corrected 2026-08-08 after a bug bash.** The numbers above are from the fixed implementation.
+> The original run had `ff_pi_traj.update` delegating to its parent whenever `w == 0.0`, with the
+> psi/y recursion placed after that early return -- so with the gate shut on ~97% of steps the
+> trajectory state advanced on only **2.9%** of steps and was stale whenever the gate reopened. The
+> arm was not testing the mechanism claimed. Fixed by making the recursion unconditional (bit-exact
+> at `w=0` because `0.0*x` is exactly `0.0`), re-verified against all three identity gates.
+> Correcting it made the arm **worse**, not better -- `lo=0.3` went from +0.719 to +2.109 and its CI
+> now excludes zero. The pre-fix figures were: lo=0.5 +0.438 [-0.181, +1.300], lo=0.3 +0.719
+> [-0.083, +1.661]. Conclusion unchanged in direction and strengthened.
 
 The decisive detail is not the total, which is only weakly distinguishable, but the composition:
-**jerk went UP** (+0.086 and +0.093). On the tuning set the gate bought jerk with tracking; on fresh
+**jerk went UP** (+0.058 and +0.356). On the tuning set the gate bought jerk with tracking; on fresh
 segments it buys nothing and merely spends tracking. The 60-segment result was run variance.
 
 This is the falsification written into the controller's own docstring before running it:
