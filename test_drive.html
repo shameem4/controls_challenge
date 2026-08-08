@@ -4,7 +4,7 @@
     --bg: #0f1319;  --panel: #161b23;  --panel2: #1b2129;  --line: #262f3b;
     --ink: #e2e7ef;  --dim: #8b95a5;  --faint: #5b6675;
     --road: #1f2630;  --road-edge: #394452;
-    --ref: #4fa89b;  --car: #e29338;  --err: #c9564c;  --ok: #6f9e5c;
+    --ref: #4fa89b;  --car: #e29338;  --err: #c9564c;  --ok: #6f9e5c;  --roll: #5aa9c9;
     --shadow: 0 1px 0 rgba(255,255,255,.04), 0 8px 24px rgba(0,0,0,.35);
     --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, "Liberation Mono", monospace;
     --sans: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -14,7 +14,7 @@
       --bg: #f4f6f9;  --panel: #ffffff;  --panel2: #eef1f6;  --line: #dbe1ea;
       --ink: #18202a;  --dim: #5d6878;  --faint: #97a1af;
       --road: #e4e9f0;  --road-edge: #b9c3d0;
-      --ref: #2e7e73;  --car: #b96f18;  --err: #b3423a;  --ok: #4d7a3d;
+      --ref: #2e7e73;  --car: #b96f18;  --err: #b3423a;  --ok: #4d7a3d;  --roll: #2f7d99;
       --shadow: 0 1px 2px rgba(20,30,45,.06), 0 8px 24px rgba(20,30,45,.08);
     }
   }
@@ -22,14 +22,14 @@
     --bg: #f4f6f9;  --panel: #ffffff;  --panel2: #eef1f6;  --line: #dbe1ea;
     --ink: #18202a;  --dim: #5d6878;  --faint: #97a1af;
     --road: #e4e9f0;  --road-edge: #b9c3d0;
-    --ref: #2e7e73;  --car: #b96f18;  --err: #b3423a;  --ok: #4d7a3d;
+    --ref: #2e7e73;  --car: #b96f18;  --err: #b3423a;  --ok: #4d7a3d;  --roll: #2f7d99;
     --shadow: 0 1px 2px rgba(20,30,45,.06), 0 8px 24px rgba(20,30,45,.08);
   }
   :root[data-theme="dark"] {
     --bg: #0f1319;  --panel: #161b23;  --panel2: #1b2129;  --line: #262f3b;
     --ink: #e2e7ef;  --dim: #8b95a5;  --faint: #5b6675;
     --road: #1f2630;  --road-edge: #394452;
-    --ref: #4fa89b;  --car: #e29338;  --err: #c9564c;  --ok: #6f9e5c;
+    --ref: #4fa89b;  --car: #e29338;  --err: #c9564c;  --ok: #6f9e5c;  --roll: #5aa9c9;
     --shadow: 0 1px 0 rgba(255,255,255,.04), 0 8px 24px rgba(0,0,0,.35);
   }
 
@@ -99,16 +99,15 @@
   }
   canvas { display: block; width: 100%; }
   #road { height: 620px; }
-  #wheels { height: 216px; }
   #trace { height: 132px; }
   #steer { height: 96px; }
 
   .readout { padding: 12px 14px 14px; display: flex; flex-direction: column; gap: 12px; }
   .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .grid4 {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; padding: 0 14px 14px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(155px, 1fr));
+    gap: 10px; padding: 0 14px 14px;
   }
-  @media (max-width: 700px) { .grid4 { grid-template-columns: repeat(2, 1fr); } }
   .stat { background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 9px 11px; }
   .stat .k {
     font-family: var(--mono); font-size: 9.5px; letter-spacing: .14em;
@@ -224,16 +223,19 @@
         <div class="k">Cost so far</div>
         <div class="v" id="run">0.0</div>
       </div>
+      <div class="stat">
+        <div class="k">Road bank</div>
+        <div class="v" id="roll" style="color:var(--roll)">0.0<span class="u">&deg;</span></div>
+      </div>
+      <div class="stat">
+        <div class="k">Chatter, 2 s</div>
+        <div class="v" id="chat">0.000</div>
+      </div>
     </div>
   </div>
 
   <div class="card" style="margin-bottom:16px">
-    <h2>Steering wheels &middot; every controller, same moment</h2>
-    <canvas id="wheels"></canvas>
-  </div>
-
-  <div class="card" style="margin-bottom:16px">
-    <h2>Lateral acceleration &mdash; commanded (dashed) vs achieved &middot; m/s&sup2;</h2>
+    <h2>Lateral acceleration &middot; commanded (dashed), achieved (solid), <span style="color:var(--roll)">road bank</span> (filled) &middot; m/s&sup2;</h2>
     <canvas id="trace"></canvas>
   </div>
   <div class="card" style="margin-bottom:16px">
@@ -373,6 +375,8 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
 
   g.save();
   g.beginPath(); g.rect(ox, oy, W, H); g.clip();
+
+  const bank = Math.asin(Math.max(-1, Math.min(1, s.roll[i0] / 9.81)));
 
   // sky/ground. The horizon is fixed: pitch is not modelled, only yaw and lateral offset.
   const sky = g.createLinearGradient(0, oy, 0, horizon);
@@ -568,6 +572,7 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
     g.closePath(); g.fill(); g.globalAlpha = 1;
     g.strokeStyle = css('--line'); g.lineWidth = 1; g.stroke();
 
+    bankIndicator(g, ox, oy, W, H, bank, s.roll[i0]);
     wheelOverlay(g, ox, oy, W, H, i0);
 
     const off = OFF[ctrlKey][i0];
@@ -586,6 +591,70 @@ function scene(g, ox, oy, W, H, i0, dir, mirror) {
     g.fillStyle = css('--faint'); g.font = '9px ' + css('--mono');
     g.fillText('REAR', ox + 6, oy + H - 6);
   }
+}
+
+// Road bank, drawn as an attitude gauge rather than by rotating the world.
+//
+// Rotating the whole scene was tried first and abandoned: the true angles are tiny -- median
+// 1.24 deg, max 3.80 deg across the shown segments -- so an honest tilt is invisible, and an
+// exaggerated one both distorts the road geometry the rest of the view depends on and left
+// uncovered corners in the sky fill at large angles. A probe across seven columns found the
+// horizon boundary bent by +-58 px rather than straight, i.e. not a rigid rotation at all.
+//
+// The gauge is self-contained and exact instead. The bar IS the road surface at its true angle,
+// magnified only inside the dial; the plumb line is gravity, always vertical; and the bar's fill
+// runs downhill, which is the direction gravity pushes the car. The number beside it is the
+// lateral acceleration that push contributes -- the quantity that actually matters, since the
+// feedforward has to cancel it and it can rival the cornering demand outright (on 05161 the mean
+// |roll| is 0.97x the mean |target|).
+function bankIndicator(g, ox, oy, W, H, bank, rollAcc) {
+  const R = Math.min(46, W * 0.06);
+  const cx = ox + R + 18, cy = oy + R + 18;
+  const MAG = 6;                                  // dial-only magnification, labelled below
+  const a = Math.max(-0.6, Math.min(0.6, bank * MAG));
+
+  g.save();
+  g.globalAlpha = .55; g.fillStyle = css('--panel');
+  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.fill();
+  g.globalAlpha = 1;
+  g.strokeStyle = css('--line'); g.lineWidth = 1;
+  g.beginPath(); g.arc(cx, cy, R, 0, Math.PI * 2); g.stroke();
+
+  // plumb line: gravity, fixed vertical
+  g.strokeStyle = css('--faint'); g.lineWidth = 1; g.setLineDash([2, 3]);
+  g.beginPath(); g.moveTo(cx, cy - R * 0.75); g.lineTo(cx, cy + R * 0.8); g.stroke();
+  g.setLineDash([]);
+
+  // the road surface
+  g.save(); g.translate(cx, cy); g.rotate(a);
+  g.strokeStyle = css('--roll'); g.lineWidth = 3;
+  g.beginPath(); g.moveTo(-R * 0.78, 0); g.lineTo(R * 0.78, 0); g.stroke();
+  g.fillStyle = css('--roll'); g.globalAlpha = .22;
+  g.fillRect(-R * 0.78, 0, R * 1.56, R * 0.42);
+  g.globalAlpha = 1;
+  // downhill arrow: which way gravity pushes the car
+  if (Math.abs(rollAcc) > 0.02) {
+    const dir = rollAcc >= 0 ? 1 : -1;
+    g.strokeStyle = css('--roll'); g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(0, -R * 0.16); g.lineTo(dir * R * 0.46, -R * 0.16); g.stroke();
+    g.beginPath();
+    g.moveTo(dir * R * 0.46, -R * 0.16);
+    g.lineTo(dir * R * 0.30, -R * 0.30); g.lineTo(dir * R * 0.30, -R * 0.02);
+    g.closePath(); g.fillStyle = css('--roll'); g.fill();
+  }
+  g.restore();
+
+  g.font = '10px ' + css('--mono'); g.textAlign = 'center';
+  g.fillStyle = css('--roll');
+  g.fillText((bank * 180 / Math.PI).toFixed(1) + '\u00B0', cx, cy + R + 13);
+  g.fillStyle = css('--faint');
+  g.fillText((rollAcc >= 0 ? '+' : '\u2212') + Math.abs(rollAcc).toFixed(2) + ' m/s\u00B2',
+             cx, cy + R + 25);
+  g.font = '9px ' + css('--mono');
+  g.fillText('bank \u00D7' + MAG + ' in dial', cx, cy + R + 36);
+  g.textAlign = 'left';
+  g.restore();
 }
 
 // The wheel as the driver sees it: bottom-centre, rising above the bonnet, turning with the car.
@@ -633,65 +702,6 @@ function wheelOverlay(g, ox, oy, W, H, i0) {
   g.textAlign = 'left';
 }
 
-function drawWheels() {
-  const [g, W, H] = fit($('#wheels'));
-  // Same selection rule as the road view: the controller driving, plus whichever ghosts are ticked.
-  // Showing all six regardless made this panel disagree with everything else on the page.
-  const s = seg();
-  const cs = DATA.controllers.filter(c => c.key === ctrlKey || ghosts.has(c.key));
-  const cw = W / Math.max(cs.length, 1);
-  g.clearRect(0, 0, W, H);
-  const R = Math.min(cw * 0.30, H * 0.31), cy = H * 0.46;
-
-  cs.forEach((c, i) => {
-    const cx = cw * (i + 0.5), st = s.runs[c.key].steer[frame];
-    const active = c.key === ctrlKey;
-    // Palette index comes from the FULL list, so a controller keeps its colour when the
-    // selection changes -- indexing the filtered list would reshuffle every colour on each tick.
-    const col = active ? css('--car') : COLORS[DATA.controllers.findIndex(x => x.key === c.key)];
-    const ang = Math.max(-4.9, Math.min(4.9, st * 160 * Math.PI / 180));
-
-    g.save(); g.translate(cx, cy); g.rotate(ang);
-    g.globalAlpha = active ? 1 : .55;
-    g.strokeStyle = col; g.lineWidth = active ? 5 : 3.5;
-    g.beginPath(); g.arc(0, 0, R, 0, Math.PI * 2); g.stroke();
-    g.lineWidth = active ? 4 : 3;                       // three spokes, like a real wheel
-    [-Math.PI / 2, Math.PI / 6, Math.PI * 5 / 6].forEach(a => {
-      g.beginPath(); g.moveTo(0, 0); g.lineTo(Math.cos(a) * R, Math.sin(a) * R); g.stroke();
-    });
-    g.fillStyle = col; g.beginPath(); g.arc(0, 0, R * 0.20, 0, Math.PI * 2); g.fill();
-    g.restore();
-
-    // twelve-o'clock marker: how far from centred, at a glance
-    g.save(); g.translate(cx, cy); g.rotate(ang);
-    g.fillStyle = css('--panel'); g.globalAlpha = .9;
-    g.fillRect(-2.5, -R - 4, 5, 9);
-    g.restore();
-
-    g.globalAlpha = 1; g.textAlign = 'center';
-    g.font = (active ? '600 ' : '') + '11px ' + css('--mono');
-    g.fillStyle = active ? css('--car') : css('--dim');
-    g.fillText(c.key, cx, cy + R + 20);
-    g.font = '12px ' + css('--mono'); g.fillStyle = css('--ink');
-    g.fillText((st >= 0 ? '+' : '\u2212') + Math.abs(st).toFixed(3), cx, cy + R + 36);
-
-    // Chatter over the last 2 s. The road view cannot show this: turning lataccel into a drawn
-    // path is a double integral, so it attenuates exactly the band the jerk cost charges for.
-    // A controller can hold a clean line and still be paying here -- that is the whole reason
-    // the drawn path and the cost rank controllers differently.
-    const a = s.runs[c.key].steer, lo = Math.max(1, frame - 19);
-    let ch = 0; for (let j = lo; j <= frame; j++) ch += Math.abs(a[j] - a[j - 1]);
-    ch /= Math.max(1, frame - lo + 1);
-    const bw = Math.min(cw * 0.52, 96), bx = cx - bw / 2, by = cy + R + 48;
-    g.fillStyle = css('--line'); g.fillRect(bx, by, bw, 6);
-    g.fillStyle = col; g.globalAlpha = active ? 1 : .55;
-    g.fillRect(bx, by, bw * Math.min(1, ch / 0.08), 6);
-    g.globalAlpha = 1; g.font = '10px ' + css('--mono'); g.fillStyle = css('--dim');
-    g.fillText('chatter ' + ch.toFixed(4), cx, by + 19);
-    g.textAlign = 'left';
-  });
-}
-
 function series(cvId, get, zero) {
   const [g, W, H] = fit($(cvId));
   const s = seg(), n = N(), pad = 8;
@@ -708,7 +718,17 @@ function series(cvId, get, zero) {
     g.strokeStyle = css('--line'); g.lineWidth = 1;
     g.beginPath(); g.moveTo(pad, Y(0)); g.lineTo(W - pad, Y(0)); g.stroke();
   }
-  sets.forEach(({ d, c, w, dash }) => {
+  sets.forEach(({ d, c, w, dash, fill }) => {
+    if (fill) {
+      // Roll is drawn as an area off the zero line: its height IS the share of the commanded
+      // lateral acceleration that gravity supplies, so the eye compares it against the target
+      // directly instead of tracking a third squiggle.
+      g.fillStyle = c; g.globalAlpha = .28;
+      g.beginPath(); g.moveTo(X(0), Y(0));
+      d.forEach((v, i) => g.lineTo(X(i), Y(v)));
+      g.lineTo(X(d.length - 1), Y(0)); g.closePath(); g.fill();
+      g.globalAlpha = 1;
+    }
     g.strokeStyle = c; g.lineWidth = w || 1.6;
     g.setLineDash(dash || []);
     g.beginPath(); d.forEach((v, i) => i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v)));
@@ -722,12 +742,27 @@ function series(cvId, get, zero) {
 function draw() {
   const s = seg(), r = s.runs[ctrlKey];
   drawRoad();
-  drawWheels();
   series('#trace', () => [
+    { d: s.roll, c: css('--roll'), w: 1, fill: true },
     { d: s.target, c: css('--ref'), w: 2, dash: [5, 5] },
     { d: r.lat, c: css('--car'), w: 1.7 },
   ], true);
   series('#steer', () => [{ d: r.steer, c: css('--car'), w: 1.5 }], true);
+
+  // Road bank, exact. Shown in degrees with its lataccel contribution beside it, because the angle
+  // is small while the contribution is not -- that gap is the whole reason roll matters here.
+  const rl = s.roll[frame], bankDeg = Math.asin(Math.max(-1, Math.min(1, rl / 9.81))) * 180 / Math.PI;
+  $('#roll').innerHTML = (bankDeg >= 0 ? '' : '\u2212') + Math.abs(bankDeg).toFixed(1) +
+    '<span class="u">\u00B0 \u00B7 ' + (rl >= 0 ? '+' : '\u2212') +
+    Math.abs(rl).toFixed(2) + ' m/s\u00B2</span>';
+
+  // Chatter over the last 2 s. The road view cannot show it -- drawing a path double-integrates the
+  // error and attenuates exactly the band the jerk cost charges for -- and this is now the only
+  // place it appears, since the per-controller wheels panel was removed.
+  const lo2 = Math.max(1, frame - 19);
+  let ch = 0; for (let j = lo2; j <= frame; j++) ch += Math.abs(r.steer[j] - r.steer[j - 1]);
+  ch /= Math.max(1, frame - lo2 + 1);
+  $('#chat').textContent = ch.toFixed(4);
 
   const e = r.lat[frame] - s.target[frame];
   $('#err').innerHTML = (e >= 0 ? '' : '\u2212') + Math.abs(e).toFixed(2) + '<span class="u">m/s\u00B2</span>';
