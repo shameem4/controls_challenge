@@ -1,9 +1,22 @@
 # comma Controls Challenge — an honest learned lateral controller
 
-Private working copy of [commaai/controls_challenge](https://github.com/commaai/controls_challenge).
-It adds a **differentiable-simulation training pipeline** and controllers that beat the PID
-baseline **honestly** — generalizing closed-loop policies, with no segment fingerprinting or
-action replay.
+A worked entry for [comma.ai's controls challenge](https://github.com/commaai/controls_challenge):
+a **differentiable-simulation training pipeline** and a learned preview controller that beats the
+PID baseline **honestly** — a generalizing closed-loop policy, with no segment fingerprinting and
+no action replay.
+
+**Result.** `cnn_v4` scores **45.32** against the PID baseline's **110.76** on the leaderboard's
+5000 segments (**−59%**), and **47.37** on 2000 segments it never trained on, never selected a
+checkpoint against, and never tuned against.
+
+**The more useful result sits underneath that one.** Roughly **68% of the achievable score is
+irreducible** — a causal floor of 31.24 set by the simulator's own synthetic noise — so the real
+controller-quality signal is about 15 points wide, and most differences between good controllers
+live 1–5 points inside it. That number is why a long run of reasonable ideas here returned nulls,
+and the nulls are written up rather than deleted. One promotion in this repo is **retracted** on
+its own evidence: a behaviour-cloning schedule credited with −0.978 turned out to be a coin flip
+once it was compared against a matched control instead of an older artifact. Rigour applied to the
+wrong comparison is still wrong.
 
 ## Results
 
@@ -483,6 +496,19 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 
 The dataset (`data/`), checkpoints (`ckpts/`) and `__pycache__` are gitignored; `data/`
 auto-downloads on first run.
+
+## Attribution
+
+Derived from [commaai/controls_challenge](https://github.com/commaai/controls_challenge). The
+simulator (`tinyphysics.py`), the physics model, the data loader and the original README reproduced
+below are comma.ai's work, kept here with their commit history intact. comma.ai publish that
+repository without a licence file, so their terms govern their portion and nothing here claims
+otherwise.
+
+Everything built on top — the differentiable simulator (`torch_sim.py`), the training pipeline, the
+controllers, the CMA-ES tuner and the `FINDINGS_*.md` measurement logs — is my own work.
+
+`controllers/pid_w_ff.py` is a port of a reference controller by jonoomph, attributed in the file.
 
 ---
 
