@@ -81,6 +81,35 @@ The previous default `cnn` controller (`cnn_v2.pt`) scores **46.91** on the full
 scores 47.87 and 52.31 on the same two). It is a pure function of the observed state, the 5-second
 preview, and its own recent actions — **no per-segment memorization**.
 
+## Watch it drive
+
+**[▶ Open the test drive](https://shameem4.github.io/controls_challenge/test_drive.html)** —
+a self-contained page, no install, no data download.
+
+Pick a segment and a controller and watch it steer from the driver's seat. Any of the six
+controllers can be run alongside as **ghosts**, so you can see exactly where two of them part
+company. The road is drawn from the *commanded* lateral acceleration and the car drifts when the
+controller fails to produce it, which makes the error visible as a thing happening to a vehicle
+rather than a line on a chart.
+
+[![Controller test drive](docs/img/test_drive.png)](https://shameem4.github.io/controls_challenge/test_drive.html)
+
+Underneath the road view: lateral acceleration commanded against achieved with road bank filled
+behind it, the steer command, and the whole-segment cost for every controller at once.
+
+![Traces and per-controller cost](docs/img/test_drive_panels.png)
+
+Three things it was built to show, none of which survive being a number in a table:
+
+- **Where the cost actually comes from.** 61% of the tracking cost is holding a near-straight line
+  at 58 mph. Watching it is more convincing than the table above.
+- **Latacc control against trajectory control.** Three controllers close the loop on lateral
+  acceleration, three on reconstructed position and heading. Each trajectory controller shares a
+  parent with a latacc one and differs *only* in the error signal, so the pairs are directly
+  comparable — trajectory control is smoother at the wheel and worse at the line.
+- **Road bank.** Rendered by tilting the world rather than with a gauge, because bank is a
+  disturbance the controller has to reject, not a reading.
+
 ## What this benchmark actually measures — read this before the numbers
 
 Measured on 500 pristine segments under `cnn_v2`, the scored window is dominated by near-straight
@@ -487,6 +516,10 @@ soft-token BPTT, and `TBPTT`/`TRAIN_N` set the BPTT window and training-set size
 | `controllers/pid_lag.py`, `pid_look.py`, `pid_hold.py`, `pid_pend.py`, `pid_wff_v.py`, `ff_pi_look.py`, `ff_pi_vlead.py` | Documented negatives from the lag/anticipation line; each reproduces its parent exactly at default parameters |
 | `FINDINGS_FLOOR.md` | The causal cost floor (31.24) derived from the plant's noise, and why sub-30 entries are seed exploits |
 | `FINDINGS_PID_LAG.md`, `FINDINGS_CLAMP.md`, `FINDINGS_GAIN_PRIOR.md`, `CYNIC_REVIEW.md` | Full measurement logs and the adversarial review |
+| `FINDINGS_TAIL.md` | Where the classical controller loses: five mechanism hypotheses that died on measurement |
+| `FINDINGS_MPC.md`, `FINDINGS_NEURAL_MPC.md` | The MPC and neural-MPC routes to sub-40, and why both lost to the learned policy |
+| `FINDINGS_TWODOF.md` | Deterministic nominal net + stochastic corrector — the premise held, the transfer still failed |
+| `test_drive.html` | The visualisation above — self-contained, no dependencies |
 | `tune_cma.py` | CMA-ES tuner (400-segment tune set, disjoint held-out guard) |
 | `controllers/pid_w_ff.py` | Ported reference controller (jonoomph, attributed) — 59.49 on our 5000 |
 | `torch_sim.py` | Differentiable batched GPU TinyPhysics (the training engine) |
